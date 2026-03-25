@@ -1,39 +1,39 @@
 ---
 name: qt-layouts
 description: >
-  Qt layout managers — arranging and sizing widgets within containers. Use when placing widgets, controlling resize behavior, building form layouts, creating splitters, nesting containers, or debugging widgets that don't appear where expected.
+  Qt 布局管理器 — 在容器中排列和调整 widgets 大小。当需要放置 widgets、控制调整大小行为、构建表单布局、创建分割器、嵌套容器，或调试 widgets 没有显示在预期位置时使用此技能。
 
-  Trigger phrases: "arrange widgets", "layout", "resize behavior", "QSplitter", "center widget", "widget not visible", "expand to fill", "fixed size", "stretch factor", "form layout", "grid layout", "spacing", "margins"
+  触发短语："arrange widgets"、"layout"、"resize behavior"、"QSplitter"、"center widget"、"widget not visible"、"expand to fill"、"fixed size"、"stretch factor"、"form layout"、"grid layout"、"spacing"、"margins"
 version: 1.0.0
 ---
 
-## Qt Layout Managers
+## Qt 布局管理器
 
-### Layout Hierarchy
+### 布局层次结构
 
-Qt lays out widgets using layout objects attached to containers. Never call `setGeometry()` manually — use layouts.
+Qt 使用附加到容器的布局对象来布局 widgets。永远不要手动调用 `setGeometry()` — 使用布局。
 
 ```
-QWidget (parent)
-└── QVBoxLayout (attached via setLayout or constructor arg)
+QWidget (父级)
+└── QVBoxLayout（通过 setLayout 或构造函数参数附加）
     ├── QLabel
-    ├── QHBoxLayout (nested)
+    ├── QHBoxLayout（嵌套）
     │   ├── QPushButton
     │   └── QPushButton
     └── QTextEdit
 ```
 
-### Core Layout Types
+### 核心布局类型
 
-| Layout | Use case |
+| 布局 | 使用场景 |
 |--------|----------|
-| `QVBoxLayout` | Stack items vertically |
-| `QHBoxLayout` | Stack items horizontally |
-| `QGridLayout` | Row/column grid |
-| `QFormLayout` | Label + field pairs |
-| `QStackedLayout` | Multiple pages, one visible |
+| `QVBoxLayout` | 垂直堆叠项目 |
+| `QHBoxLayout` | 水平堆叠项目 |
+| `QGridLayout` | 行/列网格 |
+| `QFormLayout` | 标签 + 字段对 |
+| `QStackedLayout` | 多页面，一次只显示一个 |
 
-### Basic Usage
+### 基本用法
 
 ```python
 from PySide6.QtWidgets import (
@@ -43,7 +43,7 @@ from PySide6.QtWidgets import (
 class MyWidget(QWidget):
     def __init__(self) -> None:
         super().__init__()
-        # Pass widget as parent to layout — attaches layout automatically
+        # 将 widget 作为父级传递给布局 — 自动附加布局
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(12, 12, 12, 12)
         main_layout.setSpacing(8)
@@ -51,43 +51,46 @@ class MyWidget(QWidget):
         label = QLabel("Hello")
         main_layout.addWidget(label)
 
-        # Nested horizontal row
+        # 嵌套水平行
         button_row = QHBoxLayout()
         button_row.addWidget(QPushButton("OK"))
         button_row.addWidget(QPushButton("Cancel"))
         main_layout.addLayout(button_row)
 ```
 
-Pass the parent widget to the layout constructor (`QVBoxLayout(self)`) — this is cleaner than calling `self.setLayout(layout)` separately, and prevents forgetting to attach the layout.
+将父级 widget 传递给布局构造函数（`QVBoxLayout(self)`）— 这比单独调用 `self.setLayout(layout)` 更简洁，也能防止忘记附加布局。
 
-### Stretch and Size Policy
+### 拉伸和尺寸策略
 
-**Stretch factors** distribute extra space when the window resizes:
+**拉伸因子** 在窗口调整大小时分配额外空间：
+
 ```python
-layout.addWidget(sidebar, stretch=1)    # gets 1/4 of extra space
-layout.addWidget(main_area, stretch=3)  # gets 3/4 of extra space
+layout.addWidget(sidebar, stretch=1)    # 获得额外空间的 1/4
+layout.addWidget(main_area, stretch=3)  # 获得额外空间的 3/4
 ```
 
-**Size policy** controls how individual widgets resize:
+**尺寸策略** 控制各个 widgets 如何调整大小：
+
 ```python
-# Expand to fill available horizontal space
+# 扩展以填充可用的水平空间
 widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
 
-# Fixed size — never grows or shrinks
+# 固定大小 — 永不增长或收缩
 widget.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
 widget.setFixedSize(200, 40)
 ```
 
-Common policies: `Fixed`, `Minimum`, `Maximum`, `Preferred`, `Expanding`, `MinimumExpanding`.
+常用策略：`Fixed`、`Minimum`、`Maximum`、`Preferred`、`Expanding`、`MinimumExpanding`。
 
-**Spacers:**
+**间隔器：**
+
 ```python
 from PySide6.QtWidgets import QSpacerItem, QSizePolicy
 
-# Push buttons to the right
-layout.addStretch()                          # flexible spacer
-layout.addSpacing(16)                        # fixed-size gap
-layout.addItem(QSpacerItem(                  # explicit spacer
+# 将按钮推到右侧
+layout.addStretch()                          # 弹性间隔器
+layout.addSpacing(16)                        # 固定大小间隙
+layout.addItem(QSpacerItem(                  # 显式间隔器
     40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
 ))
 ```
@@ -96,27 +99,28 @@ layout.addItem(QSpacerItem(                  # explicit spacer
 
 ```python
 grid = QGridLayout(self)
-grid.addWidget(QLabel("Name:"),    0, 0)   # row, col
+grid.addWidget(QLabel("Name:"),    0, 0)   # 行, 列
 grid.addWidget(name_edit,          0, 1)
 grid.addWidget(QLabel("Email:"),   1, 0)
 grid.addWidget(email_edit,         1, 1)
-grid.addWidget(submit_btn,         2, 0, 1, 2)  # row, col, rowspan, colspan
+grid.addWidget(submit_btn,         2, 0, 1, 2)  # 行, 列, 行跨度, 列跨度
 
-# Column stretch — second column takes all extra space
+# 列拉伸 — 第二列占用所有额外空间
 grid.setColumnStretch(0, 0)
 grid.setColumnStretch(1, 1)
 ```
 
 ### QFormLayout
 
-Use for settings dialogs and data entry forms — automatically handles label alignment:
+用于设置对话框和数据输入表单 — 自动处理标签对齐：
+
 ```python
 from PySide6.QtWidgets import QFormLayout
 
 form = QFormLayout(self)
 form.addRow("Username:", QLineEdit())
 form.addRow("Password:", QLineEdit())
-form.addRow("", QPushButton("Login"))   # empty label for button row
+form.addRow("", QPushButton("Login"))   # 按钮行使用空标签
 ```
 
 ### QSplitter
@@ -128,40 +132,44 @@ from PySide6.QtCore import Qt
 splitter = QSplitter(Qt.Orientation.Horizontal)
 splitter.addWidget(sidebar)
 splitter.addWidget(main_content)
-splitter.setSizes([200, 600])           # initial pixel widths
-splitter.setStretchFactor(0, 0)         # sidebar: don't stretch
-splitter.setStretchFactor(1, 1)         # main: takes all extra space
+splitter.setSizes([200, 600])           # 初始像素宽度
+splitter.setStretchFactor(0, 0)         # 侧边栏：不拉伸
+splitter.setStretchFactor(1, 1)         # 主区域：占用所有额外空间
 
-# Persist splitter state
+# 持久化分割器状态
 settings.setValue("splitter", splitter.saveState())
 splitter.restoreState(settings.value("splitter"))
 ```
 
-### Centering a Widget in Its Parent
+### 在父级中居中 Widget
 
 ```python
-# Via layout
+# 通过布局
 layout = QVBoxLayout(self)
 layout.addStretch()
 layout.addWidget(target_widget, alignment=Qt.AlignmentFlag.AlignHCenter)
 layout.addStretch()
 ```
 
-### Debugging Layout Issues
+### 调试布局问题
 
-**Widget appears but is zero-size:**
-- Set a size hint: `widget.setMinimumSize(100, 40)` or override `sizeHint()`
-- Check that the parent layout is actually attached (`self.layout()` returns non-None)
+**Widget 显示但尺寸为零：**
 
-**Widget not visible at all:**
-- Confirm `show()` was called (or parent is visible)
-- Check `isHidden()` and `isVisible()`
-- Ensure no `setFixedSize(0, 0)` or zero margins collapsing the widget
+- 设置尺寸提示：`widget.setMinimumSize(100, 40)` 或重写 `sizeHint()`
+- 检查父布局是否实际附加（`self.layout()` 返回非 None）
 
-**Layout ignoring size changes:**
-- Call `layout.invalidate()` after programmatic geometry changes
-- Verify size policy is not `Fixed` when you want expansion
+**Widget 完全不可见：**
 
-**Margins and spacing defaults:**
-- Default content margins: 9px on all sides (varies by style)
-- Reset to zero: `layout.setContentsMargins(0, 0, 0, 0)` and `layout.setSpacing(0)`
+- 确认调用了 `show()`（或父级可见）
+- 检查 `isHidden()` 和 `isVisible()`
+- 确保没有 `setFixedSize(0, 0)` 或导致 widget 折叠的零边距
+
+**布局忽略大小更改：**
+
+- 在程序化几何更改后调用 `layout.invalidate()`
+- 验证当需要扩展时尺寸策略不是 `Fixed`
+
+**边距和间距默认值：**
+
+- 默认内容边距：所有侧面 9px（因样式而异）
+- 重置为零：`layout.setContentsMargins(0, 0, 0, 0)` 和 `layout.setSpacing(0)`

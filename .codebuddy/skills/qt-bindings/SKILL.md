@@ -1,32 +1,32 @@
 ---
 name: qt-bindings
 description: >
-  Python Qt binding differences and migration guides — PySide6 vs PyQt6 API differences, and migration paths from PyQt5 to both modern bindings. Use when choosing between PySide6 and PyQt6, porting a PyQt5 codebase, handling binding-specific API differences, or writing code that must work with both bindings.
+  Python Qt 绑定差异和迁移指南 — PySide6 与 PyQt6 的 API 差异，以及从 PyQt5 迁移到两种现代绑定的路径。当需要在 PySide6 和 PyQt6 之间选择、移植 PyQt5 代码库、处理特定绑定的 API 差异，或编写必须同时兼容两种绑定的代码时使用此技能。
 
-  Trigger phrases: "PySide6 vs PyQt6", "PyQt5 migration", "binding difference", "migrate from PyQt5", "PyQt6 migration", "PySide6 or PyQt6", "binding compatibility", "porting Qt Python", "LGPL vs GPL"
+  触发短语："PySide6 vs PyQt6"、"PyQt5 migration"、"binding difference"、"migrate from PyQt5"、"PyQt6 migration"、"PySide6 or PyQt6"、"binding compatibility"、"porting Qt Python"、"LGPL vs GPL"
 version: 1.0.0
 ---
 
-## Python Qt Bindings
+## Python Qt 绑定
 
-### Choosing a Binding
+### 选择绑定
 
-| Criteria | PySide6 | PyQt6 |
+| 条件 | PySide6 | PyQt6 |
 |----------|---------|-------|
-| Maintainer | Qt Company (official) | Riverbank Computing |
-| License | LGPL v3 | GPL v3 / commercial |
-| Commercial use | Free (LGPL) | Requires commercial license |
-| QML/Qt Quick support | Excellent | Good |
-| Type stubs | Built-in | `PyQt6-stubs` (third-party) |
+| 维护者 | Qt Company（官方） | Riverbank Computing |
+| 许可证 | LGPL v3 | GPL v3 / 商业版 |
+| 商业使用 | 免费（LGPL） | 需要商业许可证 |
+| QML/Qt Quick 支持 | 优秀 | 良好 |
+| 类型存根（Type stubs） | 内置 | `PyQt6-stubs`（第三方） |
 | `pyqtSignal` / `Signal` | `Signal` | `pySignal` |
 | `pyqtSlot` / `Slot` | `Slot` | `pyqtSlot` |
-| Availability | pip | pip |
+| 获取方式 | pip | pip |
 
-**Default recommendation: PySide6** — official binding, LGPL, ships with complete type stubs, better QML tooling.
+**默认推荐：PySide6** — 官方绑定、LGPL 许可、附带完整的类型存根、更好的 QML 工具。
 
-### API Compatibility Layer
+### API 兼容层
 
-For code that must support both:
+对于必须同时支持两种绑定的代码：
 ```python
 try:
     from PySide6.QtWidgets import QApplication, QPushButton
@@ -38,16 +38,17 @@ except ImportError:
     PYSIDE6 = False
 ```
 
-Or use **`qtpy`** — an abstraction layer maintained by the community:
+或使用 **`qtpy`** — 由社区维护的抽象层：
 ```python
 from qtpy.QtWidgets import QApplication, QPushButton
 from qtpy.QtCore import Signal, Slot
-# Works with PySide6, PyQt6, PySide2, PyQt5 — set QT_API env var to select
+# 适用于 PySide6、PyQt6、PySide2、PyQt5 — 设置 QT_API 环境变量来选择
 ```
 
-### PySide6 vs PyQt6: Key Differences
+### PySide6 与 PyQt6：关键差异
 
-#### Signals and Slots
+#### 信号与槽（Signals and Slots）
+
 ```python
 # PySide6
 from PySide6.QtCore import Signal, Slot
@@ -66,32 +67,35 @@ class Foo(QObject):
     def my_slot(self, value: int): ...
 ```
 
-#### Enum Access
-Both require fully-qualified enum access (breaking change from Qt5):
+#### 枚举访问
+
+两者都需要完全限定的枚举访问（与 Qt5 相比的重大变更）：
 ```python
-# CORRECT (both bindings)
+# 正确（两种绑定）
 Qt.AlignmentFlag.AlignLeft
 QSizePolicy.Policy.Expanding
 QPushButton.setCheckable(True)
 
-# WRONG — Qt5 style (no longer works)
+# 错误 — Qt5 风格（不再有效）
 Qt.AlignLeft
 ```
 
-#### Exec Method (PyQt6 breaking change)
+#### exec 方法（PyQt6 重大变更）
+
 ```python
 # PySide6
 app.exec()
 dialog.exec()
 
-# PyQt6 — exec() also works in PyQt6 (exec_ removed)
+# PyQt6 — exec() 在 PyQt6 中也能工作（exec_ 已移除）
 app.exec()
 dialog.exec()
 ```
 
-Both use `exec()` — the old `exec_()` workaround is no longer needed or available in PyQt6.
+两者都使用 `exec()` — 旧的 `exec_()` 变通方法不再需要，也不再适用于 PyQt6。
 
-#### Property Decorator
+#### 属性装饰器
+
 ```python
 # PySide6
 from PySide6.QtCore import Property
@@ -104,16 +108,18 @@ from PyQt6.QtCore import pyqtProperty
 def value(self) -> int: return self._value
 ```
 
-### Migrating PyQt5 → PySide6
+### 从 PyQt5 迁移到 PySide6
 
-**Step 1: Update imports**
+**步骤 1：更新导入**
+
 ```bash
-# Mass replace with sed
+# 使用 sed 进行批量替换
 sed -i 's/from PyQt5\./from PySide6./g' src/**/*.py
 sed -i 's/import PyQt5\./import PySide6./g' src/**/*.py
 ```
 
-**Step 2: Replace signal/slot decorators**
+**步骤 2：替换信号与槽装饰器**
+
 ```python
 # PyQt5 → PySide6
 pyqtSignal → Signal
@@ -121,67 +127,71 @@ pyqtSlot  → Slot
 pyqtProperty → Property
 ```
 
-**Step 3: Fix enum usage** (most common PyQt5→PySide6 breakage)
+**步骤 3：修复枚举用法**（PyQt5→PySide6 最常见的破坏性变更）
+
 ```python
-# PyQt5 (short form)
+# PyQt5（短形式）
 Qt.AlignLeft          → Qt.AlignmentFlag.AlignLeft
 Qt.Horizontal         → Qt.Orientation.Horizontal
 QSizePolicy.Expanding → QSizePolicy.Policy.Expanding
 Qt.WindowModal        → Qt.WindowModality.WindowModal
 ```
 
-**Step 4: Fix exec() calls** — remove `exec_()` suffix:
+**步骤 4：修复 exec() 调用** — 移除 `exec_()` 后缀：
+
 ```python
 app.exec_()   → app.exec()
 dialog.exec_() → dialog.exec()
 ```
 
-**Step 5: Remove deprecated Qt5 API**
+**步骤 5：移除已弃用的 Qt5 API**
+
 ```python
-# Removed in Qt6
-QWidget.show() — still works
-QApplication.setDesktopSettingsAware() — removed
-QFontDatabase.addApplicationFont() — still works
+# 在 Qt6 中已移除
+QWidget.show() — 仍然有效
+QApplication.setDesktopSettingsAware() — 已移除
+QFontDatabase.addApplicationFont() — 仍然有效
 ```
 
-### Migrating PyQt5 → PyQt6
+### 从 PyQt5 迁移到 PyQt6
 
-Same steps as PySide6 migration, but:
+与 PySide6 迁移相同的步骤，但：
+
 ```python
-# PyQt5 → PyQt6 signals (keep pyqt prefix)
-pyqtSignal → pyqtSignal  (unchanged)
-pyqtSlot   → pyqtSlot    (unchanged)
+# PyQt5 → PyQt6 信号（保留 pyqt 前缀）
+pyqtSignal → pyqtSignal  （不变）
+pyqtSlot   → pyqtSlot    （不变）
 
-# Imports change
+# 导入变更
 from PyQt5.QtWidgets import ... → from PyQt6.QtWidgets import ...
 ```
 
-Enum changes are identical to PySide6 — both Qt6 bindings enforce fully-qualified enums.
+枚举变更与 PySide6 相同 — 两种 Qt6 绑定都强制使用完全限定的枚举。
 
-### Migrating PySide2 → PySide6
+### 从 PySide2 迁移到 PySide6
 
 ```python
-# Imports
+# 导入
 from PySide2. → from PySide6.
 
-# exec_ removal
+# exec_ 移除
 .exec_() → .exec()
 
-# Enum qualification (same as PyQt5→PySide6)
+# 枚举限定（与 PyQt5→PySide6 相同）
 ```
 
-PySide6 also drops Python 3.6/3.7 support — minimum is Python 3.8 (3.11 recommended).
+PySide6 也放弃了 Python 3.6/3.7 支持 — 最低要求是 Python 3.8（推荐 Python 3.11）。
 
-### Type Stubs
+### 类型存根
 
 ```bash
-# PySide6 ships stubs — no extra install
+# PySide6 附带存根 — 无需额外安装
 pip install PySide6
 
 # PyQt6
 pip install PyQt6-stubs
 
-# Configure pyright/mypy
+# 配置 pyright/mypy
 # pyproject.toml
 [tool.pyright]
 pythonVersion = "3.11"

@@ -1,8 +1,8 @@
-# GUI Test Report Template
+# GUI 测试报告模板
 
-The `gui-tester` agent saves reports to `tests/reports/gui-YYYY-MM-DD-HH-MM.md`.
+`gui-tester` agent 将报告保存到 `tests/reports/gui-YYYY-MM-DD-HH-MM.md`。
 
-## Report Format
+## 报告格式
 
 ```markdown
 # GUI Test Report — YYYY-MM-DD HH:MM
@@ -24,14 +24,14 @@ The `gui-tester` agent saves reports to `tests/reports/gui-YYYY-MM-DD-HH-MM.md`.
 - [After](screenshot_after.png)
 ```
 
-## Field Descriptions
+## 字段描述
 
-- **App** — the `script_path` or module passed to `launch_app`
-- **Result** — overall PASS/FAIL with a `(n/total interactions succeeded)` count
-- **Test Steps table** — one row per interaction; Result is `✅ PASS`, `❌ FAIL`, or `⚠️ SKIP`
-- **Screenshots** — relative paths to PNG files saved via `capture_screenshot`; include at minimum a before and after shot, plus one per significant state transition
+- **App** — 传递给 `launch_app` 的 `script_path` 或模块
+- **Result** — 总体 PASS/FAIL 及 `(n/total interactions succeeded)` 计数
+- **Test Steps table** — 每次交互一行; Result 为 `✅ PASS`、`❌ FAIL` 或 `⚠️ SKIP`
+- **Screenshots** — 通过 `capture_screenshot` 保存的 PNG 文件的相对路径; 至少包含前后截图各一张，以及每次重要状态转换一张
 
-## Naming Convention
+## 命名约定
 
 ```
 tests/reports/gui-YYYY-MM-DD-HH-MM.md
@@ -39,11 +39,11 @@ tests/reports/screenshot_before.png
 tests/reports/screenshot_after.png
 ```
 
-Use ISO 8601 timestamps with hyphens so reports sort lexicographically by date.
+使用 ISO 8601 时间戳 (用连字符)，以便报告按日期 lexicographically 排序。
 
-## FAIL Entry Format
+## FAIL 条目格式
 
-When a step fails, include the actual vs expected in the Result column and append a **Failures** section:
+当步骤失败时，在 Result 列中包含实际值与预期值的对比，并附加 **Failures** 部分:
 
 ```markdown
 | 3 | get_widget_info("result_label") | text == "42.0" | ❌ FAIL — got "" |

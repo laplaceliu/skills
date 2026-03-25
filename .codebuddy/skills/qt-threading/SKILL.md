@@ -1,27 +1,27 @@
 ---
 name: qt-threading
 description: >
-  Qt threading patterns — QThread, QRunnable, QThreadPool, and thread safety for GUI applications. Use when running background tasks, keeping the UI responsive during long operations, managing worker threads, using thread pools, or debugging race conditions and deadlocks.
+  Qt 线程模式 —— QThread、QRunnable、QThreadPool，以及 GUI 应用程序的线程安全。适用于运行后台任务、在长时间操作期间保持 UI 响应、管理工作线程、使用线程池，或调试竞态条件和死锁。
 
-  Trigger phrases: "QThread", "worker", "background task", "thread safety", "UI freezing", "long operation", "QRunnable", "QThreadPool", "thread pool", "concurrent", "responsive UI", "blocking the event loop"
+  触发词："QThread"、"worker"、"background task"、"thread safety"、"UI freezing"、"long operation"、"QRunnable"、"QThreadPool"、"thread pool"、"concurrent"、"responsive UI"、"blocking the event loop"
 version: 1.0.0
 ---
 
-## Qt Threading
+## Qt 线程（Qt Threading）
 
-### The Golden Rule
+### 黄金法则（The Golden Rule）
 
-**Never update UI widgets from a non-main thread.** All widget operations must happen on the main (GUI) thread. Use signals to marshal results back from worker threads.
+**永远不要从非主线程更新 UI 控件。** 所有控件操作必须在主（GUI）线程上进行。使用信号将结果从工作线程传回。
 
-### Pattern 1: Worker Object + QThread (preferred for stateful workers)
+### 模式一：Worker 对象 + QThread（适用于有状态 Worker）
 
-Move a `QObject` subclass to a `QThread`. The worker's slots execute in the thread's event loop.
+将 `QObject` 子类移动到 `QThread`。Worker 的槽在线程的事件循环中执行。
 
 ```python
 from PySide6.QtCore import QObject, QThread, Signal, Slot
 
 class DataFetcher(QObject):
-    """Worker that fetches data in a background thread."""
+    """在工作线程中获取数据的工作线程。"""
     result_ready = Signal(dict)
     error_occurred = Signal(str)
     progress = Signal(int)
@@ -36,9 +36,9 @@ class DataFetcher(QObject):
     def cancel(self) -> None:
         self._cancelled = True
 
-    @Slot()   # @Slot required — this is connected via thread.started signal
+    @Slot()   # @Slot 必需 —— 通过 thread.started 信号连接
     def fetch(self) -> None:
-        """Slot — executes in the worker thread."""
+        """槽 —— 在工作线程中执行。"""
         try:
             for i, chunk in enumerate(stream_data(self._url)):
                 if self._cancelled:
@@ -56,7 +56,7 @@ class MainWindow(QMainWindow):
         self._fetcher = DataFetcher(url)
         self._fetcher.moveToThread(self._thread)
 
-        # Wire before starting — all connections are established atomically
+        # 在启动前接线 —— 所有连接都是原子建立的
         self._thread.started.connect(self._fetcher.fetch)
         self._fetcher.result_ready.connect(self._on_result)
         self._fetcher.error_occurred.connect(self._on_error)
@@ -69,22 +69,22 @@ class MainWindow(QMainWindow):
         self._cancel_btn.setEnabled(True)
 
     def _on_result(self, data: dict) -> None:
-        """Slot — executes in the main thread (AutoConnection → queued)."""
+        """槽 —— 在主线程中执行（AutoConnection → 队列连接）。"""
         self._table.populate(data)
         self._cancel_btn.setEnabled(False)
 ```
 
-The `finished → deleteLater` chain ensures Qt cleans up the worker and thread objects when done, preventing memory leaks.
+`finished → deleteLater` 链确保 Qt 在完成时清理 worker 和线程对象，防止内存泄漏。
 
-### Pattern 2: QRunnable + QThreadPool (fire-and-forget tasks)
+### 模式二：QRunnable + QThreadPool（fire-and-forget 任务）
 
-For tasks that don't need cancellation or per-instance state:
+适用于不需要取消或每实例状态的任务：
 
 ```python
 from PySide6.QtCore import QRunnable, QThreadPool, QObject, Signal, Slot
 
 class WorkerSignals(QObject):
-    """QRunnable can't have signals directly — use a QObject container."""
+    """QRunnable 不能直接有信号 —— 使用 QObject 容器。"""
     finished = Signal()
     result = Signal(object)
     error = Signal(str)
@@ -94,9 +94,9 @@ class ProcessTask(QRunnable):
         super().__init__()
         self.signals = WorkerSignals()
         self._data = data
-        self.setAutoDelete(True)   # pool deletes task after run()
+        self.setAutoDelete(True)   # 池在 run() 后删除任务
 
-    @Slot()   # @Slot required — prevents segfault if called from different thread
+    @Slot()   # @Slot 必需 —— 防止从不同线程调用时出现段错误
     def run(self) -> None:
         try:
             result = expensive_computation(self._data)
@@ -106,35 +106,35 @@ class ProcessTask(QRunnable):
         finally:
             self.signals.finished.emit()
 
-# Usage
+# 用法
 pool = QThreadPool.globalInstance()
 task = ProcessTask(my_data)
 task.signals.result.connect(self._on_result)
 pool.start(task)
 
-# Limit threads
+# 限制线程数
 pool.setMaxThreadCount(4)
 ```
 
-### Pattern 3: Simple Background Task with QTimer
+### 模式三：使用 QTimer 的简单后台任务
 
-For periodic, lightweight tasks that don't need a separate thread:
+适用于不需要单独线程的周期性、轻量级任务：
 
 ```python
 from PySide6.QtCore import QTimer
 
-# Poll every 500ms without blocking
+# 每 500ms 轮询，不阻塞
 self._timer = QTimer(self)
 self._timer.timeout.connect(self._check_status)
 self._timer.start(500)
 
-# Single-shot — fire once after 2 seconds
+# 单次触发 —— 2 秒后触发一次
 QTimer.singleShot(2000, self._delayed_init)
 ```
 
-### Thread Safety: Shared Data
+### 线程安全：共享数据（Thread Safety: Shared Data）
 
-Qt containers and Python objects are not thread-safe. Use a mutex or queue:
+Qt 容器和 Python 对象不是线程安全的。使用互斥锁或队列：
 
 ```python
 from threading import Lock
@@ -150,21 +150,21 @@ class SafeDataStore(QObject):
     def append(self, item: object) -> None:
         with self._lock:
             self._data.append(item)
-        self.data_updated.emit()   # safe — emitting a signal is thread-safe
+        self.data_updated.emit()   # 安全 —— 发射信号是线程安全的
 
     def snapshot(self) -> list:
         with self._lock:
             return list(self._data)
 ```
 
-**Emitting signals is thread-safe.** `AutoConnection` automatically queues the slot call when emitter and receiver are in different threads.
+**发射信号是线程安全的。** 当发射器和接收器在不同线程时，`AutoConnection` 自动将槽调用排队。
 
-### Debugging Thread Issues
+### 调试线程问题（Debugging Thread Issues）
 
-**UI freezes (janky response):** A blocking call is running on the main thread. Common culprits: `requests.get()`, `time.sleep()`, large file I/O, heavy computation. Move to `QRunnable` or worker `QThread`.
+**UI 冻结（响应卡顿）：** 主线程上正在运行阻塞调用。常见原因：`requests.get()`、`time.sleep()`、大文件 I/O、重计算。移到 `QRunnable` 或工作 `QThread`。
 
-**Crash with "QObject: Cannot create children for a parent that is in a different thread":** A `QObject` created in the worker thread has a parent owned by the main thread. Create objects parentless and use `moveToThread` or `deleteLater`.
+**崩溃并显示 "QObject: Cannot create children for a parent that is in a different thread"：** 在工作线程中创建的 `QObject` 有一个由主线程拥有的父对象。创建无父对象的对象并使用 `moveToThread` 或 `deleteLater`。
 
-**Signal emitted but slot never called:** Verify `moveToThread` happened before `start()`. Verify receiver's thread has a running event loop (`QThread.exec()` or `QThread.start()`).
+**信号发出但槽从未被调用：** 验证 `moveToThread` 在 `start()` 之前发生。验证接收者的线程有正在运行的事件循环（`QThread.exec()` 或 `QThread.start()`）。
 
-**Race condition:** Never read mutable shared state in a slot without a lock. Prefer passing data as signal arguments (copied by value) over shared mutable objects.
+**竞态条件：** 在槽中读取可变共享状态时永远不要不加锁。优先使用信号参数传递数据（按值复制）而不是共享可变对象。

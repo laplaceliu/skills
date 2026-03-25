@@ -1,37 +1,37 @@
 ---
 name: qt-model-view
 description: >
-  Qt Model/View architecture — QAbstractItemModel, table/list/tree views, item delegates, and proxy models. Use when displaying tabular data, building a list with custom items, implementing a tree, creating a sortable/filterable table, or writing a custom item delegate.
+  Qt 模型/视图架构（Model/View Architecture）— QAbstractItemModel、表格/列表/树视图、项目代理（item delegates）和代理模型（proxy models）。适用于：显示表格数据、构建带自定义项目的列表、实现树结构、创建可排序/可筛选的表格，或编写自定义项目代理。
 
-  Trigger phrases: "QAbstractItemModel", "table view", "list model", "QTableView", "QListView", "tree view", "item delegate", "sort table", "filter model", "QSortFilterProxyModel", "custom model", "model data"
+  触发词："QAbstractItemModel"、"table view"、"list model"、"QTableView"、"QListView"、"tree view"、"item delegate"、"sort table"、"filter model"、"QSortFilterProxyModel"、"custom model"、"model data"
 version: 1.0.0
 ---
 
-## Qt Model/View Architecture
+## Qt 模型/视图架构（Model/View Architecture）
 
-### Architecture Overview
+### 架构概述
 
 ```
-Data Source ──→ Model ──→ [Proxy Model] ──→ View ──→ Delegate (renders cells)
-                 ↕                            ↕
-              QAbstractItemModel         QAbstractItemView
+数据源 ──→ 模型 ──→ [代理模型] ──→ 视图 ──→ 代理（渲染单元格）
+                ↕                            ↕
+             QAbstractItemModel         QAbstractItemView
 ```
 
-Separate data (model) from presentation (view). The delegate handles painting and editing per-cell. Proxy models layer transformations (sort, filter) without modifying the source model.
+将数据（模型）与呈现（视图）分离。代理负责每个单元格的绘制和编辑。代理模型在不修改源模型的情况下叠加转换（排序、筛选）。
 
-### Choosing a Model Base Class
+### 选择模型基类
 
-| Base class | When to use |
+| 基类 | 适用场景 |
 |------------|-------------|
-| `QStringListModel` | Simple list of strings |
-| `QStandardItemModel` | Quick prototype or small dataset |
-| `QAbstractListModel` | Custom list with single column |
-| `QAbstractTableModel` | Custom table with rows × columns |
-| `QAbstractItemModel` | Tree structures with parent/child |
+| `QStringListModel` | 简单的字符串列表 |
+| `QStandardItemModel` | 快速原型或小数据集 |
+| `QAbstractListModel` | 单列自定义列表 |
+| `QAbstractTableModel` | 自定义表格（行 × 列） |
+| `QAbstractItemModel` | 带父/子关系的树结构 |
 
-For anything non-trivial, subclass `QAbstractTableModel` or `QAbstractListModel` — `QStandardItemModel` has poor performance with large datasets and poor testability.
+对于任何非简单的场景，应子类化 `QAbstractTableModel` 或 `QAbstractListModel` — `QStandardItemModel` 对大数据集性能较差，且可测试性不佳。
 
-### Custom Table Model
+### 自定义表格模型
 
 ```python
 from PySide6.QtCore import QAbstractTableModel, QModelIndex, Qt
@@ -44,7 +44,7 @@ class PersonTableModel(QAbstractTableModel):
         super().__init__(parent)
         self._data = data
 
-    # --- Required overrides ---
+    # --- 必须重写的方法 ---
 
     def rowCount(self, parent: QModelIndex = QModelIndex()) -> int:
         return 0 if parent.isValid() else len(self._data)
@@ -73,7 +73,7 @@ class PersonTableModel(QAbstractTableModel):
             return self.HEADERS[section]
         return None
 
-    # --- Mutation support ---
+    # --- 支持数据修改 ---
 
     def setData(self, index: QModelIndex, value: object, role: int = Qt.ItemDataRole.EditRole) -> bool:
         if not index.isValid() or role != Qt.ItemDataRole.EditRole:
@@ -86,7 +86,7 @@ class PersonTableModel(QAbstractTableModel):
         base = super().flags(index)
         return base | Qt.ItemFlag.ItemIsEditable
 
-    # --- Batch updates (correct reset pattern) ---
+    # --- 批量更新（正确的重置模式）---
 
     def replace_all(self, new_data: list[dict]) -> None:
         self.beginResetModel()
@@ -100,9 +100,9 @@ class PersonTableModel(QAbstractTableModel):
         self.endInsertRows()
 ```
 
-Always bracket mutations with `begin*/end*` methods (`beginInsertRows`, `beginRemoveRows`, `beginResetModel`). Skipping them causes views to lose sync with the model.
+始终使用 `begin*/end*` 方法（如 `beginInsertRows`、`beginRemoveRows`、`beginResetModel`）包裹数据修改操作。跳过这些调用会导致视图与模型失去同步。
 
-### Connecting Model to View
+### 将模型连接到视图
 
 ```python
 from PySide6.QtWidgets import QTableView
@@ -111,14 +111,14 @@ model = PersonTableModel(people_data)
 view = QTableView()
 view.setModel(model)
 
-# Tuning
+# 调优
 view.horizontalHeader().setStretchLastSection(True)
 view.setSelectionBehavior(QTableView.SelectionBehavior.SelectRows)
-view.setSortingEnabled(True)   # requires QSortFilterProxyModel for custom models
+view.setSortingEnabled(True)   # 自定义模型需要 QSortFilterProxyModel
 view.resizeColumnsToContents()
 ```
 
-### Sort and Filter with QSortFilterProxyModel
+### 使用 QSortFilterProxyModel 进行排序和筛选
 
 ```python
 from PySide6.QtCore import QSortFilterProxyModel, Qt
@@ -127,24 +127,24 @@ source_model = PersonTableModel(data)
 proxy = QSortFilterProxyModel()
 proxy.setSourceModel(source_model)
 proxy.setFilterCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
-proxy.setFilterKeyColumn(0)   # filter on "Name" column
+proxy.setFilterKeyColumn(0)   # 在"Name"列上筛选
 
 view.setModel(proxy)
 view.setSortingEnabled(True)
 
-# Filter dynamically from a search box
-# setFilterRegularExpression is preferred for new code (uses QRegularExpression internally)
+# 从搜索框动态筛选
+# setFilterRegularExpression 是新代码的首选（内部使用 QRegularExpression）
 search_box.textChanged.connect(proxy.setFilterRegularExpression)
 
-# For modifying multiple filter parameters efficiently, use beginFilterChange/endFilterChange
-# rather than calling invalidateFilter() after each change
+# 要高效修改多个筛选参数，使用 beginFilterChange/endFilterChange
+# 而不是在每次更改后调用 invalidateFilter()
 ```
 
-For custom filter logic, subclass `QSortFilterProxyModel` and override `filterAcceptsRow`.
+要实现自定义筛选逻辑，请子类化 `QSortFilterProxyModel` 并重写 `filterAcceptsRow`。
 
-### Custom Item Delegate
+### 自定义项目代理（Item Delegate）
 
-Use delegates to render non-text data (progress bars, icons, custom widgets):
+使用代理来渲染非文本数据（进度条、图标、自定义组件）：
 
 ```python
 from PySide6.QtWidgets import QStyledItemDelegate, QStyleOptionViewItem, QApplication
@@ -157,7 +157,7 @@ class ProgressDelegate(QStyledItemDelegate):
         if not isinstance(value, int):
             super().paint(painter, option, index)
             return
-        # Draw progress bar using the style
+        # 使用样式绘制进度条
         opt = QStyleOptionProgressBar()
         opt.rect = option.rect.adjusted(2, 4, -2, -4)
         opt.minimum = 0
@@ -170,9 +170,9 @@ class ProgressDelegate(QStyledItemDelegate):
 view.setItemDelegateForColumn(2, ProgressDelegate(view))
 ```
 
-### Key Rules
+### 关键规则
 
-- Never access `self._data` directly from outside the model — always go through the model API
-- `rowCount()` and `columnCount()` must return 0 when `parent.isValid()` (Qt tree contract, even for tables)
-- `dataChanged` must be emitted with the exact changed index range — emitting the full model unnecessarily forces full view repaint
-- For large datasets (>10k rows), consider lazy loading via `canFetchMore()` / `fetchMore()`
+- 永远不要直接从模型外部访问 `self._data` — 应始终通过模型 API
+- `rowCount()` 和 `columnCount()` 在 `parent.isValid()` 时必须返回 0（Qt 树契约，即使对表格也适用）
+- `dataChanged` 必须使用精确的更改索引范围发出 — 不必要地发出整个模型会导致完全视图重绘
+- 对于大数据集（>10k 行），考虑通过 `canFetchMore()` / `fetchMore()` 实现懒加载

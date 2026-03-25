@@ -1,17 +1,17 @@
 ---
 name: qt-settings
 description: >
-  Persistent application settings using QSettings — storing and restoring user preferences, window geometry, recent files, and application state. Use when saving user preferences, persisting window size/position, storing recent file lists, or managing application configuration.
+  使用 QSettings 的持久化应用程序设置 — 存储和恢复用户偏好、窗口几何、近期文件和应用程序状态。适用于：保存用户偏好、持久化窗口大小/位置、存储近期文件列表或管理应用程序配置。
 
-  Trigger phrases: "QSettings", "persistent settings", "save preferences", "restore window", "user preferences", "remember state", "save window geometry", "recent files", "app configuration", "settings persistence"
+  触发词："QSettings"、"persistent settings"、"save preferences"、"restore window"、"user preferences"、"remember state"、"save window geometry"、"recent files"、"app configuration"、"settings persistence"
 version: 1.0.0
 ---
 
-## QSettings — Persistent Application Settings
+## QSettings — 持久化应用程序设置
 
-### Setup and Initialization
+### 设置和初始化
 
-Set application metadata before first `QSettings` use — these seed the default storage path:
+在首次使用 `QSettings` 之前设置应用程序元数据 — 这些会设置默认存储路径：
 
 ```python
 app.setApplicationName("MyApp")
@@ -19,65 +19,65 @@ app.setOrganizationName("MyOrg")
 app.setOrganizationDomain("myorg.com")
 ```
 
-Default storage locations (no path argument needed):
-- **Windows**: Registry `HKCU\Software\MyOrg\MyApp`
-- **macOS**: `~/Library/Preferences/com.myorg.myapp.plist`
-- **Linux**: `~/.config/MyOrg/MyApp.ini`
+默认存储位置（无需路径参数）：
+- **Windows**：注册表 `HKCU\Software\MyOrg\MyApp`
+- **macOS**：`~/Library/Preferences/com.myorg.myapp.plist`
+- **Linux**：`~/.config/MyOrg/MyApp.ini`
 
-### Basic Usage
+### 基本用法
 
 ```python
 from PySide6.QtCore import QSettings
 
-# Construct with no args — uses app name/org set on QApplication
+# 不带参数构造 — 使用 QApplication 上设置的应用程序名/组织
 settings = QSettings()
 
-# Write
+# 写入
 settings.setValue("theme", "dark")
 settings.setValue("font_size", 13)
 settings.setValue("recent_files", ["/path/to/file1.csv", "/path/to/file2.csv"])
 
-# Read with default
+# 读取（带默认值）
 theme = settings.value("theme", "light")
-font_size = settings.value("font_size", 12, type=int)   # type= forces cast
+font_size = settings.value("font_size", 12, type=int)   # type= 强制类型转换
 recent = settings.value("recent_files", [], type=list)
 
-# Delete
+# 删除
 settings.remove("obsolete_key")
 
-# Check existence
+# 检查存在性
 if settings.contains("theme"):
     ...
 
-# Force write to disk (normally deferred)
+# 强制写入磁盘（通常会延迟写入）
 settings.sync()
 ```
 
-Always provide a default in `settings.value()` — returns `None` otherwise, which causes type errors when passed to Qt methods expecting a specific type.
+始终在 `settings.value()` 中提供默认值 — 否则返回 `None`，这在传递给期望特定类型的 Qt 方法时会导致类型错误。
 
-### Groups (Namespacing)
+### 分组（命名空间）
 
 ```python
 settings = QSettings()
 
-# Group context manager (not built-in — use begin/end)
+# 分组上下文管理器（不是内置的 — 使用 begin/end）
 settings.beginGroup("window")
 settings.setValue("width", 1200)
 settings.setValue("height", 800)
 settings.setValue("maximized", False)
 settings.endGroup()
 
-# Read grouped values
+# 读取分组值
 settings.beginGroup("window")
 width = settings.value("width", 800, type=int)
 settings.endGroup()
 
-# Or use slash-delimited keys
+# 或使用斜杠分隔的键
 settings.setValue("window/width", 1200)
 width = settings.value("window/width", 800, type=int)
 ```
 
-### Window Geometry (Common Pattern)
+### 窗口几何（常见模式）
 
 ```python
 class MainWindow(QMainWindow):
@@ -105,9 +105,9 @@ class MainWindow(QMainWindow):
             self.restoreState(state)
 ```
 
-`saveGeometry()` and `restoreGeometry()` handle multi-monitor setups correctly.
+`saveGeometry()` 和 `restoreGeometry()` 正确处理多显示器设置。
 
-### Recent Files List
+### 近期文件列表
 
 ```python
 class RecentFilesManager:
@@ -131,7 +131,7 @@ class RecentFilesManager:
         self._settings.remove(self.KEY)
 ```
 
-### Settings Dialog Integration
+### 设置对话框集成
 
 ```python
 class SettingsDialog(QDialog):
@@ -146,9 +146,9 @@ class SettingsDialog(QDialog):
         s.setValue("font_size", self._font_spin.value())
 ```
 
-### INI File (Portable / Version-Controlled Config)
+### INI 文件（便携/版本控制配置）
 
-For config files that should be next to the executable or in a known location:
+对于应该放在可执行文件旁边或已知位置中的配置文件：
 
 ```python
 config_path = Path(QStandardPaths.writableLocation(
@@ -159,19 +159,19 @@ config_path.parent.mkdir(parents=True, exist_ok=True)
 settings = QSettings(str(config_path), QSettings.Format.IniFormat)
 ```
 
-### QStandardPaths — Platform-Correct File Locations
+### QStandardPaths — 平台正确的文件位置
 
 ```python
 from PySide6.QtCore import QStandardPaths
 
-# User data (documents, exports)
+# 用户数据（文档、导出）
 data_dir = QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppDataLocation)
 
-# Cache
+# 缓存
 cache_dir = QStandardPaths.writableLocation(QStandardPaths.StandardLocation.CacheLocation)
 
-# Temp
+# 临时文件
 temp_dir = QStandardPaths.writableLocation(QStandardPaths.StandardLocation.TempLocation)
 ```
 
-Use `QStandardPaths` instead of hardcoding `~/.config` or `%APPDATA%` — it returns the correct platform path automatically.
+使用 `QStandardPaths` 而不是硬编码 `~/.config` 或 `%APPDATA%` — 它会自动返回正确的平台路径。

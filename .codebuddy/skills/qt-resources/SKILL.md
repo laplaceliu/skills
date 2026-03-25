@@ -1,15 +1,15 @@
 ---
 name: qt-resources
 description: >
-  Qt resource system — .qrc files, embedding icons and assets, loading resources at runtime, and using pyrcc6 or PySide6-rcc. Use when bundling icons, images, or other files into the application, loading resources via ":/" paths, or migrating from a file-system asset approach.
+  Qt 资源系统 — .qrc 文件、嵌入图标和资源、运行时加载资源，以及使用 pyrcc6 或 PySide6-rcc。适用于：将图标、图片或其他文件打包到应用程序中、通过 ":/" 路径加载资源，或从文件系统资源方式迁移。
 
-  Trigger phrases: ".qrc file", "embed icon", "pyrcc6", "PySide6-rcc", "bundled assets", "resource path", ":/icons/", "QIcon", "QPixmap from resources", "bundle image"
+  触发词：".qrc file"、"embed icon"、"pyrcc6"、"PySide6-rcc"、"bundled assets"、"resource path"、" :/icons/"、"QIcon"、"QPixmap from resources"、"bundle image"
 version: 1.0.0
 ---
 
-## Qt Resource System
+## Qt 资源系统
 
-### .qrc File Format
+### .qrc 文件格式
 
 ```xml
 <!-- resources/resources.qrc -->
@@ -30,35 +30,35 @@ version: 1.0.0
 </RCC>
 ```
 
-File paths in `.qrc` are relative to the `.qrc` file's location. The `alias` attribute sets the name used at runtime.
+`.qrc` 中的文件路径相对于 `.qrc` 文件的位置。`alias` 属性设置运行时使用的名称。
 
-### Compiling Resources (Python)
+### 编译资源（Python）
 
-**PySide6:**
+**PySide6：**
 ```bash
 pyside6-rcc resources/resources.qrc -o src/myapp/resources/rc_resources.py
 ```
 
-**PyQt6:**
+**PyQt6：**
 ```bash
 pyrcc6 resources/resources.qrc -o src/myapp/resources/rc_resources.py
 ```
 
-Add to `pyproject.toml` build scripts or a `Makefile` to keep in sync. The compiled file imports cleanly:
+添加到 `pyproject.toml` 构建脚本或 `Makefile` 以保持同步。编译后的文件可以干净地导入：
 
 ```python
 # src/myapp/resources/__init__.py
-from . import rc_resources  # noqa: F401 — side-effect import registers resources
+from . import rc_resources  # noqa: F401 — 副作用导入注册资源
 ```
 
-Import `rc_resources` before any code that uses `:/` paths. The module-level import in `resources/__init__.py` is the cleanest approach — it runs once when the package is first imported.
+在任何使用 `:/` 路径的代码之前导入 `rc_resources`。在 `resources/__init__.py` 中的模块级导入是最简洁的方式 — 它在包首次导入时运行一次。
 
-### Using Resources at Runtime
+### 运行时使用资源
 
 ```python
 from PySide6.QtGui import QIcon, QPixmap
 
-# Icons
+# 图标
 icon = QIcon(":/icons/save.svg")
 button.setIcon(icon)
 button.setIconSize(QSize(16, 16))
@@ -67,7 +67,7 @@ button.setIconSize(QSize(16, 16))
 pixmap = QPixmap(":/icons/app.png")
 label.setPixmap(pixmap.scaled(64, 64, Qt.AspectRatioMode.KeepAspectRatio))
 
-# Text files (themes, config)
+# 文本文件（主题、配置）
 from PySide6.QtCore import QFile, QTextStream
 
 file = QFile(":/themes/dark.qss")
@@ -77,9 +77,9 @@ if file.open(QFile.OpenModeFlag.ReadOnly | QFile.OpenModeFlag.Text):
     file.close()
 ```
 
-### Inline Resource Loading (No Compile Step)
+### 内联资源加载（无需编译步骤）
 
-For small assets during development, embed directly:
+对于开发中的小资源，直接嵌入：
 
 ```python
 import base64
@@ -93,26 +93,26 @@ def icon_from_base64(data: str) -> QIcon:
     return QIcon(pix)
 ```
 
-### SVG Icons
+### SVG 图标
 
-SVGs are the preferred format — they scale perfectly at all DPIs:
+SVG 是首选格式 — 它们在任何 DPI 下都能完美缩放：
 
 ```python
 from PySide6.QtSvgWidgets import QSvgWidget
 from PySide6.QtGui import QIcon
 
-# In a layout
+# 在布局中
 svg = QSvgWidget(":/icons/logo.svg")
 svg.setFixedSize(48, 48)
 
-# As window icon (QIcon handles SVG natively on most platforms)
+# 作为窗口图标（QIcon 在大多数平台上原生处理 SVG）
 self.setWindowIcon(QIcon(":/icons/app.svg"))
 ```
 
-### High-DPI (Retina/4K) Support
+### 高 DPI（Retina/4K）支持
 
 ```python
-# In main() — before QApplication
+# 在 main() 中 — QApplication 之前
 os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "1"
 
 app = QApplication(sys.argv)
@@ -121,7 +121,7 @@ app.setHighDpiScaleFactorRoundingPolicy(
 )
 ```
 
-Use SVG icons wherever possible. For raster icons, provide `@2x` variants:
+尽可能使用 SVG 图标。对于光栅图标，提供 `@2x` 变体：
 ```xml
 <qresource prefix="/icons">
   <file alias="save.png">icons/save.png</file>
@@ -129,14 +129,14 @@ Use SVG icons wherever possible. For raster icons, provide `@2x` variants:
 </qresource>
 ```
 
-Qt automatically selects `@2x` variants on high-DPI displays.
+Qt 会在高 DPI 显示上自动选择 `@2x` 变体。
 
-### Project Automation
+### 项目自动化
 
-Add resource compilation to your build process:
+将资源编译添加到构建过程中：
 
 ```toml
-# pyproject.toml — using hatch
+# pyproject.toml — 使用 hatch
 [tool.hatch.build.hooks.custom]
 path = "build_hooks.py"
 ```
@@ -154,7 +154,7 @@ def build_editable(config, ...):
     ], check=True)
 ```
 
-Or a simple `Makefile` target:
+或简单的 `Makefile` 目标：
 ```makefile
 resources: resources/resources.qrc
 	pyside6-rcc $< -o src/myapp/resources/rc_resources.py

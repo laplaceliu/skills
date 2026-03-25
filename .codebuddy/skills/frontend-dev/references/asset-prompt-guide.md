@@ -1,43 +1,43 @@
-# Prompt Engineering Guide
+# 提示词工程指南
 
-## Image Prompts
+## 图片提示词
 
-- Be specific about composition: "left-aligned subject with negative space on the right for text overlay"
-- Specify lighting: "soft studio lighting", "golden hour backlight", "flat diffused light"
-- Include style modifiers: "editorial photography", "3D render", "flat vector illustration"
-- Add technical specs: "4K resolution, sharp focus, shallow depth of field"
-- For web assets: always mention "clean background", "web-optimized", "high contrast for readability"
-- **NEVER** include text in image prompts unless explicitly requested — AI text rendering is unreliable
+- 构图要具体说明："左侧主体，右侧预留文字叠加负空间"
+- 指定光照："柔光棚拍"、"黄金时段逆光"、"平光漫射"
+- 包含风格修饰词："杂志摄影"、"3D 渲染"、"扁平矢量插画"
+- 添加技术规格："4K 分辨率，锐利对焦，浅景深"
+- 网页素材：务必注明"干净背景"、"针对网页优化"、"高对比度以便阅读"
+- **禁止**在图片提示词中包含文字——AI 文字渲染不可靠
 
-## Video Prompts
+## 视频提示词
 
-- Use MiniMax camera commands in brackets: `[Push in]`, `[Truck left]`, `[Tracking shot]`, etc.
-- Describe scene, subject, lighting, and mood — the API auto-optimizes prompts by default
-- For web backgrounds: keep 6s duration, add `[Static shot]` for stability
-- Max 2,000 characters
+- 使用 MiniMax 相机命令并用方括号：`[Push in]`、`[Truck left]`、`[Tracking shot]` 等
+- 描述场景、主体、光照和情绪——API 默认会自动优化提示词
+- 网页背景：保持 6 秒时长，添加 `[Static shot]` 以保持稳定
+- 最多 2,000 个字符
 
-## Audio / TTS
+## 音频 / TTS
 
-- Specify genre, tempo (BPM), mood, and instruments
-- For background music: "no vocals, suitable for background, not distracting"
-- For sound effects: be extremely specific about the sound event
-- For TTS: choose voice matching content language and speaker gender
+- 指定风格、节奏（BPM）、情绪和乐器
+- 背景音乐："无人声，适合背景，不分散注意力"
+- 音效：极其具体地描述声音事件
+- TTS：选择与内容语言和说话人性别匹配的声音
 
-## Preset Shortcuts
+## 预设快捷方式
 
-| Shortcut | Spec |
+| 快捷方式 | 规格 |
 |----------|------|
-| `hero` | 16:9 (1280x720) image, cinematic, text-safe space |
-| `thumb` | 1:1 (1024x1024) image, centered subject |
-| `icon` | 1:1 (1024x1024), flat style, clean background |
-| `avatar` | 1:1 (1024x1024), portrait, circular crop ready |
-| `banner` | 21:9 (1344x576), OG/social banner |
-| `portrait` | 2:3 (832x1248), vertical portrait |
-| `mobile` | 9:16 (720x1280), mobile fullscreen |
-| `bg-video` | 768P, 6s, `[Static shot]`, MiniMax Hailuo-2.3 |
-| `video` | 768P, 6s, MiniMax Hailuo-2.3, prompt auto-optimized |
-| `video-hd` | 1080P, 6s, MiniMax Hailuo-2.3 |
-| `bgm` | 30s background music, no vocals, loopable |
-| `sfx` | Short sound effect, < 3s |
-| `tts` | Text-to-speech, MiniMax HD, MP3 |
-| `narration` | Expressive narration voice, MiniMax |
+| `hero` | 16:9 (1280x720) 图片，电影感，文字安全空间 |
+| `thumb` | 1:1 (1024x1024) 图片，主体居中 |
+| `icon` | 1:1 (1024x1024)，扁平风格，干净背景 |
+| `avatar` | 1:1 (1024x1024)，人像，可裁剪为圆形 |
+| `banner` | 21:9 (1344x576)，OG/社交横幅 |
+| `portrait` | 2:3 (832x1248)，竖版人像 |
+| `mobile` | 9:16 (720x1280)，移动端全屏 |
+| `bg-video` | 768P，6秒，`[Static shot]`，MiniMax Hailuo-2.3 |
+| `video` | 768P，6秒，MiniMax Hailuo-2.3，提示词自动优化 |
+| `video-hd` | 1080P，6秒，MiniMax Hailuo-2.3 |
+| `bgm` | 30秒背景音乐，无人声，可循环 |
+| `sfx` | 短音效，< 3秒 |
+| `tts` | 文本转语音，MiniMax HD，MP3 |
+| `narration` | 富有表现力的旁白声音，MiniMax |

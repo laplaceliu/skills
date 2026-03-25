@@ -1,10 +1,10 @@
-# Motion Recipes
+# 动效配方
 
-Production-ready animation code snippets. Copy and adapt as needed.
+生产就绪的动画代码片段。可直接复制并根据需要调整。
 
-## 1. Scroll-Triggered Reveal (Framer Motion)
+## 1. 滚动触发揭示（Framer Motion）
 
-Elements fade and slide up when entering viewport.
+元素在进入视口时淡入并上滑。
 
 ```tsx
 "use client";
@@ -33,9 +33,9 @@ export function RevealSection({ children }: { children: React.ReactNode }) {
 }
 ```
 
-## 2. Staggered List Orchestration (Framer Motion)
+## 2. 交错列表编排（Framer Motion）
 
-Children animate sequentially with blur effect.
+子元素依次动画，带模糊效果。
 
 ```tsx
 "use client";
@@ -75,9 +75,9 @@ export function StaggerGrid({ items }: { items: React.ReactNode[] }) {
 }
 ```
 
-## 3. GSAP ScrollTrigger Pinned Section
+## 3. GSAP ScrollTrigger 固定区域
 
-Horizontal scroll panels with pinning.
+水平滚动面板并固定。
 
 ```tsx
 "use client";
@@ -106,22 +106,22 @@ export function PinnedTimeline() {
       });
     }, containerRef);
 
-    return () => ctx.revert(); // CRITICAL: full cleanup
+    return () => ctx.revert(); // 关键：完整清理
   }, []);
 
   return (
     <div ref={containerRef} className="overflow-hidden">
       <div ref={panelsRef} className="flex">
-        {/* .panel elements */}
+        {/* .panel 元素 */}
       </div>
     </div>
   );
 }
 ```
 
-## 4. Parallax Tilt Card (Framer Motion)
+## 4. 视差倾斜卡片（Framer Motion）
 
-Mouse-tracking 3D perspective. Uses `useMotionValue` — never `useState`.
+鼠标追踪 3D 透视。使用 `useMotionValue`——永远不要用 `useState`。
 
 ```tsx
 "use client";
@@ -153,9 +153,9 @@ export function TiltCard({ children }: { children: React.ReactNode }) {
 }
 ```
 
-## 5. Magnetic Button (Framer Motion)
+## 5. 磁性按钮（Framer Motion）
 
-Cursor-attracted button. Pure `useMotionValue` — zero re-renders.
+被光标吸引的按钮。纯 `useMotionValue`——零重渲染。
 
 ```tsx
 "use client";
@@ -191,9 +191,9 @@ export function MagneticButton({ children }: { children: React.ReactNode }) {
 }
 ```
 
-## 6. Text Scramble / Decode Effect
+## 6. 文字扰动 / 解码效果
 
-Matrix-style character reveal — pure JS, no library needed.
+矩阵式字符揭示——纯 JS，无需库。
 
 ```tsx
 "use client";
@@ -226,9 +226,9 @@ export function TextScramble({ text, className }: { text: string; className?: st
 }
 ```
 
-## 7. SVG Path Draw on Scroll (CSS Scroll-Driven)
+## 7. SVG 路径滚动绘制（CSS 滚动驱动）
 
-Zero-JS scroll-linked path drawing using native CSS.
+使用原生 CSS 实现零 JS 滚动关联路径绘制。
 
 ```css
 @supports (animation-timeline: scroll()) {
@@ -248,9 +248,9 @@ Zero-JS scroll-linked path drawing using native CSS.
 }
 ```
 
-## 8. Horizontal Scroll Hijack (GSAP)
+## 8. 水平滚动劫持（GSAP）
 
-Vertical scroll drives horizontal panning.
+垂直滚动驱动水平平移。
 
 ```tsx
 "use client";
@@ -292,9 +292,9 @@ export function HorizontalScroll({ children }: { children: React.ReactNode }) {
 }
 ```
 
-## 9. Particle Background (React Three Fiber)
+## 9. 粒子背景（React Three Fiber）
 
-Isolated canvas layer. Purely decorative, pointer-events-none.
+隔离的画布层。纯装饰性，pointer-events-none。
 
 ```tsx
 "use client";
@@ -335,9 +335,9 @@ export function ParticleCanvas() {
 }
 ```
 
-## 10. Shared Layout Morph (Framer Motion)
+## 10. 共享布局变形（Framer Motion）
 
-Card-to-modal expansion using `layoutId`.
+使用 `layoutId` 实现卡片到模态框的扩展。
 
 ```tsx
 "use client";
@@ -377,31 +377,31 @@ export function MorphCard({ id, preview, detail }: {
 }
 ```
 
-## Scroll Animation Patterns
+## 滚动动画模式
 
-### Sticky Scroll Stack
-Cards pin to top and stack over each other.
-- Each card: `position: sticky; top: calc(var(--index) * 2rem)`
-- Depth illusion: `scale(calc(1 - var(--index) * 0.03))`
+### 粘性滚动堆叠
+卡片固定在顶部并相互堆叠。
+- 每个卡片：`position: sticky; top: calc(var(--index) * 2rem)`
+- 深度错觉：`scale(calc(1 - var(--index) * 0.03))`
 
-### Split-Screen Parallax
-Two viewport halves scroll at different speeds.
-- Left: `translateY` at 0.5x scroll speed (GSAP `scrub`)
-- Mobile: collapse to single column, disable parallax
+### 分屏视差
+两个视口半区以不同速度滚动。
+- 左侧：`translateY` 以 0.5 倍滚动速度（GSAP `scrub`）
+- 移动端：折叠为单列，禁用视差
 
-### Zoom Parallax
-Hero image scales 1 to 1.5 on scroll.
+### 缩放视差
+英雄图片在滚动时从 1 缩放到 1.5。
 ```tsx
 scrollTrigger: { trigger: heroRef, start: "top top", end: "bottom top", scrub: true }
 gsap.to(imageRef, { scale: 1.5, ease: "none" });
 ```
 
-### Text Mask Reveal
-Large typography as window into video/image background.
+### 文字遮罩揭示
+大字体作为视频/图片背景的窗口。
 - `background-clip: text` + `color: transparent`
-- Animate `background-position` on scroll
+- 滚动时动画 `background-position`
 
-### Curtain Reveal
-Hero splits in half, each side slides away on scroll.
-- Two halves clipped with `clip-path: inset(0 50% 0 0)` and `inset(0 0 0 50%)`
-- GSAP animates `xPercent: -100` and `xPercent: 100`
+### 幕布揭示
+英雄区域在滚动时从中间裂开，两侧滑开。
+- 两半用 `clip-path: inset(0 50% 0 0)` 和 `inset(0 0 0 50%)` 裁剪
+- GSAP 动画 `xPercent: -100` 和 `xPercent: 100`

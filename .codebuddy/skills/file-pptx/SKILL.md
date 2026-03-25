@@ -1,6 +1,6 @@
 ---
 name: pptx-generator
-description: "Generate, edit, and read PowerPoint presentations. Create from scratch with PptxGenJS (cover, TOC, content, section divider, summary slides), edit existing PPTX via XML workflows, or extract text with markitdown. Triggers: PPT, PPTX, PowerPoint, presentation, slide, deck, slides."
+description: "生成、编辑和读取 PowerPoint 演示文稿。从头创建（PptxGenJS，涵盖封面、目录、内容、分节页、总结幻灯片）、通过 XML 工作流编辑现有 PPTX，或使用 markitdown 提取文本。触发词：PPT、PPTX、PowerPoint、演示文稿、幻灯片、deck、slides。"
 license: MIT
 metadata:
   version: "1.0"
@@ -10,89 +10,89 @@ metadata:
     - https://github.com/microsoft/markitdown
 ---
 
-# PPTX Generator & Editor
+# PPTX 生成器与编辑器
 
-## Overview
+## 概述
 
-This skill handles all PowerPoint tasks: reading/analyzing existing presentations, editing template-based decks via XML manipulation, and creating presentations from scratch using PptxGenJS. It includes a complete design system (color palettes, fonts, style recipes) and detailed guidance for every slide type.
+此技能处理所有 PowerPoint 任务：读取/分析现有演示文稿、通过 XML 操作编辑基于模板的幻灯片，以及使用 PptxGenJS 从头创建演示文稿。它包含完整的设计系统（调色板、字体、样式配方）和每种幻灯片类型的详细指南。
 
-## Quick Reference
+## 快速参考
 
-| Task | Approach |
-|------|----------|
-| Read/analyze content | `python -m markitdown presentation.pptx` |
-| Edit or create from template | See [Editing Presentations](references/editing.md) |
-| Create from scratch | See [Creating from Scratch](#creating-from-scratch-workflow) below |
+| 任务 | 方法 |
+|------|------|
+| 读取/分析内容 | `python -m markitdown presentation.pptx` |
+| 编辑或从模板创建 | 参阅 [Editing Presentations](references/editing.md) |
+| 从头创建 | 参阅下面的 [从头创建工作流](#creating-from-scratch-workflow) |
 
-| Item | Value |
-|------|-------|
-| **Dimensions** | 10" x 5.625" (LAYOUT_16x9) |
-| **Colors** | 6-char hex without # (e.g., `"FF0000"`) |
-| **English font** | Arial (default), or approved alternatives |
-| **Chinese font** | Microsoft YaHei |
-| **Page badge position** | x: 9.3", y: 5.1" |
-| **Theme keys** | `primary`, `secondary`, `accent`, `light`, `bg` |
-| **Shapes** | RECTANGLE, OVAL, LINE, ROUNDED_RECTANGLE |
-| **Charts** | BAR, LINE, PIE, DOUGHNUT, SCATTER, BUBBLE, RADAR |
+| 项目 | 值 |
+|------|---|
+| **尺寸** | 10" x 5.625"（LAYOUT_16x9） |
+| **颜色** | 6 位十六进制，不带 #（例如 `"FF0000"`） |
+| **英文字体** | Arial（默认），或经批准的替代字体 |
+| **中文字体** | Microsoft YaHei |
+| **页码徽章位置** | x: 9.3", y: 5.1" |
+| **主题键** | `primary`、`secondary`、`accent`、`light`、`bg` |
+| **形状** | RECTANGLE、OVAL、LINE、ROUNDED_RECTANGLE |
+| **图表** | BAR、LINE、PIE、DOUGHNUT、SCATTER、BUBBLE、RADAR |
 
-## Reference Files
+## 参考文件
 
-| File | Contents |
-|------|----------|
-| [slide-types.md](references/slide-types.md) | 5 slide page types (Cover, TOC, Section Divider, Content, Summary) + additional layout patterns |
-| [design-system.md](references/design-system.md) | Color palettes, font reference, style recipes (Sharp/Soft/Rounded/Pill), typography & spacing |
-| [editing.md](references/editing.md) | Template-based editing workflow, XML manipulation, formatting rules, common pitfalls |
-| [pitfalls.md](references/pitfalls.md) | QA process, common mistakes, critical PptxGenJS pitfalls |
-| [pptxgenjs.md](references/pptxgenjs.md) | Complete PptxGenJS API reference |
+| 文件 | 内容 |
+|------|------|
+| [slide-types.md](references/slide-types.md) | 5 种幻灯片页面类型（封面、目录、分节页、内容、总结）+ 其他布局模式 |
+| [design-system.md](references/design-system.md) | 调色板、字体参考、样式配方（锐利/柔和/圆润/胶囊）、排版与间距 |
+| [editing.md](references/editing.md) | 基于模板的编辑工作流、XML 操作、格式规则、常见陷阱 |
+| [pitfalls.md](references/pitfalls.md) | QA 流程、常见错误、关键 PptxGenJS 陷阱 |
+| [pptxgenjs.md](references/pptxgenjs.md) | 完整的 PptxGenJS API 参考 |
 
 ---
 
-## Reading Content
+## 读取内容
 
 ```bash
-# Text extraction
+# 文本提取
 python -m markitdown presentation.pptx
 ```
 
 ---
 
-## Creating from Scratch — Workflow
+## 从头创建 —— 工作流
 
-**Use when no template or reference presentation is available.**
+**在没有模板或参考演示文稿时使用。**
 
-### Step 1: Research & Requirements
+### 步骤 1：研究与需求
 
-Search to understand user requirements — topic, audience, purpose, tone, content depth.
+搜索以了解用户需求 —— 主题、受众、目的、语气、内容深度。
 
-### Step 2: Select Color Palette & Fonts
+### 步骤 2：选择调色板与字体
 
-Use the [Color Palette Reference](references/design-system.md#color-palette-reference) to select a palette matching the topic and audience. Use the [Font Reference](references/design-system.md#font-reference) to choose a font pairing.
+使用[调色板参考](references/design-system.md#color-palette-reference)选择与主题和受众匹配的调色板。使用[字体参考](references/design-system.md#font-reference)选择字体搭配。
 
-### Step 3: Select Design Style
+### 步骤 3：选择设计风格
 
-Use the [Style Recipes](references/design-system.md#style-recipes) to choose a visual style (Sharp, Soft, Rounded, or Pill) matching the presentation tone.
+使用[样式配方](references/design-system.md#style-recipes)选择与演示文稿基调匹配的视觉风格（锐利、柔和、圆润或胶囊）。
 
-### Step 4: Plan Slide Outline
+### 步骤 4：规划幻灯片大纲
 
-Classify **every slide** as exactly one of the [5 page types](references/slide-types.md). Plan the content and layout for each slide. Ensure visual variety — do NOT repeat the same layout across slides.
+将**每张幻灯片**准确分类为[5 种页面类型](references/slide-types.md)中的一种。为每张幻灯片规划内容和布局。确保视觉多样性 —— 不要在多张幻灯片上重复相同的布局。
 
-### Step 5: Generate Slide JS Files
+### 步骤 5：生成幻灯片 JS 文件
 
-Create one JS file per slide in `slides/` directory. Each file must export a synchronous `createSlide(pres, theme)` function. Follow the [Slide Output Format](#slide-output-format) and the type-specific guidance in [slide-types.md](references/slide-types.md). Generate up to 5 slides concurrently using subagents if available.
+在 `slides/` 目录中为每张幻灯片创建一个 JS 文件。每个文件必须导出一个同步的 `createSlide(pres, theme)` 函数。遵循[幻灯片输出格式](#slide-output-format)和 [slide-types.md](references/slide-types.md) 中的类型特定指南。如有条件，使用子代理同时生成最多 5 张幻灯片。
 
-**Tell each subagent:**
-1. File naming: `slides/slide-01.js`, `slides/slide-02.js`, etc.
-2. Images go in: `slides/imgs/`
-3. Final PPTX goes in: `slides/output/`
-4. Dimensions: 10" x 5.625" (LAYOUT_16x9)
-5. Fonts: Chinese = Microsoft YaHei, English = Arial (or approved alternative)
-6. Colors: 6-char hex without # (e.g. `"FF0000"`)
-7. Must use the theme object contract (see [Theme Object Contract](#theme-object-contract))
-8. Must follow the [PptxGenJS API reference](references/pptxgenjs.md)
+**告知每个子代理：**
+1. 文件命名：`slides/slide-01.js`、`slides/slide-02.js` 等
+2. 图片位置：`slides/imgs/`
+3. 最终 PPTX 位置：`slides/output/`
+4. 尺寸：10" x 5.625"（LAYOUT_16x9）
+5. 字体：中文 = Microsoft YaHei，英文 = Arial（或经批准的替代字体）
+6. 颜色：6 位十六进制不带 #（例如 `"FF0000"`）
+7. 必须使用主题对象约定（参阅[主题对象约定](#theme-object-contract)）
+8. 必须遵循 [PptxGenJS API 参考](references/pptxgenjs.md)
 
-### Step 6: Compile into Final PPTX
+### 步骤 6：编译为最终 PPTX
 
-Create `slides/compile.js` to combine all slide modules:
+创建 `slides/compile.js` 以组合所有幻灯片模块：
 
 ```javascript
 // slides/compile.js
@@ -101,14 +101,14 @@ const pres = new pptxgen();
 pres.layout = 'LAYOUT_16x9';
 
 const theme = {
-  primary: "22223b",    // dark color for backgrounds/text
-  secondary: "4a4e69",  // secondary accent
-  accent: "9a8c98",     // highlight color
-  light: "c9ada7",      // light accent
-  bg: "f2e9e4"          // background color
+  primary: "22223b",    // 深色，用于背景/文字
+  secondary: "4a4e69",  // 次要强调
+  accent: "9a8c98",     // 高亮颜色
+  light: "c9ada7",      // 浅色强调
+  bg: "f2e9e4"          // 背景颜色
 };
 
-for (let i = 1; i <= 12; i++) {  // adjust count as needed
+for (let i = 1; i <= 12; i++) {  // 根据需要调整数量
   const num = String(i).padStart(2, '0');
   const slideModule = require(`./slide-${num}.js`);
   slideModule.createSlide(pres, theme);
@@ -117,29 +117,29 @@ for (let i = 1; i <= 12; i++) {  // adjust count as needed
 pres.writeFile({ fileName: './output/presentation.pptx' });
 ```
 
-Run with: `cd slides && node compile.js`
+运行：`cd slides && node compile.js`
 
-### Step 7: QA (Required)
+### 步骤 7：QA（必需）
 
-See [QA Process](references/pitfalls.md#qa-process).
+参阅 [QA 流程](references/pitfalls.md#qa-process)。
 
-### Output Structure
+### 输出结构
 
 ```
 slides/
-├── slide-01.js          # Slide modules
+├── slide-01.js          # 幻灯片模块
 ├── slide-02.js
 ├── ...
-├── imgs/                # Images used in slides
-└── output/              # Final artifacts
+├── imgs/                # 幻灯片中使用的图片
+└── output/              # 最终产物
     └── presentation.pptx
 ```
 
 ---
 
-## Slide Output Format
+## 幻灯片输出格式
 
-Each slide is a **complete, runnable JS file**:
+每张幻灯片是一个**完整的、可运行的 JS 文件**：
 
 ```javascript
 // slide-01.js
@@ -148,10 +148,10 @@ const pptxgen = require("pptxgenjs");
 const slideConfig = {
   type: 'cover',
   index: 1,
-  title: 'Presentation Title'
+  title: '演示文稿标题'
 };
 
-// MUST be synchronous (not async)
+// 必须是同步的（不是 async）
 function createSlide(pres, theme) {
   const slide = pres.addSlide();
   slide.background = { color: theme.bg };
@@ -165,7 +165,7 @@ function createSlide(pres, theme) {
   return slide;
 }
 
-// Standalone preview - use slide-specific filename
+// 独立预览 - 使用幻灯片特定的文件名
 if (require.main === module) {
   const pres = new pptxgen();
   pres.layout = 'LAYOUT_16x9';
@@ -185,31 +185,31 @@ module.exports = { createSlide, slideConfig };
 
 ---
 
-## Theme Object Contract (MANDATORY)
+## 主题对象约定（必需）
 
-The compile script passes a theme object with these **exact keys**:
+编译脚本传递的主题对象具有这些**确切键**：
 
-| Key | Purpose | Example |
-|-----|---------|---------|
-| `theme.primary` | Darkest color, titles | `"22223b"` |
-| `theme.secondary` | Dark accent, body text | `"4a4e69"` |
-| `theme.accent` | Mid-tone accent | `"9a8c98"` |
-| `theme.light` | Light accent | `"c9ada7"` |
-| `theme.bg` | Background color | `"f2e9e4"` |
+| 键 | 用途 | 示例 |
+|-----|---------|------|
+| `theme.primary` | 最深颜色，标题 | `"22223b"` |
+| `theme.secondary` | 深色强调，正文 | `"4a4e69"` |
+| `theme.accent` | 中间调强调 | `"9a8c98"` |
+| `theme.light` | 浅色强调 | `"c9ada7"` |
+| `theme.bg` | 背景颜色 | `"f2e9e4"` |
 
-**NEVER use other key names** like `background`, `text`, `muted`, `darkest`, `lightest`.
+**永远不要使用其他键名**，如 `background`、`text`、`muted`、`darkest`、`lightest`。
 
 ---
 
-## Page Number Badge (REQUIRED)
+## 页码徽章（必需）
 
-All slides **except Cover Page** MUST include a page number badge in the bottom-right corner.
+除**封面页**外，所有幻灯片都必须在右下角包含页码徽章。
 
-- **Position**: x: 9.3", y: 5.1"
-- Show current number only (e.g. `3` or `03`), NOT "3/12"
-- Use palette colors, keep subtle
+- **位置**：x: 9.3", y: 5.1"
+- 仅显示当前编号（例如 `3` 或 `03`），而不是"3/12"
+- 使用调色板颜色，保持低调
 
-### Circle Badge (Default)
+### 圆形徽章（默认）
 
 ```javascript
 slide.addShape(pres.shapes.OVAL, {
@@ -224,7 +224,7 @@ slide.addText("3", {
 });
 ```
 
-### Pill Badge
+### 胶囊徽章
 
 ```javascript
 slide.addShape(pres.shapes.ROUNDED_RECTANGLE, {
@@ -242,8 +242,8 @@ slide.addText("03", {
 
 ---
 
-## Dependencies
+## 依赖
 
-- `pip install "markitdown[pptx]"` — text extraction
-- `npm install -g pptxgenjs` — creating from scratch
-- `npm install -g react-icons react react-dom sharp` — icons (optional)
+- `pip install "markitdown[pptx]"` —— 文本提取
+- `npm install -g pptxgenjs` —— 从头创建
+- `npm install -g react-icons react react-dom sharp` —— 图标（可选）

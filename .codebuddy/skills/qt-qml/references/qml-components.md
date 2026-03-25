@@ -1,8 +1,8 @@
-# Common QtQuick.Controls Components
+# 常用 QtQuick.Controls 组件
 
-Quick reference for the standard component palette. All require `import QtQuick.Controls`.
+标准组件面板的快速参考。所有组件都需要 `import QtQuick.Controls`。
 
-## Layout Containers
+## 布局容器
 
 ```qml
 import QtQuick.Controls
@@ -14,7 +14,7 @@ GridLayout { columns: 3; ... }
 StackLayout { currentIndex: tabBar.currentIndex; ... }
 ```
 
-## Input Controls
+## 输入控件
 
 ```qml
 TextField { placeholderText: "Enter name..." }
@@ -25,7 +25,7 @@ Slider { from: 0; to: 100; value: 50 }
 SpinBox { from: 0; to: 999 }
 ```
 
-## Display
+## 显示
 
 ```qml
 Label { text: "Hello"; font.bold: true }
@@ -33,7 +33,7 @@ Image { source: "qrc:/icons/logo.svg" }
 ProgressBar { value: 0.75 }
 ```
 
-## Containers
+## 容器
 
 ```qml
 ScrollView { clip: true; ListView { ... } }

@@ -1,8 +1,8 @@
-# QML Architecture: QQmlApplicationEngine Bootstrap
+# QML 架构: QQmlApplicationEngine 引导
 
-Minimal PySide6 + QML application wiring. `engine.rootObjects()` returns empty on load failure — always guard it.
+最小的 PySide6 + QML 应用程序接线。`engine.rootObjects()` 在加载失败时返回空 — 始终进行防护。
 
-## Python Entry Point
+## Python 入口点
 
 ```python
 # src/myapp/__main__.py
@@ -25,7 +25,7 @@ def main() -> None:
     sys.exit(app.exec())
 ```
 
-## Root QML File
+## 根 QML 文件
 
 ```qml
 // src/myapp/ui/main.qml
@@ -58,9 +58,9 @@ ApplicationWindow {
 }
 ```
 
-## QRC Resource Files
+## QRC 资源文件
 
-Use QRC for all QML assets — keeps paths consistent across dev and installed builds:
+对所有 QML 资产使用 QRC — 保持开发和安装构建中的路径一致:
 
 ```xml
 <qresource prefix="/ui">
@@ -73,23 +73,23 @@ Use QRC for all QML assets — keeps paths consistent across dev and installed b
 ```
 
 ```python
-# Load from QRC (preferred over filesystem paths in shipped apps)
+# 从 QRC 加载 (优于文件系统路径，在发布的应用中)
 engine.load("qrc:/ui/main.qml")
 ```
 
 ```qml
-// Reference QRC resources in QML
+// 在 QML 中引用 QRC 资源
 Image { source: "qrc:/icons/logo.svg" }
 ```
 
-## Debugging
+## 调试
 
 ```qml
-// Print to console from QML
+// 从 QML 输出到控制台
 Component.onCompleted: console.log("loaded, width:", width)
 ```
 
 ```bash
-QML_IMPORT_TRACE=1 python -m myapp      # trace QML import resolution
-QSG_VISUALIZE=overdraw python -m myapp  # visualize rendering overdraw
+QML_IMPORT_TRACE=1 python -m myapp      # 跟踪 QML 导入解析
+QSG_VISUALIZE=overdraw python -m myapp  # 可视化渲染过度绘制
 ```

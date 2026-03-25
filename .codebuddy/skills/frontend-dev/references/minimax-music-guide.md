@@ -1,73 +1,73 @@
-# Music Generation Guide
+# 音乐生成指南
 
-## CLI Usage
+## CLI 使用
 
 ```bash
-# Instrumental (no vocals)
+# 器乐（无人声）
 python scripts/minimax_music.py --prompt "Jazz piano, smooth, relaxing" --instrumental -o jazz.mp3
 
-# With custom lyrics
+# 带自定义歌词
 python scripts/minimax_music.py --prompt "Indie folk, melancholic" --lyrics "[verse]\nStreetlights flicker\nOn empty roads" -o song.mp3
 
-# Auto-generate lyrics from prompt
+# 从提示词自动生成歌词
 python scripts/minimax_music.py --prompt "Upbeat pop, energetic, summer vibes" --auto-lyrics -o pop.mp3
 
-# From lyrics file
+# 从歌词文件读取
 python scripts/minimax_music.py --prompt "Soulful blues, rainy night" --lyrics-file lyrics.txt -o blues.mp3
 
-# Custom audio settings
+# 自定义音频设置
 python scripts/minimax_music.py --prompt "Lo-fi beats" --instrumental -o lofi.wav --format wav --sample-rate 44100 --bitrate 256000
 ```
 
-## Programmatic Usage
+## 编程使用
 
 ```python
 from minimax_music import generate_music
 
-# Instrumental
+# 器乐
 result = generate_music(prompt="Jazz piano, smooth", is_instrumental=True)
 with open("jazz.mp3", "wb") as f:
     f.write(result["audio_bytes"])
 
-# With lyrics
+# 带歌词
 result = generate_music(
     prompt="Indie folk, acoustic guitar",
     lyrics="[verse]\nWalking through the rain\n[chorus]\nI'll find my way home",
 )
 
-# Auto-generate lyrics
+# 自动生成歌词
 result = generate_music(
     prompt="Upbeat pop, summer anthem",
     lyrics_optimizer=True,
 )
 
-# Access metadata
+# 访问元数据
 print(f"Duration: {result['duration']}ms")
 print(f"Sample rate: {result['sample_rate']}")
 print(f"Size: {result['size']} bytes")
 ```
 
-## Models
+## 模型
 
-| Model | Features |
-|-------|----------|
-| `music-2.5+` | Recommended. Supports instrumental mode, complete song structures, hi-fi audio |
-| `music-2.5` | Standard model. No instrumental mode |
+| 模型 | 特性 |
+|------|------|
+| `music-2.5+` | 推荐。支持器乐模式、完整歌曲结构、高保真音频 |
+| `music-2.5` | 标准模型。无器乐模式 |
 
-## Prompt Writing
+## 提示词写作
 
-The `prompt` parameter describes music style using comma-separated descriptors:
+`prompt` 参数使用逗号分隔的描述符来描述音乐风格：
 
-| Category | Examples |
-|----------|----------|
-| Genre | Blues, Pop, Rock, Jazz, Electronic, Hip-hop, Folk, Classical |
-| Mood | Soulful, Melancholy, Upbeat, Energetic, Peaceful, Dark, Nostalgic |
-| Scenario | Rainy night, Summer day, Road trip, Late night, Sunrise |
-| Instrumentation | Electric guitar, Piano, Acoustic, Synthesizer, Strings |
-| Vocal type | Male vocals, Female vocals, Soft vocals, Powerful vocals |
-| Tempo | Slow tempo, Fast tempo, Mid-tempo, Relaxed |
+| 类别 | 示例 |
+|------|------|
+| 风格 | Blues、Pop、Rock、Jazz、Electronic、Hip-hop、Folk、Classical |
+| 情绪 | Soulful、Melancholy、Upbeat、Energetic、Peaceful、Dark、Nostalgic |
+| 场景 | Rainy night、Summer day、Road trip、Late night、Sunrise |
+| 乐器 | Electric guitar、Piano、Acoustic、Synthesizer、Strings |
+| 人声类型 | Male vocals、Female vocals、Soft vocals、Powerful vocals |
+| 节奏 | Slow tempo、Fast tempo、Mid-tempo、Relaxed |
 
-**Example prompts:**
+**提示词示例：**
 ```
 "Soulful Blues, Rainy Night, Melancholy, Male Vocals, Slow Tempo"
 "Upbeat Pop, Summer Vibes, Female Vocals, Energetic, Synth-heavy"
@@ -75,32 +75,32 @@ The `prompt` parameter describes music style using comma-separated descriptors:
 "Cinematic Orchestral, Epic, Building tension, Strings and Brass"
 ```
 
-## Lyrics Format
+## 歌词格式
 
-Use structure tags in brackets to organize song sections:
+使用方括号中的结构标签来组织歌曲段落：
 
-### Structure Tags
+### 结构标签
 
-| Tag | Purpose |
-|-----|---------|
-| `[Intro]` | Opening section (can be instrumental) |
-| `[Verse]` / `[Verse 1]` | Story/narrative sections |
-| `[Pre-Chorus]` | Build-up before chorus |
-| `[Chorus]` | Main hook, typically repeated |
-| `[Post Chorus]` | Extension after chorus |
-| `[Bridge]` | Contrasting section near end |
-| `[Interlude]` | Instrumental break |
-| `[Solo]` | Instrumental solo (add direction: "slow, bluesy") |
-| `[Outro]` | Closing section |
-| `[Break]` | Short pause or transition |
-| `[Hook]` | Catchy repeated phrase |
-| `[Build Up]` | Tension building section |
-| `[Inst]` | Instrumental section |
-| `[Transition]` | Section change |
+| 标签 | 用途 |
+|------|------|
+| `[Intro]` | 开场（可以是器乐） |
+| `[Verse]` / `[Verse 1]` | 故事/叙事段落 |
+| `[Pre-Chorus]` | 主歌前的铺垫 |
+| `[Chorus]` | 主钩子，通常重复 |
+| `[Post Chorus]` | 主歌后的延伸 |
+| `[Bridge]` | 接近尾声的对比段落 |
+| `[Interlude]` | 器乐间奏 |
+| `[Solo]` | 器乐独奏（可加方向："slow, bluesy"） |
+| `[Outro]` | 结尾段落 |
+| `[Break]` | 短暂停或过渡 |
+| `[Hook]` |  catchy 重复短语 |
+| `[Build Up]` | 紧张感积累段落 |
+| `[Inst]` | 器乐段落 |
+| `[Transition]` | 段落转换 |
 
-### Backing Vocals & Directions
+### 伴唱与方向说明
 
-Use parentheses for backing vocals or performance notes:
+使用圆括号表示伴唱或表演注释：
 ```
 (Ooh, yeah)
 (Harmonize)
@@ -108,7 +108,7 @@ Use parentheses for backing vocals or performance notes:
 (Fade out...)
 ```
 
-### Example Lyrics
+### 歌词示例
 
 ```
 [Intro]
@@ -149,68 +149,68 @@ Maybe I'll finally understand
 Under the neon lights...
 ```
 
-## Audio Settings
+## 音频设置
 
-| Parameter | Options | Default | Notes |
-|-----------|---------|---------|-------|
-| `format` | mp3, wav, pcm | mp3 | WAV for highest quality |
-| `sample_rate` | 16000, 24000, 32000, 44100 | 44100 | 44100 recommended |
-| `bitrate` | 32000, 64000, 128000, 256000 | 256000 | Higher = better quality |
+| 参数 | 选项 | 默认值 | 说明 |
+|------|------|--------|------|
+| `format` | mp3, wav, pcm | mp3 | WAV 最高质量 |
+| `sample_rate` | 16000, 24000, 32000, 44100 | 44100 | 推荐 44100 |
+| `bitrate` | 32000, 64000, 128000, 256000 | 256000 | 越高 = 越好质量 |
 
-## Generation Modes
+## 生成模式
 
-### 1. Instrumental Only
+### 1. 仅器乐
 ```bash
 python scripts/minimax_music.py --prompt "Ambient electronic, space theme" --instrumental -o ambient.mp3
 ```
-- Requires `music-2.5+` model
-- Only `prompt` needed, no lyrics
+- 需要 `music-2.5+` 模型
+- 只需 `prompt`，不需要歌词
 
-### 2. With Custom Lyrics
+### 2. 带自定义歌词
 ```bash
 python scripts/minimax_music.py --prompt "Pop ballad, emotional" --lyrics "[verse]\nYour lyrics here" -o ballad.mp3
 ```
-- Provide both `prompt` (style) and `lyrics` (words + structure)
+- 同时提供 `prompt`（风格）和 `lyrics`（文字+结构）
 
-### 3. Auto-Generated Lyrics
+### 3. 自动生成歌词
 ```bash
 python scripts/minimax_music.py --prompt "Rock anthem about freedom" --auto-lyrics -o rock.mp3
 ```
-- System generates lyrics from prompt
-- Good for quick generation when lyrics aren't critical
+- 系统从提示词生成歌词
+- 当歌词不是关键时适合快速生成
 
-## Limits
+## 限制
 
-- **Prompt:** max 2,000 characters
-- **Lyrics:** 1–3,500 characters
-- **Duration:** ~25-30 seconds per generation (varies)
-- **URL expiration:** 24 hours (when using URL output mode)
+- **提示词：** 最多 2,000 个字符
+- **歌词：** 1–3,500 个字符
+- **时长：** 每次生成约 25-30 秒（因内容而异）
+- **URL 过期：** 24 小时（使用 URL 输出模式时）
 
-## Best Practices
+## 最佳实践
 
-1. **Layer style descriptors** — Combine genre + mood + instrumentation for precise results
-2. **Use structure tags** — Even simple `[verse]` `[chorus]` improves arrangement
-3. **Include backing vocal cues** — `(Ooh)`, `(Yeah)` add production polish
-4. **Match prompt to lyrics mood** — Conflicting prompt/lyrics produce inconsistent results
-5. **Instrumental for backgrounds** — Use `--instrumental` for BGM, avoiding vocal distractions
-6. **High bitrate for production** — Use 256000 for final assets, lower for drafts
+1. **叠加风格描述符** — 结合风格 + 情绪 + 乐器以获得精确结果
+2. **使用结构标签** — 即使简单的 `[verse]` `[chorus]` 也能改善编曲
+3. **包含伴唱提示** — `(Ooh)`、`(Yeah)` 添加制作质感
+4. **提示词与歌词情绪匹配** — 冲突的 prompt/lyrics 会产生不一致的结果
+5. **背景音乐用器乐** — 使用 `--instrumental` 作为 BGM，避免人声干扰
+6. **成品用高码率** — 最终资产用 256000，草稿用较低码率
 
-## Common Use Cases
+## 常见用例
 
-| Use Case | Command |
-|----------|---------|
-| Background music | `--prompt "Lo-fi, calm, ambient" --instrumental` |
-| Landing page hero | `--prompt "Cinematic, inspiring, building" --instrumental` |
-| Podcast intro | `--prompt "Upbeat, energetic, short" --instrumental` |
-| Demo song | `--prompt "Pop, catchy" --auto-lyrics` |
-| Custom jingle | `--prompt "Happy, bright, corporate" --lyrics "[hook]\nYour brand name"` |
+| 用例 | 命令 |
+|------|------|
+| 背景音乐 | `--prompt "Lo-fi, calm, ambient" --instrumental` |
+| 落地页英雄区 | `--prompt "Cinematic, inspiring, building" --instrumental` |
+| 播客开场 | `--prompt "Upbeat, energetic, short" --instrumental` |
+| 演示歌曲 | `--prompt "Pop, catchy" --auto-lyrics` |
+| 自定义 jingle | `--prompt "Happy, bright, corporate" --lyrics "[hook]\nYour brand name"` |
 
-## Error Handling
+## 错误处理
 
-| Error Code | Meaning | Solution |
-|------------|---------|----------|
-| 1002 | Rate limit | Wait and retry |
-| 1004 | Auth failed | Check API key |
-| 1008 | Insufficient balance | Top up account |
-| 1026 | Content flagged | Rephrase prompt/lyrics |
-| 2013 | Invalid parameters | Check prompt/lyrics length |
+| 错误码 | 含义 | 解决方案 |
+|--------|------|----------|
+| 1002 | 速率限制 | 等待后重试 |
+| 1004 | 认证失败 | 检查 API 密钥 |
+| 1008 | 余额不足 | 充值账户 |
+| 1026 | 内容被拦截 | 重新措辞提示词/歌词 |
+| 2013 | 参数无效 | 检查提示词/歌词长度 |

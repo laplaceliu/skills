@@ -1,12 +1,12 @@
-# QML Signals and Connections
+# QML 信号与连接
 
-## Defining and Connecting Signals in QML
+## 在 QML 中定义和连接信号
 
 ```qml
-// Define signal in a QML component
+// 在 QML 组件中定义信号
 signal dataChanged(var newData)
 
-// Connect in QML using Connections block
+// 使用 Connections 块在 QML 中连接
 Connections {
     target: someItem
     function onDataChanged(data) {
@@ -15,9 +15,9 @@ Connections {
 }
 ```
 
-## Connecting QML Signals to Python Slots
+## 将 QML 信号连接到 Python Slot
 
 ```python
-# After engine.load(), connect QML signal to Python slot
+# 在 engine.load() 之后，将 QML 信号连接到 Python slot
 engine.rootObjects()[0].dataChanged.connect(backend.on_data_changed)
 ```

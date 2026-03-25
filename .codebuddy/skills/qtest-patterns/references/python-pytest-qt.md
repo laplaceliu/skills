@@ -1,14 +1,14 @@
-# Python pytest-qt Reference
+# Python pytest-qt 参考
 
-## Installation
+## 安装
 
 ```bash
 pip install pytest pytest-qt
-# For PySide6 specifically:
+# 对于 PySide6 特别:
 pip install pytest pytest-qt PySide6
 ```
 
-Specify the Qt binding in config:
+在配置中指定 Qt 绑定:
 ```ini
 # pytest.ini
 [pytest]
@@ -17,20 +17,20 @@ qt_api = pyside6
 
 ## qtbot Fixture API
 
-`qtbot` is the central fixture. It manages a `QApplication` instance and ensures widgets are cleaned up after each test.
+`qtbot` 是核心 fixture。它管理 `QApplication` 实例并确保每个测试后清理组件。
 
-### Widget Registration
+### 组件注册
 
-Always register widgets under test to ensure cleanup:
+始终注册要测试的组件以确保清理:
 
 ```python
 def test_something(qtbot):
     widget = MyWidget()
-    qtbot.addWidget(widget)  # cleaned up after test, even if test fails
+    qtbot.addWidget(widget)  # 测试后清理，即使测试失败
     widget.show()
 ```
 
-### Mouse Simulation
+### 鼠标模拟
 
 ```python
 from pytestqt.qtbot import QtBot
@@ -50,7 +50,7 @@ def test_clicks(qtbot: QtBot):
     qtbot.mouseMove(w, pos=QPoint(100, 100))
 ```
 
-### Keyboard Simulation
+### 键盘模拟
 
 ```python
 from PySide6.QtCore import Qt
@@ -67,26 +67,26 @@ def test_keys(qtbot):
     qtbot.keyClick(w.input, "a", Qt.KeyboardModifier.ControlModifier)
 ```
 
-### Signal Waiting
+### 信号等待
 
-`waitSignal` and `waitSignals` block until a signal fires or timeout expires (raises `TimeoutError`):
+`waitSignal` 和 `waitSignals` 阻塞直到信号发出或超时到期 (引发 `TimeoutError`):
 
 ```python
 def test_async_result(qtbot):
     worker = MyWorker()
     qtbot.addWidget(worker)
 
-    # Block until result_ready fires (max 2 seconds)
+    # 阻塞直到 result_ready 发出 (最多 2 秒)
     with qtbot.waitSignal(worker.result_ready, timeout=2000) as blocker:
         worker.start()
     assert blocker.args[0] == expected_value
 
-    # Wait for multiple signals
+    # 等待多个信号
     with qtbot.waitSignals([worker.started, worker.finished], timeout=5000):
         worker.run()
 ```
 
-### Waiting for Conditions
+### 等待条件
 
 ```python
 def test_eventual_state(qtbot):
@@ -98,7 +98,7 @@ def test_eventual_state(qtbot):
     assert w.result == expected
 ```
 
-### Signal Recording
+### 信号录制
 
 ```python
 from pytestqt.qt_compat import qt_api
@@ -111,9 +111,9 @@ def test_signal_emitted_n_times(qtbot):
         w.trigger_three_changes()
 ```
 
-## conftest.py Patterns
+## conftest.py 模式
 
-### Application Fixture
+### 应用程序 Fixture
 
 ```python
 # tests/conftest.py
@@ -122,38 +122,38 @@ from myapp.main_window import MainWindow
 
 @pytest.fixture
 def app_window(qtbot):
-    """Provides a fully initialized and shown MainWindow."""
+    """提供完全初始化并显示的 MainWindow。"""
     window = MainWindow()
     qtbot.addWidget(window)
     window.show()
-    qtbot.waitExposed(window)  # wait until window is actually visible
+    qtbot.waitExposed(window)  # 等待直到窗口实际可见
     return window
 
 @pytest.fixture
 def populated_window(app_window, qtbot):
-    """Provides MainWindow with sample data loaded."""
+    """提供加载了示例数据的 MainWindow。"""
     app_window.load_sample_data()
     qtbot.waitUntil(lambda: app_window.is_data_loaded(), timeout=2000)
     return app_window
 ```
 
-### Temporary Directory Fixture
+### 临时目录 Fixture
 
 ```python
 @pytest.fixture
 def temp_project(tmp_path):
-    """Provides a temp dir with a minimal project structure."""
+    """提供带有最小项目结构的临时目录。"""
     (tmp_path / "data").mkdir()
     (tmp_path / "config.json").write_text('{"version": 1}')
     return tmp_path
 ```
 
-## Testing Models (QAbstractItemModel)
+## 测试模型 (QAbstractItemModel)
 
 ```python
 def test_model_data(qtbot):
     model = MyTableModel()
-    qtbot.addWidget(model)  # not strictly required but good practice
+    qtbot.addWidget(model)  # 非严格必需但是好习惯
 
     assert model.rowCount() == 0
 
@@ -164,17 +164,17 @@ def test_model_data(qtbot):
     assert model.data(idx, Qt.ItemDataRole.DisplayRole) == "Alice"
 ```
 
-## Common Gotchas
+## 常见陷阱
 
-**`QApplication` already exists**: pytest-qt creates one automatically. Never create a `QApplication` inside a test fixture — it conflicts.
+**`QApplication` 已存在**: pytest-qt 自动创建一个。永远不要在测试 fixture 中创建 `QApplication` — 会冲突。
 
-**`RuntimeError: wrapped C++ object deleted`**: Widget was garbage collected because Python lost the reference. Keep a reference in the test or use `qtbot.addWidget`.
+**`RuntimeError: wrapped C++ object deleted`**: 组件被垃圾回收，因为 Python 失去了引用。在测试中保持引用或使用 `qtbot.addWidget`。
 
-**Signal test flakiness**: Use `waitSignal` instead of `assert` + `qWait`. `qWait` is a time-based race condition; `waitSignal` is event-driven.
+**信号测试不稳定**: 使用 `waitSignal` 而不是 `assert` + `qWait`。`qWait` 是基于时间的竞态条件; `waitSignal` 是事件驱动的。
 
-**`waitSignal` timeout**: Increase timeout for slow operations. Default is 1000ms. Use `timeout=5000` for file I/O or network operations.
+**`waitSignal` 超时**: 为慢操作增加超时时间。默认是 1000ms。对文件 I/O 或网络操作使用 `timeout=5000`。
 
-**Headless CI failures**: Set `QT_QPA_PLATFORM=offscreen` in the CI environment or use Xvfb. Tests will fail with `Could not connect to display` otherwise.
+**Headless CI 失败**: 在 CI 环境中设置 `QT_QPA_PLATFORM=offscreen` 或使用 Xvfb。否则测试将失败并显示 `Could not connect to display`。
 
 ```yaml
 # .github/workflows/test.yml
@@ -183,7 +183,7 @@ env:
   DISPLAY: ":99"
 ```
 
-## Parametrize Pattern
+## 参数化模式
 
 ```python
 import pytest
@@ -192,23 +192,23 @@ import pytest
     ("", False),
     ("a", True),
     ("hello world", True),
-    ("   ", False),  # whitespace-only is falsy in our validator
+    ("   ", False),  # 仅空白在我们的验证器中是假的
 ])
 def test_input_validator(qtbot, value, expected):
     validator = InputValidator()
     assert validator.is_valid(value) == expected
 ```
 
-## Async Test Pattern (Qt event loop)
+## 异步测试模式 (Qt 事件循环)
 
 ```python
 import pytest
 
 @pytest.mark.asyncio
 async def test_async_operation(qtbot):
-    # For coroutine-based logic that doesn't use Qt signals directly
+    # 对于不使用 Qt 信号直接相关的协程逻辑
     result = await my_async_function()
     assert result == expected
 ```
 
-For Qt-native async (signals/slots), prefer `waitSignal` over `asyncio`.
+对于 Qt 原生异步 (信号/slot)，优先使用 `waitSignal` 而不是 `asyncio`。

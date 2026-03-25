@@ -1,37 +1,37 @@
 ---
 name: qt-packaging
 description: >
-  Packaging and distributing Qt Python applications — PyInstaller, Briefcase, and platform-specific build configurations. Use when distributing a PySide6 or PyQt6 app as a standalone executable, creating installers, configuring macOS bundles, Windows executables, or Linux AppImages.
+  Qt Python 应用程序的打包与分发 — PyInstaller、Briefcase 以及平台特定的构建配置。适用于：将 PySide6 或 PyQt6 应用分发为独立可执行文件、创建安装程序、配置 macOS bundles、Windows 可执行文件或 Linux AppImages。
 
-  Trigger phrases: "package app", "PyInstaller", "distribute", "deploy", "standalone executable", "installer", "bundle app", "briefcase", "Windows build", "macOS build", "AppImage", "one-file"
+  触发词："package app"、"PyInstaller"、"distribute"、"deploy"、"standalone executable"、"installer"、"bundle app"、"briefcase"、"Windows build"、"macOS build"、"AppImage"、"one-file"
 version: 1.0.0
 ---
 
-## Packaging Qt Python Applications
+## Qt Python 应用程序打包
 
-### PyInstaller (most common)
+### PyInstaller（最常用）
 
-**Critical: Virtual Environment Isolation**
+**关键：虚拟环境隔离**
 
-The official Qt for Python docs document a known PyInstaller gotcha: **if a system-level PySide6 is installed, PyInstaller silently picks it instead of your venv version**. Before building:
+Qt for Python 官方文档记录了一个已知的 PyInstaller 问题：**如果安装了系统级 PySide6，PyInstaller 会静默选择它而不是 venv 版本**。构建前请执行：
 
 ```bash
-# Remove ALL system-level PySide6 installs from the build machine
+# 从构建机器上移除所有系统级 PySide6 安装
 pip uninstall pyside6 pyside6_essentials pyside6_addons shiboken6 -y
 
-# Verify only venv version remains
+# 验证只剩下 venv 版本
 python -c "import PySide6; print(PySide6.__file__)"
-# Must show a path inside .venv/, not /usr/lib or system site-packages
+# 必须显示 .venv/ 内的路径，而不是 /usr/lib 或系统 site-packages
 ```
 
-**`--onefile` limitation:** For Qt6, `--onefile` bundles cannot deploy Qt plugins automatically. The one-directory (`dist/MyApp/`) approach is reliable. Use `--onefile` only if you understand its limitations and handle Qt plugins manually.
+**`--onefile` 限制：** 对于 Qt6，`--onefile` 打包无法自动部署 Qt 插件。单目录（`dist/MyApp/`）方式更可靠。仅在你了解其限制并手动处理 Qt 插件时才使用 `--onefile`。
 
-**Installation:**
+**安装：**
 ```bash
 uv add --dev pyinstaller
 ```
 
-**Basic one-directory build:**
+**基本单目录构建：**
 ```bash
 pyinstaller --name MyApp \
   --windowed \
@@ -39,7 +39,7 @@ pyinstaller --name MyApp \
   src/myapp/__main__.py
 ```
 
-**Spec file (reproducible builds):**
+**Spec 文件（可重现构建）：**
 ```python
 # MyApp.spec
 block_cipher = None
@@ -49,12 +49,12 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=[
-        ("src/myapp/resources", "resources"),   # (src, dest inside bundle)
+        ("src/myapp/resources", "resources"),   # (源, 打包内的目标路径)
     ],
     hiddenimports=[
-        "PySide6.QtSvg",          # SVG support
-        "PySide6.QtSvgWidgets",   # SVG widgets
-        "PySide6.QtXml",          # required by some Qt modules
+        "PySide6.QtSvg",          # SVG 支持
+        "PySide6.QtSvgWidgets",   # SVG 组件
+        "PySide6.QtXml",          # 部分 Qt 模块需要
     ],
     hookspath=[],
     hooksconfig={},
@@ -78,9 +78,9 @@ exe = EXE(
     bootloader_ignore_signals=False,
     strip=False,
     upx=False,
-    console=False,           # True for CLI apps
+    console=False,           # CLI 应用设为 True
     disable_windowed_traceback=False,
-    argv_emulation=False,    # macOS: use True for drag-and-drop files
+    argv_emulation=False,    # macOS：拖放文件时设为 True
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
@@ -99,32 +99,32 @@ coll = COLLECT(
 )
 ```
 
-Run: `pyinstaller MyApp.spec`
+运行：`pyinstaller MyApp.spec`
 
-**Qt plugin detection issues:** PySide6 often needs explicit plugin imports. Add to `hiddenimports`:
+**Qt 插件检测问题：** PySide6 通常需要显式导入插件。添加到 `hiddenimports`：
 ```python
 hiddenimports = [
     "PySide6.QtSvg", "PySide6.QtSvgWidgets",
-    "PySide6.QtPrintSupport",   # required by QTextEdit on some platforms
+    "PySide6.QtPrintSupport",   # 部分平台上 QTextEdit 需要
     "PySide6.QtDBus",           # Linux
 ]
 ```
 
-**QRC compiled resources:** Include compiled `.py` resource files in `datas` or ensure they're importable. The cleanest approach is importing `rc_resources` in `__init__.py` so PyInstaller detects it automatically.
+**QRC 编译资源：** 将编译后的 `.py` 资源文件包含在 `datas` 中，或确保它们可导入。最简洁的方式是在 `__init__.py` 中导入 `rc_resources`，让 PyInstaller 自动检测。
 
-### Briefcase (cross-platform, preferred for distribution)
+### Briefcase（跨平台，分发首选）
 
-Briefcase produces native platform installers (`.msi`, `.dmg`, `.AppImage`):
+Briefcase 生成原生平台安装程序（`.msi`、`.dmg`、`.AppImage`）：
 
 ```bash
 pip install briefcase
-briefcase create     # create platform package
-briefcase build      # compile
-briefcase run        # run from package
-briefcase package    # create installer
+briefcase create     # 创建平台包
+briefcase build      # 编译
+briefcase run        # 从包运行
+briefcase package    # 创建安装程序
 ```
 
-**pyproject.toml for Briefcase:**
+**Briefcase 的 pyproject.toml：**
 ```toml
 [tool.briefcase]
 project_name = "MyApp"
@@ -138,54 +138,54 @@ author_email = "me@myorg.com"
 [tool.briefcase.app.myapp]
 formal_name = "My Application"
 description = "Description here"
-icon = "resources/icons/app"   # no extension — briefcase uses platform-appropriate format
+icon = "resources/icons/app"   # 不带扩展名 — briefcase 使用平台适格的格式
 sources = ["src/myapp"]
 requires = ["PySide6>=6.6"]
 ```
 
-Briefcase handles Qt plugin bundling more reliably than PyInstaller for PySide6.
+Briefcase 处理 Qt 插件打包比 PyInstaller 更可靠。
 
-### Windows: windeployqt + Code Signing
+### Windows：windeployqt + 代码签名
 
-After PyInstaller builds the one-directory package, run `windeployqt` from the Qt SDK to copy any missing Qt plugins and translations:
+PyInstaller 构建单目录包后，运行 `windeployqt`（来自 Qt SDK）来复制任何缺失的 Qt 插件和翻译：
 
 ```bash
-# Run from the Qt SDK tools directory (or add to PATH)
+# 从 Qt SDK tools 目录运行（或添加到 PATH）
 windeployqt dist/MyApp/MyApp.exe
 ```
 
-This ensures platform plugins (`qwindows.dll`) and other Qt plugin DLLs are present. PyInstaller hooks should collect most of them automatically, but `windeployqt` catches stragglers.
+这确保平台插件（`qwindows.dll`）和其他 Qt 插件 DLL 存在。PyInstaller hooks 通常会自动收集它们，但 `windeployqt` 会捕获遗漏的部分。
 
 ```bash
-# Sign the executable (requires a code signing certificate)
+# 为可执行文件签名（需要代码签名证书）
 signtool sign /fd SHA256 /a /tr http://timestamp.digicert.com dist/MyApp.exe
 ```
 
-Unsigned Windows executables trigger SmartScreen warnings. For internal distribution, instruct users to right-click → Properties → Unblock.
+未签名的 Windows 可执行文件会触发 SmartScreen 警告。对于内部分发，指导用户右键 → 属性 → 解除阻止。
 
-### macOS: App Bundle
+### macOS：App Bundle
 
-PyInstaller produces a `.app` bundle. For distribution outside the App Store:
+PyInstaller 生成 `.app` bundle。对于 App Store 以外的分发：
 ```bash
-# Ad-hoc signing (no developer ID)
+# Ad-hoc 签名（无开发者 ID）
 codesign --force --deep --sign - dist/MyApp.app
 
-# With developer ID
+# 使用开发者 ID
 codesign --force --deep --sign "Developer ID Application: Name (TEAM_ID)" dist/MyApp.app
 
-# Notarization (required for Gatekeeper)
+# 公证（Gatekeeper 要求）
 xcrun notarytool submit dist/MyApp.zip --apple-id me@example.com --team-id TEAM_ID
 ```
 
-### Linux: AppImage via PyInstaller
+### Linux：AppImage via PyInstaller
 
 ```bash
-# Build one-directory first, then package as AppImage
-# Use https://github.com/AppImage/AppImageKit
+# 先构建单目录，然后打包为 AppImage
+# 使用 https://github.com/AppImage/AppImageKit
 appimagetool dist/MyApp/ MyApp-x86_64.AppImage
 ```
 
-### Build Automation (CI)
+### 构建自动化（CI）
 
 ```yaml
 # .github/workflows/build.yml
@@ -202,9 +202,9 @@ jobs:
           path: dist/MyApp/
 ```
 
-### Common Packaging Pitfalls
+### 常见打包陷阱
 
-- **Missing Qt platform plugins**: `qt.qpa.plugin: Could not find the Qt platform plugin` — ensure `PySide6/Qt/plugins/platforms/` is included. PyInstaller hooks usually handle this; rebuild if not.
-- **Missing SVG support**: Import `PySide6.QtSvg` in `hiddenimports` or the app will crash loading SVGs silently.
-- **Relative path assumptions**: Use `Path(__file__).parent` for locating resource files in development; use `sys._MEIPASS` for PyInstaller runtime paths (or bundle via QRC to avoid the problem entirely).
-- **App freezes on macOS**: Set `argv_emulation=True` in the spec if the app needs to handle file associations.
+- **缺失 Qt 平台插件**：`qt.qpa.plugin: Could not find the Qt platform plugin` — 确保 `PySide6/Qt/plugins/platforms/` 被包含。PyInstaller hooks 通常会处理此项；如未处理请重建。
+- **缺失 SVG 支持**：在 `hiddenimports` 中导入 `PySide6.QtSvg`，否则加载 SVG 时应用会静默崩溃。
+- **相对路径假设**：开发中使用 `Path(__file__).parent` 定位资源文件；PyInstaller 运行时路径使用 `sys._MEIPASS`（或通过 QRC 打包以完全避免此问题）。
+- **macOS 上应用冻结**：如果应用需要处理文件关联，在 spec 中设置 `argv_emulation=True`。

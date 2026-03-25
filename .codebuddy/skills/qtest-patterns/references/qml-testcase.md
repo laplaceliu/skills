@@ -1,67 +1,67 @@
-# QML TestCase Reference
+# QML TestCase 参考
 
-## Module Import
+## 模块导入
 
 ```qml
 import QtTest 1.15
-// or for Qt 6.x:
+// 或对于 Qt 6.x:
 import QtTest
 ```
 
-## TestCase Structure
+## TestCase 结构
 
 ```qml
 TestCase {
-    name: "MyComponentTests"   // required — identifies this test suite
+    name: "MyComponentTests"   // 必需 — 标识此测试套件
 
-    // Optional lifecycle functions
-    function initTestCase() { /* before all tests */ }
-    function cleanupTestCase() { /* after all tests */ }
-    function init() { /* before each test */ }
-    function cleanup() { /* after each test */ }
+    // 可选的生命周期函数
+    function initTestCase() { /* 在所有测试之前 */ }
+    function cleanupTestCase() { /* 在所有测试之后 */ }
+    function init() { /* 在每个测试之前 */ }
+    function cleanup() { /* 在每个测试之后 */ }
 
-    // Test functions — must start with "test_"
+    // 测试函数 — 必须以 "test_" 开头
     function test_initialState() { ... }
     function test_buttonClick() { ... }
 }
 ```
 
-## Assertion Functions
+## 断言函数
 
-| Function | Passes when |
+| 函数 | 通过条件 |
 |---|---|
-| `verify(expr)` | expr is truthy |
-| `verify(expr, msg)` | expr is truthy (custom failure message) |
-| `compare(actual, expected)` | values are equal |
-| `fuzzyCompare(a, b, delta)` | `\|a - b\| <= delta` |
-| `fail(msg)` | unconditional failure |
-| `skip(msg)` | skip test with message |
-| `expectFail("", msg, AbortTestOnFail)` | next compare is expected to fail |
+| `verify(expr)` | expr 为真 |
+| `verify(expr, msg)` | expr 为真 (自定义失败消息) |
+| `compare(actual, expected)` | 值相等 |
+| `fuzzyCompare(a, b, delta)` | `|a - b| <= delta` |
+| `fail(msg)` | 无条件失败 |
+| `skip(msg)` | 跳过测试并显示消息 |
+| `expectFail("", msg, AbortTestOnFail)` | 下一个比较预期失败 |
 
-## Component Creation
+## 组件创建
 
 ```qml
 TestCase {
     name: "MyComponent"
 
     function test_createAndDestroy() {
-        // Inline component (preferred for simple cases)
+        // 内联组件 (简单情况首选)
         var component = Qt.createComponent("MyComponent.qml")
         verify(component !== null, "Component loaded")
         verify(component.status === Component.Ready,
                "Component ready: " + component.errorString())
 
-        var obj = component.createObject(null)  // null parent = no visual parent
+        var obj = component.createObject(null)  // null 父级 = 无视觉父级
         verify(obj !== null, "Object created")
 
         compare(obj.title, "Untitled")
 
-        obj.destroy()  // always destroy to prevent leaks
+        obj.destroy()  // 始终销毁以防止泄漏
     }
 }
 ```
 
-### Inline Component Pattern (Qt 5.15+)
+### 内联组件模式 (Qt 5.15+)
 
 ```qml
 TestCase {
@@ -83,7 +83,7 @@ TestCase {
 }
 ```
 
-## Signal Testing
+## 信号测试
 
 ```qml
 TestCase {
@@ -91,7 +91,7 @@ TestCase {
 
     SignalSpy {
         id: spy
-        target: null  // set in test
+        target: null  // 在测试中设置
         signalName: "clicked"
     }
 
@@ -109,9 +109,9 @@ TestCase {
 }
 ```
 
-`SignalSpy` must have `target` and `signalName` set before the signal fires. Reset between tests with `spy.clear()`.
+`SignalSpy` 必须在信号发出之前设置 `target` 和 `signalName`。使用 `spy.clear()` 在测试之间重置。
 
-## Async / Timer Testing
+## 异步/定时器测试
 
 ```qml
 TestCase {
@@ -122,7 +122,7 @@ TestCase {
         compare(obj.status, "idle")
 
         obj.start()
-        wait(200)  // wait 200ms for timer to fire
+        wait(200)  // 等待 200ms 以让定时器触发
 
         compare(obj.status, "done")
         obj.destroy()
@@ -135,7 +135,7 @@ TestCase {
         spy.target = worker
 
         worker.start()
-        spy.wait(2000)  // waits until count > 0 or timeout
+        spy.wait(2000)  // 等待直到 count > 0 或超时
 
         compare(spy.count, 1)
         worker.destroy()
@@ -143,14 +143,14 @@ TestCase {
 }
 ```
 
-## Running QML Tests
+## 运行 QML 测试
 
-### CMake Setup
+### CMake 设置
 
 ```cmake
 find_package(Qt6 REQUIRED COMPONENTS Quick QuickTest)
 
-# Minimal C++ entry point required by QtQuickTest
+# QtQuickTest 所需的最小 C++ 入口点
 add_executable(qml_tests qml_test_main.cpp)
 target_link_libraries(qml_tests PRIVATE Qt6::Quick Qt6::QuickTest)
 
@@ -160,23 +160,23 @@ add_test(NAME QmlTests
 ```
 
 ```cpp
-// qml_test_main.cpp — boilerplate, don't modify
+// qml_test_main.cpp — 样板文件，不要修改
 #include <QtQuickTest>
 QUICK_TEST_MAIN(qml_tests)
 ```
 
-### qmltestrunner (Alternative)
+### qmltestrunner (替代方案)
 
-If Qt is installed with `qmltestrunner`:
+如果 Qt 安装了 `qmltestrunner`:
 ```bash
 qmltestrunner -input tests/
 ```
 
-### Import Path Configuration
+### 导入路径配置
 
-If your QML module is registered but not in the default import path:
+如果 QML 模块已注册但不在默认导入路径中:
 ```cpp
-// Extended entry point with custom import path
+// 带自定义导入路径的扩展入口点
 #include <QtQuickTest>
 #include <QGuiApplication>
 #include <QQmlEngine>
@@ -185,7 +185,7 @@ class Setup : public QObject {
     Q_OBJECT
 public slots:
     void applicationAvailable() {
-        // called before QML engine is created
+        // 在 QML 引擎创建之前调用
     }
     void qmlEngineAvailable(QQmlEngine *engine) {
         engine->addImportPath(":/imports");
@@ -195,9 +195,9 @@ public slots:
 QUICK_TEST_MAIN_WITH_SETUP(qml_tests, Setup)
 ```
 
-## File Naming Convention
+## 文件命名约定
 
-QML test files should be prefixed with `tst_` to distinguish them from the components they test:
+QML 测试文件应加前缀 `tst_` 以区别于它们测试的组件:
 
 ```
 tests/
@@ -206,12 +206,12 @@ tests/
 └── tst_Navigation.qml
 ```
 
-## Common Issues
+## 常见问题
 
-**`Component.Error` status**: The QML import path doesn't include your module. Check `engine->addImportPath()` or `QML_IMPORT_PATH` env var.
+**`Component.Error` 状态**: QML 导入路径不包含你的模块。检查 `engine->addImportPath()` 或 `QML_IMPORT_PATH` 环境变量。
 
-**`compare` fails on object references**: QML `compare` uses `===` semantics for objects. For property comparisons, access the property: `compare(obj.value, expected)`.
+**对象引用上的 `compare` 失败**: QML `compare` 对对象使用 `===` 语义。对于属性比较，访问属性: `compare(obj.value, expected)`。
 
-**`wait()` causes flakiness on slow CI**: Increase wait duration or use `SignalSpy.wait()` which is event-driven instead of time-based.
+**`wait()` 在慢速 CI 上导致不稳定**: 增加等待持续时间或使用 `SignalSpy.wait()`，它是事件驱动的而非基于时间的。
 
-**`obj.destroy()` not called**: QML test leaks objects if `destroy()` is not called. This can cause subsequent tests to see stale state from previous test objects.
+**未调用 `obj.destroy()`**: 如果未调用 `destroy()`，QML 测试会泄漏对象。这可能导致后续测试看到先前测试对象的过时状态。

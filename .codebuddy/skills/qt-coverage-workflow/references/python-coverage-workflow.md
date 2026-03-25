@@ -1,32 +1,32 @@
-# Python Coverage Workflow Reference
+# Python Coverage 工作流参考
 
-## Installation
+## 安装
 
 ```bash
 pip install coverage pytest-cov
 ```
 
-## Running Coverage
+## 运行覆盖率
 
-### Via pytest-cov (Recommended)
+### 通过 pytest-cov (推荐)
 
 ```bash
-# Basic — measures coverage of myapp package
+# 基本用法 — 测量 myapp 包的覆盖率
 pytest --cov=myapp tests/
 
-# With missing line numbers in terminal report
+# 显示终端报告中缺失的行号
 pytest --cov=myapp --cov-report=term-missing tests/
 
-# HTML report (browsable)
+# HTML 报告 (可浏览)
 pytest --cov=myapp --cov-report=html:htmlcov tests/
 
-# XML report (for CI/SonarQube parsing)
+# XML 报告 (供 CI/SonarQube 解析)
 pytest --cov=myapp --cov-report=xml:coverage.xml tests/
 
-# Fail if coverage drops below threshold
+# 如果覆盖率低于阈值则失败
 pytest --cov=myapp --cov-fail-under=80 tests/
 
-# Multiple output formats at once
+# 同时输出多种格式
 pytest --cov=myapp \
        --cov-report=term-missing \
        --cov-report=html:htmlcov \
@@ -34,19 +34,19 @@ pytest --cov=myapp \
        tests/
 ```
 
-### Via coverage CLI
+### 通过 coverage CLI
 
 ```bash
 coverage run -m pytest tests/
 coverage report --show-missing
 coverage html -d htmlcov
 coverage xml -o coverage.xml
-coverage json -o coverage.json  # machine-readable
+coverage json -o coverage.json  # 机器可读格式
 ```
 
-## Configuration
+## 配置
 
-### pyproject.toml (Recommended)
+### pyproject.toml (推荐)
 
 ```toml
 [tool.coverage.run]
@@ -57,12 +57,12 @@ omit = [
     "*/__main__.py",
     "myapp/vendor/*",
 ]
-branch = true  # measure branch coverage in addition to line coverage
+branch = true  # 除行覆盖率外还测量分支覆盖率
 
 [tool.coverage.report]
 fail_under = 80
 show_missing = true
-skip_covered = false  # show 100% files in report (set true to hide them)
+skip_covered = false  # 在报告中显示 100% 的文件 (设为 true 可隐藏)
 precision = 1
 
 [tool.coverage.html]
@@ -73,7 +73,7 @@ title = "My App Coverage"
 output = "coverage.xml"
 ```
 
-### .coveragerc (Legacy)
+### .coveragerc (旧式)
 
 ```ini
 [run]
@@ -88,22 +88,22 @@ fail_under = 80
 show_missing = True
 ```
 
-## Branch Coverage
+## 分支覆盖率
 
-Line coverage only confirms a line executed; branch coverage confirms both paths of a conditional were taken:
+行覆盖率仅确认一行被执行了; 分支覆盖率确认条件的两条路径都被执行:
 
 ```python
 def validate(x):
-    if x > 0:       # line 1 — always hit
-        return True  # line 2 — hit when x > 0
-    return False     # line 3 — missed if tests only use x > 0
+    if x > 0:       # 第 1 行 — 总是被命中
+        return True  # 第 2 行 — 当 x > 0 时被命中
+    return False     # 第 3 行 — 如果测试只用 x > 0 则被忽略
 ```
 
-Without branch coverage: 3/3 lines = 100%. With branch coverage: the `if x > 0 → True` branch is only tested if both `x > 0` and `x <= 0` test cases exist.
+没有分支覆盖率: 3/3 行 = 100%。有分支覆盖率: `if x > 0 → True` 分支只有在同时存在 `x > 0` 和 `x <= 0` 测试用例时才能被完全测试。
 
-Enable with `branch = true` in config or `--cov-branch` flag.
+通过在配置中设置 `branch = true` 或使用 `--cov-branch` 标志启用。
 
-## Reading the Gap Report
+## 阅读差距报告
 
 ```
 Name                    Stmts   Miss Branch BrPart  Cover   Missing
@@ -111,18 +111,18 @@ calculator.py              24      4      8      2    75%   18-22, 45
 utils/formatter.py         12      2      4      1    67%   8-10
 ```
 
-- **Stmts** — total executable statements
-- **Miss** — unexecuted statements
-- **Branch** — total branch pairs (only with `branch = true`)
-- **BrPart** — branches partially covered (one direction tested)
-- **Missing** — line ranges never executed
+- **Stmts** — 总的可执行语句数
+- **Miss** — 未执行的语句
+- **Branch** — 总的分支对数 (仅在 `branch = true` 时有)
+- **BrPart** — 部分覆盖的分支 (只测试了一个方向)
+- **Missing** — 从未执行的行范围
 
-When targeting gap lines, `18-22` means the `if/else` block spanning those lines has an untested path.
+当针对差距行时，`18-22` 表示跨越这些行的 `if/else` 块有一条未测试的路径。
 
-## Parsing for CI / Agent Handoff
+## 解析以供 CI / Agent 交接
 
 ```bash
-# Extract total coverage percentage
+# 提取总覆盖率百分比
 python -c "
 import json, sys
 data = json.load(open('coverage.json'))
@@ -130,7 +130,7 @@ total = data['totals']['percent_covered']
 print(f'{total:.1f}%')
 "
 
-# List files below threshold
+# 列出低于阈值的文件
 python -c "
 import json
 data = json.load(open('coverage.json'))
@@ -143,23 +143,23 @@ for fname, info in data['files'].items():
 "
 ```
 
-## Parallel Test Runs
+## 并行测试运行
 
-When running pytest with `pytest-xdist`, each worker writes its own `.coverage.*` file. Combine them before reporting:
+使用 `pytest-xdist` 运行 pytest 时，每个 worker 写入自己的 `.coverage.*` 文件。在报告前合并它们:
 
 ```bash
 pytest --cov=myapp --cov-parallel -n auto tests/
-coverage combine  # merge all .coverage.* files
+coverage combine  # 合并所有 .coverage.* 文件
 coverage report
 ```
 
-Add to `.coveragerc`:
+添加到 `.coveragerc`:
 ```ini
 [run]
 parallel = True
 ```
 
-## GitHub Actions Pattern
+## GitHub Actions 模式
 
 ```yaml
 - name: Install dependencies
@@ -182,7 +182,7 @@ parallel = True
     path: htmlcov/
     if-no-files-found: warn
 
-# Optional: Post coverage summary to PR
+# 可选: 发布覆盖率摘要到 PR
 - name: Coverage summary
   run: |
     python -c "

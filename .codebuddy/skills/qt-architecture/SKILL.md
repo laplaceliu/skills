@@ -1,19 +1,19 @@
 ---
 name: qt-architecture
 description: >
-  Qt application architecture, project structure, and entry-point patterns for PySide6, PyQt6, and C++/Qt. Use when structuring a Qt app, setting up QApplication, designing the main window, choosing between MVC/MVP patterns, organizing a src layout, or deciding how to separate concerns in a GUI application.
+  Qt 应用程序架构、项目结构和入口点模式，适用于 PySide6、PyQt6 和 C++/Qt。当需要构建 Qt 应用结构、设置 QApplication、设计主窗口、在 MVC/MVP 模式之间选择、组织 src 布局，或决定如何在 GUI 应用中分离关注点时使用此技能。
 
-  Trigger phrases: "structure my Qt app", "QApplication setup", "app entry point", "Qt project layout", "organize Qt code", "Qt MVC", "Qt MVP", "main window architecture", "new Qt project"
+  触发短语："structure my Qt app"、"QApplication setup"、"app entry point"、"Qt project layout"、"organize Qt code"、"Qt MVC"、"Qt MVP"、"main window architecture"、"new Qt project"
 version: "1.0.0"
 ---
 
-## Qt Application Architecture
+## Qt 应用程序架构
 
-### Entry-Point Pattern
+### 入口点模式
 
-Every Qt application requires exactly one `QApplication` (widgets) or `QGuiApplication` (QML-only) instance. Create it before any widgets.
+每个 Qt 应用程序都需要恰好一个 `QApplication`（widgets）或 `QGuiApplication`（仅 QML）实例。在任何 widgets 之前创建它。
 
-**Python/PySide6 canonical entry point:**
+**Python/PySide6 标准入口点：**
 ```python
 # src/myapp/__main__.py
 import sys
@@ -33,9 +33,9 @@ if __name__ == "__main__":
     main()
 ```
 
-Using `__main__.py` enables `python -m myapp` invocation. Set `applicationName` and `organizationName` before creating any widgets — these values seed `QSettings`.
+使用 `__main__.py` 可以启用 `python -m myapp` 调用。在创建任何 widgets 之前设置 `applicationName` 和 `organizationName` —— 这些值会注入 `QSettings`。
 
-**C++/Qt canonical main.cpp:**
+**C++/Qt 标准 main.cpp：**
 ```cpp
 #include <QApplication>
 #include "mainwindow.h"
@@ -50,24 +50,24 @@ int main(int argc, char *argv[]) {
 }
 ```
 
-### Project Layout (Python/PySide6)
+### 项目布局（Python/PySide6）
 
-Use `src` layout to prevent accidental imports from the project root:
+使用 `src` 布局来防止从项目根目录意外导入：
 
 ```
 my-qt-app/
 ├── src/
 │   └── myapp/
 │       ├── __init__.py
-│       ├── __main__.py          # Entry point
+│       ├── __main__.py          # 入口点
 │       ├── ui/
 │       │   ├── __init__.py
-│       │   ├── main_window.py   # QMainWindow subclass
-│       │   ├── dialogs/         # QDialog subclasses
-│       │   └── widgets/         # Custom QWidget subclasses
-│       ├── models/              # Data models (non-Qt)
-│       ├── services/            # Business logic, I/O
-│       └── resources/           # .qrc compiled output
+│       │   ├── main_window.py   # QMainWindow 子类
+│       │   ├── dialogs/         # QDialog 子类
+│       │   └── widgets/         # 自定义 QWidget 子类
+│       ├── models/              # 数据模型（非 Qt）
+│       ├── services/            # 业务逻辑、I/O
+│       └── resources/           # .qrc 编译输出
 ├── tests/
 │   ├── conftest.py
 │   └── test_*.py
@@ -75,12 +75,12 @@ my-qt-app/
 │   ├── icons/
 │   └── resources.qrc
 ├── pyproject.toml
-└── .qt-test.json                # qt-test-suite config
+└── .qt-test.json                # qt-test-suite 配置
 ```
 
-Keep `ui/`, `models/`, and `services/` separate. UI code should never contain business logic.
+保持 `ui/`、`models/` 和 `services/` 分离。UI 代码不应包含业务逻辑。
 
-### QMainWindow Structure
+### QMainWindow 结构
 
 ```python
 # src/myapp/ui/main_window.py
@@ -97,32 +97,32 @@ class MainWindow(QMainWindow):
         self._connect_signals()
 
     def _setup_ui(self) -> None:
-        """Build central widget and layout."""
+        """构建中央部件和布局。"""
         central = QWidget()
         self.setCentralWidget(central)
         layout = QVBoxLayout(central)
-        # Add widgets to layout here
+        # 在此处将 widgets 添加到布局
 
     def _setup_menu(self) -> None:
-        """Build menu bar and actions."""
+        """构建菜单栏和动作。"""
         pass
 
     def _connect_signals(self) -> None:
-        """Wire all signal→slot connections."""
+        """连接所有信号与槽（signal→slot）连接。"""
         pass
 ```
 
-Separate `_setup_ui`, `_setup_menu`, and `_connect_signals` into distinct methods. This makes each responsibility findable and testable.
+将 `_setup_ui`、`_setup_menu` 和 `_connect_signals` 分离为独立的方法。这使得每个职责都易于查找和测试。
 
-### Architectural Patterns
+### 架构模式
 
-**MVP (Model-View-Presenter)** — preferred for testable Qt applications:
-- **Model**: Pure Python classes, no Qt imports. Holds data and business logic.
-- **View**: QWidget subclasses. Emits signals for user actions; receives data to display.
-- **Presenter**: Mediates between Model and View. Contains decision logic. Testable without Qt.
+**MVP（Model-View-Presenter，模型-视图-呈现器）** — 适用于可测试的 Qt 应用程序：
+- **Model（模型）**：纯 Python 类，不导入 Qt。持有数据和业务逻辑。
+- **View（视图）**：QWidget 子类。发出用户操作的信号；接收要显示的数据。
+- **Presenter（呈现器）**：在 Model 和 View 之间进行协调。包含决策逻辑。可以在没有 Qt 的情况下进行测试。
 
 ```python
-# Presenter owns the view and model
+# Presenter 拥有 view 和 model
 class CalculatorPresenter:
     def __init__(self, view: CalculatorView, model: CalculatorModel) -> None:
         self._view = view
@@ -134,11 +134,11 @@ class CalculatorPresenter:
         self._view.display_result(result)
 ```
 
-**MVC** maps less naturally to Qt's signal/slot system. MVP is the idiomatic choice.
+**MVC** 与 Qt 的信号与槽（signals and slots）系统配合不太自然。MVP 是惯用选择。
 
-**For simple apps**: Direct signal/slot connections are fine. Introduce MVP when you need unit-testable business logic.
+**对于简单的应用程序**：直接连接信号与槽是可行的。当需要可单元测试的业务逻辑时再引入 MVP。
 
-### pyproject.toml Configuration
+### pyproject.toml 配置
 
 ```toml
 [build-system]
@@ -166,9 +166,9 @@ pythonVersion = "3.11"
 include = ["src"]
 ```
 
-### Qt Project Config (.qt-test.json)
+### Qt 项目配置（.qt-test.json）
 
-Always create this at project root for `qt-test-suite` compatibility:
+始终在项目根目录创建此文件以确保 `qt-test-suite` 兼容性：
 
 ```json
 {
@@ -179,10 +179,10 @@ Always create this at project root for `qt-test-suite` compatibility:
 }
 ```
 
-### Critical Constraints
+### 关键约束
 
-- One `QApplication` per process — never create it twice or inside a function that may be called multiple times
-- All widget creation must happen after `QApplication` is constructed
-- Widgets created without a parent become top-level windows; always pass `parent` to avoid orphaned widgets
-- Never store Qt objects (QWidget, QObject) in module-level globals — deferred destruction causes segfaults
-- `app.exec()` blocks until the last window closes; all application logic runs via signals/slots within this loop
+- 每个进程只有一个 `QApplication` —— 永远不要创建两次或将其放在可能被多次调用的函数内
+- 所有 widget 创建必须在 `QApplication` 构建之后进行
+- 没有父级的 widget 会成为顶级窗口；始终传递 `parent` 以避免产生孤儿 widgets
+- 永远不要将 Qt 对象（QWidget、QObject）存储在模块级全局变量中 —— 延迟销毁会导致段错误
+- `app.exec()` 会阻塞直到最后一个窗口关闭；所有应用程序逻辑都通过此循环内的信号与槽运行

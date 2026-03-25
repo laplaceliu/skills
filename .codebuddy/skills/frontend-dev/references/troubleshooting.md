@@ -1,28 +1,28 @@
-# Troubleshooting
+# 故障排除
 
-## Quick reference
+## 快速参考
 
-| Error | Cause | Fix |
-|-------|-------|-----|
-| `MINIMAX_API_KEY is not set` | Key not set | `export MINIMAX_API_KEY="key"` |
-| `401 Unauthorized` | Invalid/expired key | Check key validity |
-| `429 Too Many Requests` | Rate limit | Add delays between requests |
-| `TimeoutError` | Network or long text | Use async TTS for long text, check network |
-| `invalid params, method t2a-v2 not have model` | Wrong model name | Use `speech-2.8-hd` (hyphens, not underscores) |
-| `brotli: decoder process called...` | Encoding issue | Already fixed in utils.py (Accept-Encoding header) |
+| 错误 | 原因 | 修复方法 |
+|------|------|----------|
+| `MINIMAX_API_KEY is not set` | 密钥未设置 | `export MINIMAX_API_KEY="key"` |
+| `401 Unauthorized` | 密钥无效/过期 | 检查密钥有效性 |
+| `429 Too Many Requests` | 速率限制 | 请求之间添加延迟 |
+| `TimeoutError` | 网络问题或文本过长 | 对长文本使用异步 TTS，检查网络 |
+| `invalid params, method t2a-v2 not have model` | 模型名称错误 | 使用 `speech-2.8-hd`（用连字符，不是下划线） |
+| `brotli: decoder process called...` | 编码问题 | 已在 utils.py 中修复（Accept-Encoding 头） |
 
-## Environment
+## 环境问题
 
-### API key not set
+### API 密钥未设置
 
 ```bash
-export MINIMAX_API_KEY="<paste-your-key-here>"
+export MINIMAX_API_KEY="<在此粘贴您的密钥>"
 
-# Verify
+# 验证
 echo $MINIMAX_API_KEY
 ```
 
-### FFmpeg not found
+### 未找到 FFmpeg
 
 ```bash
 # macOS
@@ -31,26 +31,26 @@ brew install ffmpeg
 # Ubuntu
 sudo apt install ffmpeg
 
-# Verify
+# 验证
 ffmpeg -version
 ```
 
-### Missing Python packages
+### 缺少 Python 包
 
 ```bash
 pip install requests
 ```
 
-## API errors
+## API 错误
 
-### Authentication (401)
+### 认证失败 (401)
 
-- Verify API key is correct and not expired
-- Check for extra spaces in key value
+- 验证 API 密钥正确且未过期
+- 检查密钥值中是否有额外的空格
 
-### Rate limiting (429)
+### 速率限制 (429)
 
-Add delays between requests:
+在请求之间添加延迟：
 ```python
 import time
 for text in texts:
@@ -58,28 +58,28 @@ for text in texts:
     time.sleep(1)
 ```
 
-### Invalid model name
+### 模型名称无效
 
-Valid names (use hyphens, must include -hd or -turbo):
-- `speech-2.8-hd` (recommended)
+有效名称（使用连字符，必须包含 -hd 或 -turbo）：
+- `speech-2.8-hd`（推荐）
 - `speech-2.8-turbo`
 - `speech-2.6-hd`
 - `speech-2.6-turbo`
 
-Wrong: `speech_01`, `speech_2.6`, `speech-01`
+错误示例：`speech_01`、`speech_2.6`、`speech-01`
 
-## Audio issues
+## 音频问题
 
-### Poor quality
+### 质量不佳
 
-Re-generate with higher settings:
+使用更高设置重新生成：
 ```bash
 python scripts/minimax_tts.py "text" -o out.mp3 --sample-rate 32000 --model speech-2.8-hd
 ```
 
-### Invalid emotion
+### 无效的情绪参数
 
-Valid emotions:
-- All models: happy, sad, angry, fearful, disgusted, surprised, calm
-- speech-2.6 only: + fluent, whisper
-- speech-2.8: auto-matched (leave empty, recommended)
+有效的情绪值：
+- 所有模型：happy、sad、angry、fearful、disgusted、surprised、calm
+- 仅 speech-2.6：+ fluent、whisper
+- speech-2.8：自动匹配（留空，推荐）

@@ -1,23 +1,23 @@
-# C++ QTest Reference
+# C++ QTest 参考
 
-## Complete Macro Reference
+## 完整宏参考
 
-### Assertion Macros
+### 断言宏
 
-| Macro | Passes when | Fails with |
+| 宏 | 通过条件 | 失败显示 |
 |---|---|---|
-| `QVERIFY(expr)` | expr is truthy | "expr returned false" |
-| `QVERIFY2(expr, msg)` | expr is truthy | custom message |
-| `QCOMPARE(actual, expected)` | values are equal | diff showing both values |
-| `QVERIFY_THROWS_EXCEPTION(ExType, expr)` | expr throws ExType | no throw or wrong type |
-| `QVERIFY_THROWS_NO_EXCEPTION(expr)` | expr doesn't throw | exception message |
-| `QTRY_VERIFY(expr)` | expr eventually true within 5s | timeout |
-| `QTRY_COMPARE(a, b)` | values eventually equal within 5s | timeout |
-| `QTRY_VERIFY_WITH_TIMEOUT(expr, ms)` | expr eventually true | timeout |
-| `QSKIP("reason")` | — | marks test as skipped |
-| `QEXPECT_FAIL("", "reason", Continue)` | — | marks next QVERIFY expected to fail |
+| `QVERIFY(expr)` | expr 为真 | "expr returned false" |
+| `QVERIFY2(expr, msg)` | expr 为真 | 自定义消息 |
+| `QCOMPARE(actual, expected)` | 值相等 | 显示两个值的差异 |
+| `QVERIFY_THROWS_EXCEPTION(ExType, expr)` | expr 抛出 ExType | 未抛出或类型错误 |
+| `QVERIFY_THROWS_NO_EXCEPTION(expr)` | expr 不抛出 | 异常消息 |
+| `QTRY_VERIFY(expr)` | expr 在 5 秒内最终为真 | 超时 |
+| `QTRY_COMPARE(a, b)` | 值在 5 秒内最终相等 | 超时 |
+| `QTRY_VERIFY_WITH_TIMEOUT(expr, ms)` | expr 最终为真 | 超时 |
+| `QSKIP("reason")` | — | 标记测试为跳过 |
+| `QEXPECT_FAIL("", "reason", Continue)` | — | 标记下一个 QVERIFY 预期失败 |
 
-### Data-Driven Tests
+### 数据驱动测试
 
 ```cpp
 void MyTest::myTest_data() {
@@ -36,11 +36,11 @@ void MyTest::myTest() {
 }
 ```
 
-The `_data()` function must have the same name as the test function with `_data` appended and be a private slot.
+`_data()` 函数必须与测试函数同名并附加 `_data`，且必须是私有 slot。
 
-### Signal Spy
+### 信号间谍
 
-`QSignalSpy` records all signal emissions for later inspection:
+`QSignalSpy` 记录所有信号发射以供后续检查:
 
 ```cpp
 #include <QSignalSpy>
@@ -55,14 +55,14 @@ QList<QVariant> args = spy.takeFirst();
 QCOMPARE(args.at(0).toString(), "hello");
 ```
 
-For signals with multiple parameters, `args` contains all parameters in order.
+对于具有多个参数的信号，`args` 按顺序包含所有参数。
 
-### GUI/Input Simulation
+### GUI/输入模拟
 
 ```cpp
 #include <QTest>
 
-// Mouse
+// 鼠标
 QTest::mouseClick(widget, Qt::LeftButton);
 QTest::mouseClick(widget, Qt::LeftButton, Qt::NoModifier, QPoint(10, 10));
 QTest::mouseDClick(widget, Qt::LeftButton);
@@ -70,19 +70,19 @@ QTest::mousePress(widget, Qt::LeftButton);
 QTest::mouseRelease(widget, Qt::LeftButton);
 QTest::mouseMove(widget, QPoint(50, 50));
 
-// Keyboard
+// 键盘
 QTest::keyClick(widget, Qt::Key_Return);
 QTest::keyClick(widget, 'a', Qt::ControlModifier);
 QTest::keyClicks(widget, "hello world");
 QTest::keyPress(widget, Qt::Key_Shift);
 QTest::keyRelease(widget, Qt::Key_Shift);
 
-// Delay (for animation / debounce scenarios)
-QTest::qWait(100);  // ms
-QTest::qSleep(100); // ms (blocks event loop — avoid in GUI tests)
+// 延迟 (用于动画/防抖场景)
+QTest::qWait(100);  // 毫秒
+QTest::qSleep(100); // 毫秒 (阻塞事件循环 — 在 GUI 测试中避免)
 ```
 
-### Benchmark Macros
+### 基准测试宏
 
 ```cpp
 void MyBenchmark::sortBenchmark() {
@@ -94,30 +94,30 @@ void MyBenchmark::sortBenchmark() {
 }
 ```
 
-Run benchmarks: `./my_test -benchmark`.
+运行基准测试: `./my_test -benchmark`。
 
-Available measurement backends:
-- Default: walltime
+可用的测量后端:
+- 默认: walltime
 - `-callgrind`: Valgrind Callgrind
-- `-perf`: Linux perf event counters
-- `-tickcounter`: CPU tick counter
+- `-perf`: Linux perf 事件计数器
+- `-tickcounter`: CPU 计时器计数
 
-## Output Formats
+## 输出格式
 
 ```bash
-./my_test                        # plain text (default)
-./my_test -o results.xml,xml     # JUnit XML (CI-friendly)
-./my_test -o results.tap,tap     # TAP format
-./my_test -o -,txt -o results.xml,xml  # multiple outputs simultaneously
-./my_test -v1                    # verbose: print test names
-./my_test -v2                    # very verbose: all assertions
-./my_test TestClass::specificTest  # run one test by name
-./my_test -functions             # list all test function names
+./my_test                        # 纯文本 (默认)
+./my_test -o results.xml,xml     # JUnit XML (CI 友好)
+./my_test -o results.tap,tap     # TAP 格式
+./my_test -o -,txt -o results.xml,xml  # 同时多输出
+./my_test -v1                    # 详细: 打印测试名称
+./my_test -v2                    # 非常详细: 所有断言
+./my_test TestClass::specificTest  # 按名称运行一个测试
+./my_test -functions             # 列出所有测试函数名称
 ```
 
-## CMake Patterns
+## CMake 模式
 
-### Simple (one test per executable)
+### 简单 (每个测试一个可执行文件)
 
 ```cmake
 find_package(Qt6 REQUIRED COMPONENTS Test)
@@ -127,7 +127,7 @@ target_link_libraries(TestCalculator PRIVATE Qt6::Test calculator_lib)
 add_test(NAME TestCalculator COMMAND TestCalculator)
 ```
 
-### Helper Function (recommended for multiple tests)
+### 辅助函数 (多个测试时推荐)
 
 ```cmake
 function(qt_add_unit_test name)
@@ -145,24 +145,24 @@ qt_add_unit_test(TestCalculator test_calculator.cpp)
 qt_add_unit_test(TestMainWindow test_main_window.cpp)
 ```
 
-### CTest Configuration
+### CTest 配置
 
 ```cmake
-# Set timeout per test (default unlimited)
+# 设置每个测试的超时时间 (默认无限)
 set_tests_properties(TestCalculator PROPERTIES TIMEOUT 30)
 
-# Run in parallel
+# 并行运行
 set(CTEST_PARALLEL_LEVEL 4)
 ```
 
-Run all tests: `ctest --output-on-failure --parallel 4`
+运行所有测试: `ctest --output-on-failure --parallel 4`
 
-## Linking Against Application Code
+## 链接应用程序代码
 
-Avoid linking tests directly against the application executable. Instead, extract logic into a static or shared library:
+避免直接链接测试到应用程序可执行文件。相反，将逻辑提取到静态库或共享库:
 
 ```cmake
-# Main CMakeLists.txt
+# 主 CMakeLists.txt
 add_library(myapp_lib STATIC
     src/calculator.cpp
     src/formatter.cpp
@@ -172,17 +172,17 @@ target_link_libraries(myapp_lib PUBLIC Qt6::Core Qt6::Widgets)
 add_executable(myapp main.cpp)
 target_link_libraries(myapp PRIVATE myapp_lib)
 
-# Tests link the library, not the executable
+# 测试链接库，而非可执行文件
 enable_testing()
 add_subdirectory(tests)
 ```
 
-## Troubleshooting
+## 故障排除
 
-**`undefined reference to 'TestFoo::staticMetaObject'`**: Missing `#include "test_foo.moc"` at the end of the test file.
+**`undefined reference to 'TestFoo::staticMetaObject'`**: 缺少在测试文件末尾的 `#include "test_foo.moc"`。
 
-**Test doesn't find Qt headers**: `find_package(Qt6 REQUIRED COMPONENTS Test)` must come before `target_link_libraries`.
+**测试找不到 Qt 头文件**: `find_package(Qt6 REQUIRED COMPONENTS Test)` 必须在 `target_link_libraries` 之前。
 
-**GUI tests fail on CI**: Use `QT_QPA_PLATFORM=offscreen` or Xvfb. CI machines have no display.
+**GUI 测试在 CI 上失败**: 使用 `QT_QPA_PLATFORM=offscreen` 或 Xvfb。CI 机器没有显示器。
 
-**`QCOMPARE` fails with no diff shown**: Type may not have `operator<<(QDebug, T)`. Register it or use `QVERIFY(a == b)` with a manual message.
+**`QCOMPARE` 失败但没有显示差异**: 类型可能没有 `operator<<(QDebug, T)`。注册它或使用带有手动消息的 `QVERIFY(a == b)`。

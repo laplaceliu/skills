@@ -1,6 +1,6 @@
-# gcov + lcov Coverage Workflow Reference
+# gcov + lcov 覆盖率工作流参考
 
-## Prerequisites
+## 前置条件
 
 ```bash
 # Debian/Ubuntu
@@ -9,15 +9,15 @@ sudo apt-get install gcov lcov
 # Fedora/RHEL
 sudo dnf install gcc lcov
 
-# macOS (requires GCC from Homebrew; Apple Clang uses llvm-cov instead)
+# macOS (需要 Homebrew 的 GCC; Apple Clang 使用 llvm-cov 替代)
 brew install gcc lcov
 ```
 
-Note: With Clang on macOS, replace `gcov` references with `llvm-cov gcov`.
+注意: 在 macOS 上使用 Clang 时，将 `gcov` 引用替换为 `llvm-cov gcov`。
 
-## CMake Coverage Presets
+## CMake 覆盖率预设
 
-### CMakePresets.json (Recommended)
+### CMakePresets.json (推荐)
 
 ```json
 {
@@ -49,14 +49,14 @@ Note: With Clang on macOS, replace `gcov` references with `llvm-cov gcov`.
 }
 ```
 
-Usage:
+使用方法:
 ```bash
 cmake --preset coverage
 cmake --build --preset coverage
 ctest --preset coverage
 ```
 
-### CMakeLists.txt Coverage Option
+### CMakeLists.txt 覆盖率选项
 
 ```cmake
 option(ENABLE_COVERAGE "Enable gcov/lcov coverage instrumentation" OFF)
@@ -71,36 +71,36 @@ if(ENABLE_COVERAGE)
 endif()
 ```
 
-## Full lcov Workflow
+## 完整 lcov 工作流
 
 ```bash
 #!/usr/bin/env bash
-# Full coverage collection sequence
+# 完整覆盖率收集流程
 
 BUILD_DIR="build-coverage"
 SRC_DIR="$(pwd)"
 OUTPUT_DIR="htmlcov"
 
-# 1. Build
+# 1. 构建
 cmake -B "$BUILD_DIR" -DCMAKE_BUILD_TYPE=Debug -DENABLE_COVERAGE=ON
 cmake --build "$BUILD_DIR" --parallel
 
-# 2. Zero out any stale counters from previous runs
+# 2. 清除之前的计数器
 lcov --zerocounters --directory "$BUILD_DIR"
 
-# 3. Run tests (generates .gcda files in build dir)
+# 3. 运行测试 (在构建目录生成 .gcda 文件)
 cd "$BUILD_DIR"
 ctest --output-on-failure
 cd "$SRC_DIR"
 
-# 4. Capture coverage data
+# 4. 捕获覆盖率数据
 lcov --capture \
      --directory "$BUILD_DIR" \
      --output-file coverage_raw.info \
-     --no-external \             # exclude /usr/include and Qt headers
-     --gcov-tool gcov            # use 'llvm-cov gcov' on macOS with Clang
+     --no-external \             # 排除 /usr/include 和 Qt 头文件
+     --gcov-tool gcov            # macOS Clang 使用 'llvm-cov gcov'
 
-# 5. Remove noise: tests, moc files, UI-generated files
+# 5. 移除噪音: 测试、moc 文件、UI 生成的文件
 lcov --remove coverage_raw.info \
      '*/tests/*' \
      '*/moc_*' \
@@ -108,23 +108,23 @@ lcov --remove coverage_raw.info \
      '*/build-coverage/*' \
      --output-file coverage.info
 
-# 6. Display summary
+# 6. 显示摘要
 lcov --summary coverage.info
 
-# 7. Generate browsable HTML report
+# 7. 生成可浏览的 HTML 报告
 genhtml coverage.info \
         --output-directory "$OUTPUT_DIR" \
         --title "$(basename $SRC_DIR) Coverage" \
         --legend \
         --show-details \
-        --demangle-cpp            # requires c++filt
+        --demangle-cpp            # 需要 c++filt
 
 echo "Report: $OUTPUT_DIR/index.html"
 ```
 
-## Parsing Coverage for Gap Identification
+## 解析覆盖率以识别差距
 
-Extract files below threshold from lcov summary:
+从 lcov 摘要中提取低于阈值的文件:
 
 ```bash
 THRESHOLD=80
@@ -138,17 +138,17 @@ lcov --summary coverage.info 2>&1 | \
     }' | sort -n
 ```
 
-Extract specific uncovered lines from lcov data file:
+从 lcov 数据文件中提取特定的未覆盖行:
 
 ```bash
-# Parse lcov .info file for DA (line data) entries with hit count 0
+# 解析 lcov .info 文件中 DA (行数据) 条目中命中计数为 0 的内容
 grep -E "^(SF:|DA:)" coverage.info | \
     awk '/^SF:/{file=$0} /^DA:/{split($0,a,":"); split(a[2],b,","); if(b[2]==0) print file" line "b[1]}'
 ```
 
-## Clang/LLVM Coverage Alternative
+## Clang/LLVM 覆盖率替代方案
 
-If using Clang (especially on macOS):
+如果使用 Clang (特别是在 macOS 上):
 
 ```cmake
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -157,23 +157,23 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 ```
 
-Collect:
+收集:
 ```bash
-# After running tests:
+# 运行测试后:
 llvm-profdata merge -sparse *.profraw -o coverage.profdata
 llvm-cov report ./my_test -instr-profile=coverage.profdata
 llvm-cov show ./my_test -instr-profile=coverage.profdata \
     -format=html -output-dir=htmlcov
 ```
 
-## Troubleshooting
+## 故障排除
 
-**`.gcda` files not generated**: Tests never ran, or ran with a different binary. Verify `ctest` ran successfully before `lcov --capture`.
+**`.gcda` 文件未生成**: 测试未运行，或使用了不同的二进制文件。在 `lcov --capture` 之前确认 `ctest` 成功运行。
 
-**Coverage shows 0% for all files**: `-fprofile-arcs -ftest-coverage` missing from compile flags. Verify `ENABLE_COVERAGE=ON` was actually applied.
+**所有文件覆盖率显示 0%**: 编译标志中缺少 `-fprofile-arcs -ftest-coverage`。确认 `ENABLE_COVERAGE=ON` 实际生效。
 
-**`--no-external` misses Qt headers from non-system paths**: If Qt is installed in a custom prefix (not `/usr`), exclude it explicitly: `lcov --remove coverage_raw.info '/opt/qt6/*'`.
+**`--no-external` 遗漏了非系统路径的 Qt 头文件**: 如果 Qt 安装在自定义前缀 (非 `/usr`)，需要显式排除: `lcov --remove coverage_raw.info '/opt/qt6/*'`。
 
-**`genhtml: demangle failed`**: `c++filt` not installed, or remove `--demangle-cpp` flag.
+**`genhtml: demangle failed`**: 未安装 `c++filt`，或移除 `--demangle-cpp` 标志。
 
-**Different results across runs**: Object files from non-instrumented builds mixing with instrumented ones. Run `cmake --build --clean-first` after enabling coverage.
+**不同运行结果**: 来自非检测构建的对象文件与检测构建的对象文件混合。在启用覆盖率后运行 `cmake --build --clean-first`。

@@ -1,28 +1,28 @@
-# QML + PySide6: Exposing Python Objects to QML
+# QML + PySide6: 向 QML 暴露 Python 对象
 
-Three methods, listed newest-to-oldest. Prefer Method 1 for new code.
+三种方法，按从新到旧排序。对于新代码首选方法 1。
 
-## Method 1: Required Properties (preferred — Qt 6 idiomatic)
+## 方法 1: 必需属性 (首选 — Qt 6 惯用法)
 
-`setInitialProperties` + `required property` gives type-checked, scoped injection.
-`setContextProperty` is untyped and global — avoid for new code.
+`setInitialProperties` + `required property` 提供类型检查的、作用域受限的注入。
+`setContextProperty` 是无类型的且全局的 — 对新代码避免使用。
 
 ```python
-# Python — set before engine.load()
+# Python — 在 engine.load() 之前设置
 backend = Backend()
 engine.setInitialProperties({"backend": backend})
 engine.load("qrc:/ui/main.qml")
 ```
 
 ```qml
-// QML root — declare as required property; type-checked at load time
+// QML 根 — 声明为必需属性; 在加载时进行类型检查
 ApplicationWindow {
     required property Backend backend
-    // access via: backend.count, backend.increment(), etc.
+    // 通过以下方式访问: backend.count, backend.increment() 等
 }
 ```
 
-## Method 2: Context Property (valid for existing code)
+## 方法 2: 上下文属性 (适用于现有代码)
 
 ```python
 from PySide6.QtCore import QObject, Signal, Property, Slot
@@ -38,12 +38,12 @@ class Backend(QObject):
     def count(self) -> int:
         return self._count
 
-    @Slot()                          # @Slot is REQUIRED for QML invocation
+    @Slot()                          # @Slot 是 QML 调用所必需的
     def increment(self) -> None:
         self._count += 1
         self.countChanged.emit()
 
-    @Slot(str, result=str)           # return type declared in @Slot
+    @Slot(str, result=str)           # 在 @Slot 中声明返回类型
     def greet(self, name: str) -> str:
         return f"Hello, {name}!"
 
@@ -57,11 +57,11 @@ Button { onClicked: backend.increment() }
 Label { text: backend.greet("World") }
 ```
 
-**`@Slot` is mandatory for QML-callable methods.** QML has no `Q_INVOKABLE` equivalent — any Python method callable from QML must have `@Slot`. Missing it causes `TypeError` at runtime.
+**`@Slot` 对 QML 可调用的方法是强制的。** QML 没有 `Q_INVOKABLE` 等效物 — 任何可从 QML 调用的 Python 方法必须有 `@Slot`。缺少它会在运行时导致 `TypeError`。
 
-## Method 3: Registered QML Type (reusable, namespaced)
+## 方法 3: 注册的 QML 类型 (可重用，有命名空间)
 
-Use when the Python class is a model or component that QML should instantiate directly.
+当 Python 类是 QML 应直接实例化的模型或组件时使用。
 
 ```python
 from PySide6.QtQml import QmlElement

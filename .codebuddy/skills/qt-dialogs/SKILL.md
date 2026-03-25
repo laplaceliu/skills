@@ -1,40 +1,40 @@
 ---
 name: qt-dialogs
 description: >
-  Qt dialog patterns — QDialog, QMessageBox, QFileDialog, QInputDialog, and custom modal/modeless dialogs. Use when creating confirmation prompts, file pickers, settings dialogs, custom data entry dialogs, or wizard-style multi-step dialogs.
+  Qt 对话框模式 — QDialog、QMessageBox、QFileDialog、QInputDialog 以及自定义模态/非模态对话框。当需要创建确认提示、文件选择器、设置对话框、自定义数据输入对话框或向导式多步对话框时使用此技能。
 
-  Trigger phrases: "dialog", "QMessageBox", "QFileDialog", "QInputDialog", "modal", "modeless", "settings dialog", "confirm dialog", "custom dialog", "file picker", "wizard", "popup"
+  触发短语："dialog"、"QMessageBox"、"QFileDialog"、"QInputDialog"、"modal"、"modeless"、"settings dialog"、"confirm dialog"、"custom dialog"、"file picker"、"wizard"、"popup"
 version: 1.0.0
 ---
 
-## Qt Dialog Patterns
+## Qt 对话框模式
 
-### QMessageBox — Standard Prompts
+### QMessageBox — 标准提示
 
 ```python
 from PySide6.QtWidgets import QMessageBox
 
-# Confirmation dialog
+# 确认对话框
 def confirm_delete(parent, item_name: str) -> bool:
     result = QMessageBox.question(
         parent,
         "Confirm Delete",
         f"Delete '{item_name}'? This cannot be undone.",
         QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-        QMessageBox.StandardButton.No,   # default button
+        QMessageBox.StandardButton.No,   # 默认按钮
     )
     return result == QMessageBox.StandardButton.Yes
 
-# Error
+# 错误
 QMessageBox.critical(parent, "Error", f"Failed to save: {error}")
 
-# Warning
+# 警告
 QMessageBox.warning(parent, "Warning", "File already exists. Overwrite?")
 
-# Information
+# 信息
 QMessageBox.information(parent, "Done", "Export completed successfully.")
 
-# Custom buttons
+# 自定义按钮
 msg = QMessageBox(parent)
 msg.setWindowTitle("Unsaved Changes")
 msg.setText("You have unsaved changes.")
@@ -46,17 +46,17 @@ msg.exec()
 if msg.clickedButton() is save_btn:
     self._save()
 elif msg.clickedButton() is discard_btn:
-    pass  # discard
-# else: Cancel — do nothing
+    pass  # 丢弃
+# 否则：取消 — 不做任何事
 ```
 
-### QFileDialog — File and Directory Pickers
+### QFileDialog — 文件和目录选择器
 
 ```python
 from PySide6.QtWidgets import QFileDialog
 from pathlib import Path
 
-# Open single file
+# 打开单个文件
 path, _ = QFileDialog.getOpenFileName(
     parent,
     "Open File",
@@ -66,23 +66,23 @@ path, _ = QFileDialog.getOpenFileName(
 if path:
     self._load(Path(path))
 
-# Open multiple files
+# 打开多个文件
 paths, _ = QFileDialog.getOpenFileNames(parent, "Select Images", "", "Images (*.png *.jpg *.svg)")
 
-# Save file
+# 保存文件
 path, _ = QFileDialog.getSaveFileName(
     parent, "Save As", "export.csv", "CSV (*.csv)"
 )
 if path:
     self._export(Path(path))
 
-# Select directory
+# 选择目录
 directory = QFileDialog.getExistingDirectory(parent, "Select Output Folder")
 ```
 
-The filter string format is `"Description (*.ext *.ext2);;Description2 (*.ext3)"`.
+过滤器字符串格式为 `"Description (*.ext *.ext2);;Description2 (*.ext3)"`。
 
-### Custom QDialog
+### 自定义 QDialog
 
 ```python
 from PySide6.QtWidgets import (
@@ -110,7 +110,7 @@ class AddPersonDialog(QDialog):
         form.addRow("Email:", self._email_edit)
         layout.addLayout(form)
 
-        # Standard OK / Cancel buttons
+        # 标准确定/取消按钮
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
         )
@@ -122,7 +122,7 @@ class AddPersonDialog(QDialog):
         if not self._name_edit.text().strip():
             QMessageBox.warning(self, "Validation", "Name is required.")
             return
-        self.accept()   # closes dialog and returns QDialog.Accepted
+        self.accept()   # 关闭对话框并返回 QDialog.Accepted
 
     def name(self) -> str:
         return self._name_edit.text().strip()
@@ -130,37 +130,38 @@ class AddPersonDialog(QDialog):
     def email(self) -> str:
         return self._email_edit.text().strip()
 
-# Usage
+# 用法
 dialog = AddPersonDialog(self)
 if dialog.exec() == QDialog.DialogCode.Accepted:
     self._model.add_person(dialog.name(), dialog.email())
 ```
 
-Use `QDialogButtonBox` for standard buttons — it respects platform button order conventions (OK/Cancel vs Cancel/OK).
+使用 `QDialogButtonBox` 获取标准按钮 — 它遵守平台按钮顺序约定（OK/取消 vs 取消/OK）。
 
-### Modal vs Modeless
+### 模态 vs 非模态
 
 ```python
-# Modal — blocks input to parent window
+# 模态 — 阻止对父窗口的输入
 dialog.setModal(True)
-dialog.exec()      # blocks until closed
+dialog.exec()      # 阻塞直到关闭
 
-# Modeless — user can interact with parent
+# 非模态 — 用户可以与父窗口交互
 dialog.setModal(False)
-dialog.show()      # non-blocking
-dialog.raise_()    # bring to front
+dialog.show()      # 非阻塞
+dialog.raise_()    # 带到前面
 dialog.activateWindow()
 ```
 
-For modeless dialogs, keep a reference to prevent garbage collection:
+对于非模态对话框，请保留引用以防止垃圾回收：
+
 ```python
 self._settings_dialog = SettingsDialog(self)
 self._settings_dialog.show()
 ```
 
-### Settings Dialog Pattern
+### 设置对话框模式
 
-Settings dialogs should apply changes live (on change) or on explicit OK:
+设置对话框应该实时应用更改（更改时）或在明确点击确定时应用：
 
 ```python
 class SettingsDialog(QDialog):
@@ -174,9 +175,9 @@ class SettingsDialog(QDialog):
 
     def _on_change(self) -> None:
         self._current["theme"] = self._theme_combo.currentText()
-        self.settings_changed.emit(self._current)   # live preview
+        self.settings_changed.emit(self._current)   # 实时预览
 
     def reject(self) -> None:
-        self.settings_changed.emit(self._original)  # restore on cancel
+        self.settings_changed.emit(self._original)  # 取消时恢复
         super().reject()
 ```

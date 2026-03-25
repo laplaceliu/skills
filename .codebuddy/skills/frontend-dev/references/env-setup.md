@@ -1,33 +1,33 @@
-# Getting Started
+# 快速入门
 
-## 1. Set API key
+## 1. 设置 API Key
 
 ```bash
-export MINIMAX_API_KEY="<paste-your-key-here>"
+export MINIMAX_API_KEY="<在此粘贴您的密钥>"
 ```
 
-## 2. Install dependencies
+## 2. 安装依赖
 
 ```bash
 pip install requests
 
-# FFmpeg (optional, for audio post-processing)
-# macOS:
+# FFmpeg（可选，用于音频后处理）
+# macOS：
 brew install ffmpeg
-# Ubuntu:
+# Ubuntu：
 sudo apt install ffmpeg
 ```
 
-## 3. Quick test
+## 3. 快速测试
 
 ```bash
 python scripts/minimax_tts.py "Hello world" -o test.mp3
 ```
 
-If successful, you'll see `OK: xxxxx bytes -> test.mp3`.
+如果成功，您将看到 `OK: xxxxx bytes -> test.mp3`。
 
-## Next steps
+## 下一步
 
-- **Voice selection**: See [minimax-voice-catalog.md](minimax-voice-catalog.md)
-- **TTS workflows**: See [minimax-tts-guide.md](minimax-tts-guide.md)
-- **Troubleshooting**: See [troubleshooting.md](troubleshooting.md)
+- **选择声音**：参见 [minimax-voice-catalog.md](minimax-voice-catalog.md)
+- **TTS 工作流**：参见 [minimax-tts-guide.md](minimax-tts-guide.md)
+- **故障排除**：参见 [troubleshooting.md](troubleshooting.md)
