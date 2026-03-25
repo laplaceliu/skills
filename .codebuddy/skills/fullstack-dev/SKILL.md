@@ -1,14 +1,14 @@
 ---
 name: fullstack-dev
 description: |
-  Full-stack backend architecture and frontend-backend integration guide.
-  TRIGGER when: building a full-stack app, creating REST API with frontend, scaffolding backend service,
-  building todo app, building CRUD app, building real-time app, building chat app,
-  Express + React, Next.js API, Node.js backend, Python backend, Go backend,
-  designing service layers, implementing error handling, managing config/auth,
-  setting up API clients, implementing auth flows, handling file uploads,
-  adding real-time features (SSE/WebSocket), hardening for production.
-  DO NOT TRIGGER when: pure frontend UI work, pure CSS/styling, database schema only.
+  全栈后端架构与前后端集成指南。
+  触发条件: 构建全栈应用、创建带前端的 REST API、搭建后端服务、
+  构建待办应用、构建 CRUD 应用、构建实时应用、构建聊天应用、
+  Express + React、Next.js API、Node.js 后端、Python 后端、Go 后端、
+  设计服务层、实现错误处理、管理配置/认证、
+  设置 API 客户端、实现认证流程、处理文件上传、
+  添加实时功能 (SSE/WebSocket)、生产环境加固。
+  不触发条件: 纯前端 UI 工作、纯 CSS/样式、仅数据库模式设计。
 license: MIT
 metadata:
   category: full-stack
@@ -23,205 +23,205 @@ metadata:
     - ThoughtWorks Technology Radar
 ---
 
-# Full-Stack Development Practices
+# 全栈开发实践
 
-## MANDATORY WORKFLOW — Follow These Steps In Order
+## 强制工作流 — 按顺序执行以下步骤
 
-**When this skill is triggered, you MUST follow this workflow before writing any code.**
+**当此技能被触发时，在编写任何代码前必须遵循此工作流。**
 
-### Step 0: Gather Requirements
+### 第 0 步: 收集需求
 
-Before scaffolding anything, ask the user to clarify (or infer from context):
+在开始搭建项目之前，请用户明确（或从上下文中推断）:
 
-1. **Stack**: Language/framework for backend and frontend (e.g., Express + React, Django + Vue, Go + HTMX)
-2. **Service type**: API-only, full-stack monolith, or microservice?
-3. **Database**: SQL (PostgreSQL, SQLite, MySQL) or NoSQL (MongoDB, Redis)?
-4. **Integration**: REST, GraphQL, tRPC, or gRPC?
-5. **Real-time**: Needed? If yes — SSE, WebSocket, or polling?
-6. **Auth**: Needed? If yes — JWT, session, OAuth, or third-party (Clerk, Auth.js)?
+1. **技术栈**: 后端和前端的语言/框架 (如 Express + React、Django + Vue、Go + HTMX)
+2. **服务类型**: 纯 API、全栈单体还是微服务?
+3. **数据库**: SQL (PostgreSQL、SQLite、MySQL) 还是 NoSQL (MongoDB、Redis)?
+4. **集成方式**: REST、GraphQL、tRPC 还是 gRPC?
+5. **实时功能**: 是否需要? 如需 — 使用 SSE、WebSocket 还是轮询?
+6. **认证**: 是否需要? 如需 — 使用 JWT、session、OAuth 还是第三方 (Clerk、Auth.js)?
 
-If the user has already specified these in their request, skip asking and proceed.
+如果用户已在请求中说明这些，跳过询问直接继续。
 
-### Step 1: Architectural Decisions
+### 第 1 步: 架构决策
 
-Based on requirements, make and state these decisions before coding:
+根据需求，在编码前做出并说明以下决策:
 
-| Decision | Options | Reference |
-|----------|---------|-----------|
-| Project structure | Feature-first (recommended) vs layer-first | [Section 1](#1-project-structure--layering-critical) |
-| API client approach | Typed fetch / React Query / tRPC / OpenAPI codegen | [Section 5](#5-api-client-patterns-medium) |
-| Auth strategy | JWT + refresh / session / third-party | [Section 6](#6-authentication--middleware-high) |
-| Real-time method | Polling / SSE / WebSocket | [Section 11](#11-real-time-patterns-medium) |
-| Error handling | Typed error hierarchy + global handler | [Section 3](#3-error-handling--resilience-high) |
+| 决策项 | 选项 | 参考 |
+|--------|------|------|
+| 项目结构 | 特性优先 (推荐) vs 分层优先 | [第 1 节](#1-项目结构与分层-关键) |
+| API 客户端方案 | 类型化 fetch / React Query / tRPC / OpenAPI 代码生成 | [第 5 节](#5-api-客户端模式-中等) |
+| 认证策略 | JWT + 刷新 / session / 第三方 | [第 6 节](#6-认证与中间件-高) |
+| 实时方案 | 轮询 / SSE / WebSocket | [第 11 节](#11-实时模式-中等) |
+| 错误处理 | 类型化错误层次 + 全局处理器 | [第 3 节](#3-错误处理与弹性-高) |
 
-Briefly explain each choice (1 sentence per decision).
+简要解释每个选择 (每项 1 句话)。
 
-### Step 2: Scaffold with Checklist
+### 第 2 步: 使用清单搭建项目
 
-Use the appropriate checklist below. Ensure ALL checked items are implemented — do not skip any.
+使用下方合适的清单。确保所有勾选项都已实现 — 不要跳过任何一项。
 
-### Step 3: Implement Following Patterns
+### 第 3 步: 按模式实现
 
-Write code following the patterns in this document. Reference specific sections as you implement each part.
+编写代码时遵循本文档中的模式。实现各部分时引用具体章节。
 
-### Step 4: Test & Verify
+### 第 4 步: 测试与验证
 
-After implementation, run these checks before claiming completion:
+实现完成后，在声称完成前运行以下检查:
 
-1. **Build check**: Ensure both backend and frontend compile without errors
+1. **构建检查**: 确保前后端都能无错误编译
    ```bash
-   # Backend
+   # 后端
    cd server && npm run build
-   # Frontend
+   # 前端
    cd client && npm run build
    ```
-2. **Start & smoke test**: Start the server, verify key endpoints return expected responses
+2. **启动与冒烟测试**: 启动服务器，验证关键端点返回预期响应
    ```bash
-   # Start server, then test
+   # 启动服务器，然后测试
    curl http://localhost:3000/health
    curl http://localhost:3000/api/<resource>
    ```
-3. **Integration check**: Verify frontend can connect to backend (CORS, API base URL, auth flow)
-4. **Real-time check** (if applicable): Open two browser tabs, verify changes sync
+3. **集成检查**: 验证前端能连接到后端 (CORS、API 基础 URL、认证流程)
+4. **实时功能检查** (如适用): 打开两个浏览器标签，验证变更同步
 
-If any check fails, fix the issue before proceeding.
+如有任何检查失败，先修复问题再继续。
 
-### Step 5: Handoff Summary
+### 第 5 步: 移交摘要
 
-Provide a brief summary to the user:
+向用户提供简要摘要:
 
-- **What was built**: List of implemented features and endpoints
-- **How to run**: Exact commands to start backend and frontend
-- **What's missing / next steps**: Any deferred items, known limitations, or recommended improvements
-- **Key files**: List the most important files the user should know about
-
----
-
-## Scope
-
-**USE this skill when:**
-- Building a full-stack application (backend + frontend)
-- Scaffolding a new backend service or API
-- Designing service layers and module boundaries
-- Implementing database access, caching, or background jobs
-- Writing error handling, logging, or configuration management
-- Reviewing backend code for architectural issues
-- Hardening for production
-- Setting up API clients, auth flows, file uploads, or real-time features
-
-**NOT for:**
-- Pure frontend/UI concerns (use your frontend framework's docs)
-- Pure database schema design without backend context
+- **已完成**: 实现的功能和端点列表
+- **如何运行**: 启动前后端的精确命令
+- **缺失项/后续步骤**: 任何延期项目、已知限制或建议改进
+- **关键文件**: 用户应了解的最重要的文件列表
 
 ---
 
-## Quick Start — New Backend Service Checklist
+## 适用范围
 
-- [ ] Project scaffolded with **feature-first** structure
-- [ ] Configuration **centralized**, env vars **validated at startup** (fail fast)
-- [ ] **Typed error hierarchy** defined (not generic `Error`)
-- [ ] **Global error handler** middleware
-- [ ] **Structured JSON logging** with request ID propagation
-- [ ] Database: **migrations** set up, **connection pooling** configured
-- [ ] **Input validation** on all endpoints (Zod / Pydantic / Go validator)
-- [ ] **Authentication middleware** in place
-- [ ] **Health check** endpoints (`/health`, `/ready`)
-- [ ] **Graceful shutdown** handling (SIGTERM)
-- [ ] **CORS** configured (explicit origins, not `*`)
-- [ ] **Security headers** (helmet or equivalent)
-- [ ] `.env.example` committed (no real secrets)
+**使用此技能的情况:**
+- 构建全栈应用 (后端 + 前端)
+- 搭建新的后端服务或 API
+- 设计服务层和模块边界
+- 实现数据库访问、缓存或后台任务
+- 编写错误处理、日志记录或配置管理
+- 审查后端代码的架构问题
+- 生产环境加固
+- 设置 API 客户端、认证流程、文件上传或实时功能
 
-## Quick Start — Frontend-Backend Integration Checklist
-
-- [ ] **API client** configured (typed fetch wrapper, React Query, tRPC, or OpenAPI generated)
-- [ ] **Base URL** from environment variable (not hardcoded)
-- [ ] **Auth token** attached to requests automatically (interceptor / middleware)
-- [ ] **Error handling** — API errors mapped to user-facing messages
-- [ ] **Loading states** handled (skeleton/spinner, not blank screen)
-- [ ] **Type safety** across the boundary (shared types, OpenAPI, or tRPC)
-- [ ] **CORS** configured with explicit origins (not `*` in production)
-- [ ] **Refresh token** flow implemented (httpOnly cookie + transparent retry on 401)
+**不适用的情况:**
+- 纯前端/UI 问题 (使用你前端框架的文档)
+- 无后端上下文的纯数据库模式设计
 
 ---
 
-## Quick Navigation
+## 快速开始 — 新后端服务清单
 
-| Need to… | Jump to |
-|----------|---------|
-| Organize project folders | [1. Project Structure](#1-project-structure--layering-critical) |
-| Manage config + secrets | [2. Configuration](#2-configuration--environment-critical) |
-| Handle errors properly | [3. Error Handling](#3-error-handling--resilience-high) |
-| Write database code | [4. Database Access Patterns](#4-database-access-patterns-high) |
-| Set up API client from frontend | [5. API Client Patterns](#5-api-client-patterns-medium) |
-| Add auth middleware | [6. Auth & Middleware](#6-authentication--middleware-high) |
-| Set up logging | [7. Logging & Observability](#7-logging--observability-medium-high) |
-| Add background jobs | [8. Background Jobs](#8-background-jobs--async-medium) |
-| Implement caching | [9. Caching](#9-caching-patterns-medium) |
-| Upload files (presigned URL, multipart) | [10. File Upload Patterns](#10-file-upload-patterns-medium) |
-| Add real-time features (SSE, WebSocket) | [11. Real-Time Patterns](#11-real-time-patterns-medium) |
-| Handle API errors in frontend UI | [12. Cross-Boundary Error Handling](#12-cross-boundary-error-handling-medium) |
-| Harden for production | [13. Production Hardening](#13-production-hardening-medium) |
-| Design API endpoints | [API Design](references/api-design.md) |
-| Design database schema | [Database Schema](references/db-schema.md) |
-| Auth flow (JWT, refresh, Next.js SSR, RBAC) | [references/auth-flow.md](references/auth-flow.md) |
-| CORS, env vars, environment management | [references/environment-management.md](references/environment-management.md) |
+- [ ] 使用**特性优先**结构搭建项目
+- [ ] 配置**集中式**管理，环境变量**在启动时验证** (快速失败)
+- [ ] 定义**类型化错误层次** (非通用 `Error`)
+- [ ] 添加**全局错误处理**中间件
+- [ ] 带请求 ID 传播的**结构化 JSON 日志**
+- [ ] 数据库: 设置**迁移**，配置**连接池**
+- [ ] 所有端点的**输入验证** (Zod / Pydantic / Go validator)
+- [ ] 添加**认证中间件**
+- [ ] **健康检查**端点 (`/health`, `/ready`)
+- [ ] **优雅关闭**处理 (SIGTERM)
+- [ ] 配置 **CORS** (显式指定来源，非 `*`)
+- [ ] **安全响应头** (helmet 或等效方案)
+- [ ] 提交 `.env.example` (不含真实密钥)
+
+## 快速开始 — 前后端集成清单
+
+- [ ] 配置 **API 客户端** (类型化 fetch 包装、React Query、tRPC 或 OpenAPI 生成)
+- [ ] **基础 URL** 来自环境变量 (非硬编码)
+- [ ] **认证令牌** 自动附加到请求 (拦截器 / 中间件)
+- [ ] **错误处理** — API 错误映射到用户友好的消息
+- [ ] 处理 **加载状态** (骨架屏/加载动画，非空白屏幕)
+- [ ] 跨边界的**类型安全** (共享类型、OpenAPI 或 tRPC)
+- [ ] **CORS** 配置显式来源 (生产环境非 `*`)
+- [ ] 实现 **刷新令牌** 流程 (httpOnly cookie + 401 时自动重试)
 
 ---
 
-## Core Principles (7 Iron Rules)
+## 快速导航
+
+| 需要… | 跳转到 |
+|-------|--------|
+| 组织项目文件夹 | [1. 项目结构](#1-项目结构与分层-关键) |
+| 管理配置 + 密钥 | [2. 配置](#2-配置与环境-关键) |
+| 正确处理错误 | [3. 错误处理](#3-错误处理与弹性-高) |
+| 编写数据库代码 | [4. 数据库访问模式](#4-数据库访问模式-高) |
+| 从前端设置 API 客户端 | [5. API 客户端模式](#5-api-客户端模式-中等) |
+| 添加认证中间件 | [6. 认证与中间件](#6-认证与中间件-高) |
+| 设置日志 | [7. 日志与可观测性](#7-日志与可观测性-中-高) |
+| 添加后台任务 | [8. 后台任务](#8-后台任务与异步-中等) |
+| 实现缓存 | [9. 缓存](#9-缓存模式-中等) |
+| 上传文件 (预签名 URL、分片) | [10. 文件上传模式](#10-文件上传模式-中等) |
+| 添加实时功能 (SSE、WebSocket) | [11. 实时模式](#11-实时模式-中等) |
+| 在前端 UI 处理 API 错误 | [12. 跨边界错误处理](#12-跨边界错误处理-中等) |
+| 生产环境加固 | [13. 生产加固](#13-生产加固-中等) |
+| 设计 API 端点 | [API 设计](references/api-design.md) |
+| 设计数据库模式 | [数据库模式](references/db-schema.md) |
+| 认证流程 (JWT、刷新、Next.js SSR、RBAC) | [references/auth-flow.md](references/auth-flow.md) |
+| CORS、环境变量、环境管理 | [references/environment-management.md](references/environment-management.md) |
+
+---
+
+## 核心原则 (7 条铁律)
 
 ```
-1. ✅ Organize by FEATURE, not by technical layer
-2. ✅ Controllers never contain business logic
-3. ✅ Services never import HTTP request/response types
-4. ✅ All config from env vars, validated at startup, fail fast
-5. ✅ Every error is typed, logged, and returns consistent format
-6. ✅ All input validated at the boundary — trust nothing from client
-7. ✅ Structured JSON logging with request ID — not console.log
+1. 按特性组织，不按技术层组织
+2. 控制器绝不含业务逻辑
+3. 服务绝不导入 HTTP 请求/响应类型
+4. 所有配置来自环境变量，启动时验证，快速失败
+5. 每个错误都有类型、记录日志，并返回统一格式
+6. 在边界处验证所有输入 — 不信任来自客户端的任何内容
+7. 结构化 JSON 日志带请求 ID — 不用 console.log
 ```
 
 ---
 
-## 1. Project Structure & Layering (CRITICAL)
+## 1. 项目结构与分层 (关键)
 
-### Feature-First Organization
+### 特性优先组织
 
 ```
-✅ Feature-first                    ❌ Layer-first
-src/                                src/
-  orders/                             controllers/
-    order.controller.ts                 order.controller.ts
-    order.service.ts                    user.controller.ts
-    order.repository.ts               services/
-    order.dto.ts                        order.service.ts
-    order.test.ts                       user.service.ts
-  users/                              repositories/
-    user.controller.ts                  ...
+特性优先                    分层优先
+src/                        src/
+  orders/                     controllers/
+    order.controller.ts         order.controller.ts
+    order.service.ts            user.controller.ts
+    order.repository.ts       services/
+    order.dto.ts                order.service.ts
+    order.test.ts               user.service.ts
+  users/                      repositories/
+    user.controller.ts          ...
     user.service.ts
   shared/
     database/
     middleware/
 ```
 
-### Three-Layer Architecture
+### 三层架构
 
 ```
-Controller (HTTP) → Service (Business Logic) → Repository (Data Access)
+控制器 (HTTP) → 服务 (业务逻辑) → 仓库 (数据访问)
 ```
 
-| Layer | Responsibility | ❌ Never |
-|-------|---------------|---------|
-| Controller | Parse request, validate, call service, format response | Business logic, DB queries |
-| Service | Business rules, orchestration, transaction mgmt | HTTP types (req/res), direct DB |
-| Repository | Database queries, external API calls | Business logic, HTTP types |
+| 层 | 职责 | 绝不 |
+|-----|-------|------|
+| 控制器 | 解析请求、验证、调用服务、格式化响应 | 业务逻辑、数据库查询 |
+| 服务 | 业务规则、编排、事务管理 | HTTP 类型 (req/res)、直接数据库访问 |
+| 仓库 | 数据库查询、外部 API 调用 | 业务逻辑、HTTP 类型 |
 
-### Dependency Injection (All Languages)
+### 依赖注入 (所有语言)
 
 **TypeScript:**
 ```typescript
 class OrderService {
   constructor(
-    private readonly orderRepo: OrderRepository,    // ✅ injected interface
+    private readonly orderRepo: OrderRepository,    // 注入接口
     private readonly emailService: EmailService,
   ) {}
 }
@@ -231,14 +231,14 @@ class OrderService {
 ```python
 class OrderService:
     def __init__(self, order_repo: OrderRepository, email_service: EmailService):
-        self.order_repo = order_repo                 # ✅ injected
+        self.order_repo = order_repo                 # 已注入
         self.email_service = email_service
 ```
 
 **Go:**
 ```go
 type OrderService struct {
-    orderRepo    OrderRepository                      // ✅ interface
+    orderRepo    OrderRepository                      // 接口
     emailService EmailService
 }
 
@@ -249,9 +249,9 @@ func NewOrderService(repo OrderRepository, email EmailService) *OrderService {
 
 ---
 
-## 2. Configuration & Environment (CRITICAL)
+## 2. 配置与环境 (关键)
 
-### Centralized, Typed, Fail-Fast
+### 集中式、类型化、快速失败
 
 **TypeScript:**
 ```typescript
@@ -263,7 +263,7 @@ const config = {
 
 function requiredEnv(name: string): string {
   const value = process.env[name];
-  if (!value) throw new Error(`Missing required env var: ${name}`);  // fail fast
+  if (!value) throw new Error(`Missing required env var: ${name}`);  // 快速失败
   return value;
 }
 ```
@@ -273,37 +273,37 @@ function requiredEnv(name: string): string {
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
-    database_url: str                        # required — app won't start without it
-    jwt_secret: str                          # required
-    port: int = 3000                         # optional with default
+    database_url: str                        # 必需 — 缺失则应用无法启动
+    jwt_secret: str                          # 必需
+    port: int = 3000                         # 可选，有默认值
     db_pool_size: int = 10
     class Config:
         env_file = ".env"
 
-settings = Settings()                        # fails fast if DATABASE_URL missing
+settings = Settings()                        # 如 DATABASE_URL 缺失则快速失败
 ```
 
-### Rules
+### 规则
 
 ```
-✅ All config via environment variables (Twelve-Factor)
-✅ Validate required vars at startup — fail fast
-✅ Type-cast at config layer, not at usage sites
-✅ Commit .env.example with dummy values
+所有配置通过环境变量 (十二要素)
+启动时验证必需变量 — 快速失败
+在配置层进行类型转换，非使用处
+提交带虚拟值的 .env.example
 
-❌ Never hardcode secrets, URLs, or credentials
-❌ Never commit .env files
-❌ Never scatter process.env / os.environ throughout code
+绝不硬编码密钥、URL 或凭证
+绝不提交 .env 文件
+绝不在代码中散布 process.env / os.environ
 ```
 
 ---
 
-## 3. Error Handling & Resilience (HIGH)
+## 3. 错误处理与弹性 (高)
 
-### Typed Error Hierarchy
+### 类型化错误层次
 
 ```typescript
-// Base (TypeScript)
+// 基础 (TypeScript)
 class AppError extends Error {
   constructor(
     message: string,
@@ -325,7 +325,7 @@ class ValidationError extends AppError {
 ```
 
 ```python
-# Base (Python)
+# 基础 (Python)
 class AppError(Exception):
     def __init__(self, message: str, code: str, status_code: int):
         self.message, self.code, self.status_code = message, code, status_code
@@ -335,7 +335,7 @@ class NotFoundError(AppError):
         super().__init__(f"{resource} not found: {id}", "NOT_FOUND", 404)
 ```
 
-### Global Error Handler
+### 全局错误处理器
 
 ```typescript
 // TypeScript (Express)
@@ -351,25 +351,25 @@ app.use((err, req, res, next) => {
 });
 ```
 
-### Rules
+### 规则
 
 ```
-✅ Typed, domain-specific error classes
-✅ Global error handler catches everything
-✅ Operational errors → structured response
-✅ Programming errors → log + generic 500
-✅ Retry transient failures with exponential backoff
+类型化、领域特定的错误类
+全局错误处理器捕获所有错误
+运维错误 → 结构化响应
+程序错误 → 记录日志 + 通用 500
+使用指数退避重试瞬时失败
 
-❌ Never catch and ignore errors silently
-❌ Never return stack traces to client
-❌ Never throw generic Error('something')
+绝不静默捕获并忽略错误
+绝不在客户端暴露堆栈跟踪
+绝不抛出通用 Error('something')
 ```
 
 ---
 
-## 4. Database Access Patterns (HIGH)
+## 4. 数据库访问模式 (高)
 
-### Migrations Always
+### 始终使用迁移
 
 ```bash
 # TypeScript (Prisma)           # Python (Alembic)              # Go (golang-migrate)
@@ -378,24 +378,24 @@ npx prisma migrate deploy       alembic upgrade head             migrate -databa
 ```
 
 ```
-✅ Schema changes via migrations, never manual SQL
-✅ Migrations must be reversible
-✅ Review migration SQL before production
-❌ Never modify production schema manually
+通过迁移进行模式变更，绝不手动 SQL
+迁移必须可逆
+生产环境前审查迁移 SQL
+绝不手动修改生产模式
 ```
 
-### N+1 Prevention
+### 防止 N+1
 
 ```typescript
-// ❌ N+1: 1 query + N queries
+// N+1: 1 次查询 + N 次查询
 const orders = await db.order.findMany();
 for (const o of orders) { o.items = await db.item.findMany({ where: { orderId: o.id } }); }
 
-// ✅ Single JOIN query
+// 单次 JOIN 查询
 const orders = await db.order.findMany({ include: { items: true } });
 ```
 
-### Transactions for Multi-Step Writes
+### 多步写入使用事务
 
 ```typescript
 await db.$transaction(async (tx) => {
@@ -405,17 +405,17 @@ await db.$transaction(async (tx) => {
 });
 ```
 
-### Connection Pooling
+### 连接池
 
-Pool size = `(CPU cores × 2) + spindle_count` (start with 10-20). Always set connection timeout. Use PgBouncer for serverless.
+连接池大小 = `(CPU 核心数 × 2) + 磁盘数` (从 10-20 开始)。始终设置连接超时。无服务器环境使用 PgBouncer。
 
 ---
 
-## 5. API Client Patterns (MEDIUM)
+## 5. API 客户端模式 (中等)
 
-The "glue layer" between frontend and backend. Choose the approach that fits your team and stack.
+前后端之间的"胶水层"。选择适合你团队和技术的方案。
 
-### Option A: Typed Fetch Wrapper (Simple, No Dependencies)
+### 选项 A: 类型化 Fetch 包装器 (简单，无依赖)
 
 ```typescript
 // lib/api-client.ts
@@ -428,7 +428,7 @@ class ApiError extends Error {
 }
 
 async function api<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const token = getAuthToken();  // from cookie / memory / context
+  const token = getAuthToken();  // 从 cookie / 内存 / 上下文获取
 
   const res = await fetch(`${BASE_URL}${path}`, {
     ...options,
@@ -457,7 +457,7 @@ export const apiClient = {
 };
 ```
 
-### Option B: React Query + Typed Client (Recommended for React)
+### 选项 B: React Query + 类型化客户端 (React 推荐)
 
 ```typescript
 // hooks/use-orders.ts
@@ -471,7 +471,7 @@ export function useOrders() {
   return useQuery({
     queryKey: ['orders'],
     queryFn: () => apiClient.get<{ data: Order[] }>('/api/orders'),
-    staleTime: 1000 * 60,  // 1 min
+    staleTime: 1000 * 60,  // 1 分钟
   });
 }
 
@@ -486,7 +486,7 @@ export function useCreateOrder() {
   });
 }
 
-// Usage in component:
+// 组件中使用:
 function OrdersPage() {
   const { data, isLoading, error } = useOrders();
   const createOrder = useCreateOrder();
@@ -496,10 +496,10 @@ function OrdersPage() {
 }
 ```
 
-### Option C: tRPC (Same Team Owns Both Sides)
+### 选项 C: tRPC (同一团队维护前后端)
 
 ```typescript
-// server: trpc/router.ts
+// 服务端: trpc/router.ts
 export const appRouter = router({
   orders: router({
     list: publicProcedure.query(async () => {
@@ -514,12 +514,12 @@ export const appRouter = router({
 });
 export type AppRouter = typeof appRouter;
 
-// client: automatic type safety, no code generation
+// 客户端: 自动类型安全，无需代码生成
 const { data } = trpc.orders.list.useQuery();
 const createOrder = trpc.orders.create.useMutation();
 ```
 
-### Option D: OpenAPI Generated Client (Public / Multi-Consumer APIs)
+### 选项 D: OpenAPI 生成客户端 (公开 / 多消费者 API)
 
 ```bash
 npx openapi-typescript-codegen \
@@ -528,41 +528,41 @@ npx openapi-typescript-codegen \
   --client axios
 ```
 
-### Decision: Which API Client?
+### 决策: 使用哪个 API 客户端?
 
-| Approach | When | Type Safety | Effort |
-|----------|------|-------------|--------|
-| Typed fetch wrapper | Simple apps, small teams | Manual types | Low |
-| React Query + fetch | React apps, server state | Manual types | Medium |
-| tRPC | Same team, TypeScript both sides | Automatic | Low |
-| OpenAPI generated | Public API, multi-consumer | Automatic | Medium |
-| GraphQL codegen | GraphQL APIs | Automatic | Medium |
+| 方案 | 适用场景 | 类型安全 | 工作量 |
+|------|----------|----------|--------|
+| 类型化 fetch 包装器 | 简单应用、小团队 | 手动类型 | 低 |
+| React Query + fetch | React 应用、服务器状态 | 手动类型 | 中等 |
+| tRPC | 同一团队、两边 TypeScript | 自动 | 低 |
+| OpenAPI 生成 | 公开 API、多消费者 | 自动 | 中等 |
+| GraphQL codegen | GraphQL API | 自动 | 中等 |
 
 ---
 
-## 6. Authentication & Middleware (HIGH)
+## 6. 认证与中间件 (高)
 
-> **Full reference:** [references/auth-flow.md](references/auth-flow.md) — JWT bearer flow, automatic token refresh, Next.js server-side auth, RBAC pattern, backend middleware order.
+> **完整参考:** [references/auth-flow.md](references/auth-flow.md) — JWT 持有者流程、自动令牌刷新、Next.js 服务端认证、RBAC 模式、后端中间件顺序。
 
-### Standard Middleware Order
-
-```
-Request → 1.RequestID → 2.Logging → 3.CORS → 4.RateLimit → 5.BodyParse
-       → 6.Auth → 7.Authz → 8.Validation → 9.Handler → 10.ErrorHandler → Response
-```
-
-### JWT Rules
+### 标准中间件顺序
 
 ```
-✅ Short expiry access token (15min) + refresh token (server-stored)
-✅ Minimal claims: userId, roles (not entire user object)
-✅ Rotate signing keys periodically
-
-❌ Never store tokens in localStorage (XSS risk)
-❌ Never pass tokens in URL query params
+请求 → 1.RequestID → 2.Logging → 3.CORS → 4.RateLimit → 5.BodyParse
+     → 6.Auth → 7.Authz → 8.Validation → 9.Handler → 10.ErrorHandler → 响应
 ```
 
-### RBAC Pattern
+### JWT 规则
+
+```
+短期访问令牌 (15分钟) + 刷新令牌 (服务端存储)
+最小声明: userId、roles (非整个用户对象)
+定期轮换签名密钥
+
+绝不将令牌存储在 localStorage (XSS 风险)
+绝不在 URL 查询参数中传递令牌
+```
+
+### RBAC 模式
 
 ```typescript
 function authorize(...roles: Role[]) {
@@ -575,10 +575,10 @@ function authorize(...roles: Role[]) {
 router.delete('/users/:id', authenticate, authorize('admin'), deleteUser);
 ```
 
-### Auth Token Automatic Refresh
+### 认证令牌自动刷新
 
 ```typescript
-// lib/api-client.ts — transparent refresh on 401
+// lib/api-client.ts — 401 时透明刷新
 async function apiWithRefresh<T>(path: string, options: RequestInit = {}): Promise<T> {
   try {
     return await api<T>(path, options);
@@ -586,10 +586,10 @@ async function apiWithRefresh<T>(path: string, options: RequestInit = {}): Promi
     if (err instanceof ApiError && err.status === 401) {
       const refreshed = await api<{ accessToken: string }>('/api/auth/refresh', {
         method: 'POST',
-        credentials: 'include',  // send httpOnly cookie
+        credentials: 'include',  // 发送 httpOnly cookie
       });
       setAuthToken(refreshed.accessToken);
-      return api<T>(path, options);  // retry
+      return api<T>(path, options);  // 重试
     }
     throw err;
   }
@@ -598,61 +598,61 @@ async function apiWithRefresh<T>(path: string, options: RequestInit = {}): Promi
 
 ---
 
-## 7. Logging & Observability (MEDIUM-HIGH)
+## 7. 日志与可观测性 (中-高)
 
-### Structured JSON Logging
+### 结构化 JSON 日志
 
 ```typescript
-// ✅ Structured — parseable, filterable, alertable
+// 结构化 — 可解析、可过滤、可告警
 logger.info('Order created', {
   orderId: order.id, userId: user.id, total: order.total,
   items: order.items.length, duration_ms: Date.now() - startTime,
 });
-// Output: {"level":"info","msg":"Order created","orderId":"ord_123",...}
+// 输出: {"level":"info","msg":"Order created","orderId":"ord_123",...}
 
-// ❌ Unstructured — useless at scale
+// 非结构化 — 大规模下无用
 console.log(`Order created for user ${user.id} with total ${order.total}`);
 ```
 
-### Log Levels
+### 日志级别
 
-| Level | When | Production? |
-|-------|------|------------|
-| error | Requires immediate attention | ✅ Always |
-| warn | Unexpected but handled | ✅ Always |
-| info | Normal operations, audit trail | ✅ Always |
-| debug | Dev troubleshooting | ❌ Dev only |
+| 级别 | 何时使用 | 生产环境? |
+|------|----------|-----------|
+| error | 需要立即关注 | 始终 |
+| warn | 意外但已处理 | 始终 |
+| info | 正常操作、审计追踪 | 始终 |
+| debug | 开发调试 | 仅开发 |
 
-### Rules
+### 规则
 
 ```
-✅ Request ID in every log entry (propagated via middleware)
-✅ Log at layer boundaries (request in, response out, external call)
-❌ Never log passwords, tokens, PII, or secrets
-❌ Never use console.log in production code
+每条日志条目包含请求 ID (通过中间件传播)
+在层边界记录日志 (请求入、响应出、外部调用)
+绝不记录密码、令牌、PII 或密钥
+绝不在生产代码中使用 console.log
 ```
 
 ---
 
-## 8. Background Jobs & Async (MEDIUM)
+## 8. 后台任务与异步 (中等)
 
-### Rules
+### 规则
 
 ```
-✅ All jobs must be IDEMPOTENT (same job running twice = same result)
-✅ Failed jobs → retry (max 3) → dead letter queue → alert
-✅ Workers run as SEPARATE processes (not threads in API server)
+所有任务必须是幂等的 (同一任务运行两次 = 相同结果)
+失败任务 → 重试 (最多 3 次) → 死信队列 → 告警
+工作进程作为独立进程运行 (非 API 服务器的线程)
 
-❌ Never put long-running tasks in request handlers
-❌ Never assume job runs exactly once
+绝不在请求处理器中执行长时间运行的任务
+绝不假设任务只执行一次
 ```
 
-### Idempotent Job Pattern
+### 幂等任务模式
 
 ```typescript
 async function processPayment(data: { orderId: string }) {
   const order = await orderRepo.findById(data.orderId);
-  if (order.paymentStatus === 'completed') return;  // already processed
+  if (order.paymentStatus === 'completed') return;  // 已处理
   await paymentGateway.charge(order);
   await orderRepo.updatePaymentStatus(order.id, 'completed');
 }
@@ -660,9 +660,9 @@ async function processPayment(data: { orderId: string }) {
 
 ---
 
-## 9. Caching Patterns (MEDIUM)
+## 9. 缓存模式 (中等)
 
-### Cache-Aside (Lazy Loading)
+### 旁路缓存 (懒加载)
 
 ```typescript
 async function getUser(id: string): Promise<User> {
@@ -672,55 +672,55 @@ async function getUser(id: string): Promise<User> {
   const user = await userRepo.findById(id);
   if (!user) throw new NotFoundError('User', id);
 
-  await redis.set(`user:${id}`, JSON.stringify(user), 'EX', 900);  // 15min TTL
+  await redis.set(`user:${id}`, JSON.stringify(user), 'EX', 900);  // 15分钟 TTL
   return user;
 }
 ```
 
-### Rules
+### 规则
 
 ```
-✅ ALWAYS set TTL — never cache without expiry
-✅ Invalidate on write (delete cache key after update)
-✅ Use cache for reads, never for authoritative state
+始终设置 TTL — 绝不无过期缓存
+写入时失效 (更新后删除缓存键)
+用于读取缓存，绝不用于权威状态
 
-❌ Never cache without TTL (stale data is worse than slow data)
+绝不无 TTL 缓存 (陈旧数据比慢数据更糟)
 ```
 
-| Data Type | Suggested TTL |
-|-----------|---------------|
-| User profile | 5-15 min |
-| Product catalog | 1-5 min |
-| Config / feature flags | 30-60 sec |
-| Session | Match session duration |
+| 数据类型 | 建议 TTL |
+|----------|----------|
+| 用户资料 | 5-15 分钟 |
+| 产品目录 | 1-5 分钟 |
+| 配置 / 功能开关 | 30-60 秒 |
+| Session | 匹配 session 时长 |
 
 ---
 
-## 10. File Upload Patterns (MEDIUM)
+## 10. 文件上传模式 (中等)
 
-### Option A: Presigned URL (Recommended for Large Files)
+### 选项 A: 预签名 URL (大文件推荐)
 
 ```
-Client → GET /api/uploads/presign?filename=photo.jpg&type=image/jpeg
-Server → { uploadUrl: "https://s3.../presigned", fileKey: "uploads/abc123.jpg" }
-Client → PUT uploadUrl (direct to S3, bypasses your server)
-Client → POST /api/photos { fileKey: "uploads/abc123.jpg" }  (save reference)
+客户端 → GET /api/uploads/presign?filename=photo.jpg&type=image/jpeg
+服务端 → { uploadUrl: "https://s3.../presigned", fileKey: "uploads/abc123.jpg" }
+客户端 → PUT uploadUrl (直接上传到 S3，绕过你的服务器)
+客户端 → POST /api/photos { fileKey: "uploads/abc123.jpg" }  (保存引用)
 ```
 
-**Backend:**
+**后端:**
 ```typescript
 app.get('/api/uploads/presign', authenticate, async (req, res) => {
   const { filename, type } = req.query;
   const key = `uploads/${crypto.randomUUID()}-${filename}`;
   const url = await s3.getSignedUrl('putObject', {
     Bucket: process.env.S3_BUCKET, Key: key,
-    ContentType: type, Expires: 300,  // 5 min
+    ContentType: type, Expires: 300,  // 5 分钟
   });
   res.json({ uploadUrl: url, fileKey: key });
 });
 ```
 
-**Frontend:**
+**前端:**
 ```typescript
 async function uploadFile(file: File) {
   const { uploadUrl, fileKey } = await apiClient.get<PresignResponse>(
@@ -731,34 +731,34 @@ async function uploadFile(file: File) {
 }
 ```
 
-### Option B: Multipart (Small Files < 10MB)
+### 选项 B: 分片 (小文件 < 10MB)
 
 ```typescript
-// Frontend
+// 前端
 const formData = new FormData();
 formData.append('file', file);
 formData.append('description', 'Profile photo');
 const res = await fetch('/api/upload', { method: 'POST', body: formData });
-// Note: do NOT set Content-Type header — browser sets boundary automatically
+// 注意: 不要设置 Content-Type 头 — 浏览器自动设置 boundary
 ```
 
-### Decision
+### 决策
 
-| Method | File Size | Server Load | Complexity |
-|--------|-----------|-------------|------------|
-| Presigned URL | Any (recommended > 5MB) | None (direct to storage) | Medium |
-| Multipart | < 10MB | High (streams through server) | Low |
-| Chunked / Resumable | > 100MB | Medium | High |
+| 方法 | 文件大小 | 服务器负载 | 复杂度 |
+|------|----------|------------|--------|
+| 预签名 URL | 任意 (> 5MB 推荐) | 无 (直接到存储) | 中等 |
+| 分片 | < 10MB | 高 (流经服务器) | 低 |
+| 分块 / 断点续传 | > 100MB | 中等 | 高 |
 
 ---
 
-## 11. Real-Time Patterns (MEDIUM)
+## 11. 实时模式 (中等)
 
-### Option A: Server-Sent Events (SSE) — One-Way Server → Client
+### 选项 A: 服务器发送事件 (SSE) — 单向服务端 → 客户端
 
-Best for: notifications, live feeds, streaming AI responses.
+最适合: 通知、实时信息流、流式 AI 响应。
 
-**Backend (Express):**
+**后端 (Express):**
 ```typescript
 app.get('/api/events', authenticate, (req, res) => {
   res.writeHead(200, {
@@ -776,7 +776,7 @@ app.get('/api/events', authenticate, (req, res) => {
 });
 ```
 
-**Frontend:**
+**前端:**
 ```typescript
 function useServerEvents(userId: string) {
   useEffect(() => {
@@ -784,17 +784,17 @@ function useServerEvents(userId: string) {
     source.addEventListener('notification', (e) => {
       showToast(JSON.parse(e.data).message);
     });
-    source.onerror = () => { source.close(); setTimeout(() => /* reconnect */, 3000); };
+    source.onerror = () => { source.close(); setTimeout(() => /* 重连 */, 3000); };
     return () => source.close();
   }, [userId]);
 }
 ```
 
-### Option B: WebSocket — Bidirectional
+### 选项 B: WebSocket — 双向
 
-Best for: chat, collaborative editing, gaming.
+最适合: 聊天、协同编辑、游戏。
 
-**Backend (ws library):**
+**后端 (ws 库):**
 ```typescript
 import { WebSocketServer } from 'ws';
 const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
@@ -804,19 +804,19 @@ wss.on('connection', (ws, req) => {
   ws.on('message', (raw) => handleMessage(userId, JSON.parse(raw.toString())));
   ws.on('close', () => cleanupUser(userId));
   const interval = setInterval(() => ws.ping(), 30000);
-  ws.on('pong', () => { /* alive */ });
+  ws.on('pong', () => { /* 存活 */ });
   ws.on('close', () => clearInterval(interval));
 });
 ```
 
-**Frontend:**
+**前端:**
 ```typescript
 function useWebSocket(url: string) {
   const [ws, setWs] = useState<WebSocket | null>(null);
   useEffect(() => {
     const socket = new WebSocket(url);
     socket.onopen = () => setWs(socket);
-    socket.onclose = () => setTimeout(() => /* reconnect */, 3000);
+    socket.onclose = () => setTimeout(() => /* 重连 */, 3000);
     return () => socket.close();
   }, [url]);
   const send = useCallback((data: unknown) => ws?.send(JSON.stringify(data)), [ws]);
@@ -824,7 +824,7 @@ function useWebSocket(url: string) {
 }
 ```
 
-### Option C: Polling (Simplest, No Infrastructure)
+### 选项 C: 轮询 (最简单，无基础设施)
 
 ```typescript
 function useOrderStatus(orderId: string) {
@@ -839,45 +839,45 @@ function useOrderStatus(orderId: string) {
 }
 ```
 
-### Decision
+### 决策
 
-| Method | Direction | Complexity | When |
-|--------|-----------|------------|------|
-| Polling | Client → Server | Low | Simple status checks, < 10 clients |
-| SSE | Server → Client | Medium | Notifications, feeds, AI streaming |
-| WebSocket | Bidirectional | High | Chat, collaboration, gaming |
+| 方法 | 方向 | 复杂度 | 适用场景 |
+|------|------|--------|----------|
+| 轮询 | 客户端 → 服务端 | 低 | 简单状态检查，< 10 客户端 |
+| SSE | 服务端 → 客户端 | 中等 | 通知、信息流、AI 流式 |
+| WebSocket | 双向 | 高 | 聊天、协同、游戏 |
 
 ---
 
-## 12. Cross-Boundary Error Handling (MEDIUM)
+## 12. 跨边界错误处理 (中等)
 
-### API Error → User-Facing Message
+### API 错误 → 用户友好消息
 
 ```typescript
 // lib/error-handler.ts
 export function getErrorMessage(error: unknown): string {
   if (error instanceof ApiError) {
     switch (error.status) {
-      case 401: return 'Please log in to continue.';
-      case 403: return 'You don\'t have permission to do this.';
-      case 404: return 'The item you\'re looking for doesn\'t exist.';
-      case 409: return 'This conflicts with an existing item.';
+      case 401: return '请先登录以继续。';
+      case 403: return '您没有权限执行此操作。';
+      case 404: return '您查找的项目不存在。';
+      case 409: return '与现有项目冲突。';
       case 422:
         const fields = error.body?.errors;
         if (fields?.length) return fields.map((f: any) => f.message).join('. ');
-        return 'Please check your input.';
-      case 429: return 'Too many requests. Please wait a moment.';
-      default: return 'Something went wrong. Please try again.';
+        return '请检查您的输入。';
+      case 429: return '请求过多，请稍后再试。';
+      default: return '出了点问题，请重试。';
     }
   }
   if (error instanceof TypeError && error.message === 'Failed to fetch') {
-    return 'Cannot connect to server. Check your internet connection.';
+    return '无法连接到服务器，请检查您的网络连接。';
   }
-  return 'An unexpected error occurred.';
+  return '发生了意外错误。';
 }
 ```
 
-### React Query Global Error Handler
+### React Query 全局错误处理器
 
 ```typescript
 const queryClient = new QueryClient({
@@ -893,58 +893,58 @@ const queryClient = new QueryClient({
 });
 ```
 
-### Rules
+### 规则
 
 ```
-✅ Map every API error code to a human-readable message
-✅ Show field-level validation errors next to form inputs
-✅ Auto-retry on 5xx (max 3, with backoff), never on 4xx
-✅ Redirect to login on 401 (after refresh attempt fails)
-✅ Show "offline" banner when fetch fails with TypeError
+将每个 API 错误码映射为人类可读的消息
+在表单输入旁显示字段级验证错误
+5xx 自动重试 (最多 3 次，带退避)，4xx 绝不重试
+401 时重定向到登录 (刷新尝试失败后)
+fetch 失败出现 TypeError 时显示"离线"提示
 
-❌ Never show raw API error messages to users ("NullPointerException")
-❌ Never silently swallow errors (show toast or log)
-❌ Never retry 4xx errors (client is wrong, retrying won't help)
+绝不向用户显示原始 API 错误消息 ("NullPointerException")
+绝不静默吞掉错误 (显示提示或记录日志)
+绝不重试 4xx 错误 (客户端错误，重试无用)
 ```
 
-### Integration Decision Tree
+### 集成决策树
 
 ```
-Same team owns frontend + backend?
+同一团队维护前端 + 后端?
 │
-├─ YES, both TypeScript
-│   └─ tRPC (end-to-end type safety, zero codegen)
+├─ 是，两边 TypeScript
+│   └─ tRPC (端到端类型安全，零代码生成)
 │
-├─ YES, different languages
-│   └─ OpenAPI spec → generated client (type safety via codegen)
+├─ 是，不同语言
+│   └─ OpenAPI 规范 → 生成客户端 (通过代码生成实现类型安全)
 │
-├─ NO, public API
-│   └─ REST + OpenAPI → generated SDKs for consumers
+├─ 否，公开 API
+│   └─ REST + OpenAPI → 为消费者生成 SDK
 │
-└─ Complex data needs, multiple frontends
-    └─ GraphQL + codegen (flexible queries per client)
+└─ 复杂数据需求，多个前端
+    └─ GraphQL + 代码生成 (每个客户端灵活查询)
 
-Real-time needed?
+需要实时功能?
 │
-├─ Server → Client only (notifications, feeds, AI streaming)
-│   └─ SSE (simplest, auto-reconnect, works through proxies)
+├─ 仅服务端 → 客户端 (通知、信息流、AI 流式)
+│   └─ SSE (最简单，自动重连，可穿透代理)
 │
-├─ Bidirectional (chat, collaboration)
-│   └─ WebSocket (need heartbeat + reconnection logic)
+├─ 双向 (聊天、协同)
+│   └─ WebSocket (需要心跳 + 重连逻辑)
 │
-└─ Simple status polling (< 10 clients)
-    └─ React Query refetchInterval (no infrastructure needed)
+└─ 简单状态轮询 (< 10 客户端)
+    └─ React Query refetchInterval (无需基础设施)
 ```
 
 ---
 
-## 13. Production Hardening (MEDIUM)
+## 13. 生产加固 (中等)
 
-### Health Checks
+### 健康检查
 
 ```typescript
-app.get('/health', (req, res) => res.json({ status: 'ok' }));           // liveness
-app.get('/ready', async (req, res) => {                                   // readiness
+app.get('/health', (req, res) => res.json({ status: 'ok' }));           // 存活检查
+app.get('/ready', async (req, res) => {                                   // 就绪检查
   const checks = {
     database: await checkDb(), redis: await checkRedis(), 
   };
@@ -953,85 +953,85 @@ app.get('/ready', async (req, res) => {                                   // rea
 });
 ```
 
-### Graceful Shutdown
+### 优雅关闭
 
 ```typescript
 process.on('SIGTERM', async () => {
   logger.info('SIGTERM received');
-  server.close();              // stop new connections
-  await drainConnections();    // finish in-flight
+  server.close();              // 停止新连接
+  await drainConnections();    // 完成进行中的请求
   await closeDatabase();
   process.exit(0);
 });
 ```
 
-### Security Checklist
+### 安全检查清单
 
 ```
-✅ CORS: explicit origins (never '*' in production)
-✅ Security headers (helmet / equivalent)
-✅ Rate limiting on public endpoints
-✅ Input validation on ALL endpoints (trust nothing)
-✅ HTTPS enforced
-❌ Never expose internal errors to clients
+CORS: 显式来源 (生产环境绝不 '*')
+安全响应头 (helmet / 等效方案)
+公开端点的速率限制
+所有端点的输入验证 (不信任任何内容)
+强制 HTTPS
+绝不向客户端暴露内部错误
 ```
 
 ---
 
-## Anti-Patterns
+## 反模式
 
-| # | ❌ Don't | ✅ Do Instead |
-|---|---------|--------------|
-| 1 | Business logic in routes/controllers | Move to service layer |
-| 2 | `process.env` scattered everywhere | Centralized typed config |
-| 3 | `console.log` for logging | Structured JSON logger |
-| 4 | Generic `Error('oops')` | Typed error hierarchy |
-| 5 | Direct DB calls in controllers | Repository pattern |
-| 6 | No input validation | Validate at boundary (Zod/Pydantic) |
-| 7 | Catching errors silently | Log + rethrow or return error |
-| 8 | No health check endpoints | `/health` + `/ready` |
-| 9 | Hardcoded config/secrets | Environment variables |
-| 10 | No graceful shutdown | Handle SIGTERM properly |
-| 11 | Hardcode API URL in frontend | Environment variable (`NEXT_PUBLIC_API_URL`) |
-| 12 | Store JWT in localStorage | Memory + httpOnly refresh cookie |
-| 13 | Show raw API errors to users | Map to human-readable messages |
-| 14 | Retry 4xx errors | Only retry 5xx (server failures) |
-| 15 | Skip loading states | Skeleton/spinner while fetching |
-| 16 | Upload large files through API server | Presigned URL → direct to S3 |
-| 17 | Poll for real-time data | SSE or WebSocket |
-| 18 | Duplicate types frontend + backend | Shared types, tRPC, or OpenAPI codegen |
-
----
-
-## Common Issues
-
-### Issue 1: "Where does this business rule go?"
-
-**Rule:** If it involves HTTP (request parsing, status codes, headers) → controller. If it involves business decisions (pricing, permissions, rules) → service. If it touches the database → repository.
-
-### Issue 2: "Service is getting too big"
-
-**Symptom:** One service file > 500 lines with 20+ methods.
-
-**Fix:** Split by sub-domain. `OrderService` → `OrderCreationService` + `OrderFulfillmentService` + `OrderQueryService`. Each focused on one workflow.
-
-### Issue 3: "Tests are slow because they hit the database"
-
-**Fix:** Unit tests mock the repository layer (fast). Integration tests use test containers or transaction rollback (real DB, still fast). Never mock the service layer in integration tests.
+| # | 不要 | 要做 |
+|---|------|------|
+| 1 | 在路由/控制器中写业务逻辑 | 移到服务层 |
+| 2 | 到处散布 `process.env` | 集中式类型化配置 |
+| 3 | 用 `console.log` 记录日志 | 结构化 JSON 日志器 |
+| 4 | 通用 `Error('oops')` | 类型化错误层次 |
+| 5 | 控制器中直接调用数据库 | 仓库模式 |
+| 6 | 无输入验证 | 在边界验证 (Zod/Pydantic) |
+| 7 | 静默捕获错误 | 记录日志 + 重抛或返回错误 |
+| 8 | 无健康检查端点 | `/health` + `/ready` |
+| 9 | 硬编码配置/密钥 | 环境变量 |
+| 10 | 无优雅关闭 | 正确处理 SIGTERM |
+| 11 | 前端硬编码 API URL | 环境变量 (`NEXT_PUBLIC_API_URL`) |
+| 12 | JWT 存储在 localStorage | 内存 + httpOnly 刷新 cookie |
+| 13 | 向用户显示原始 API 错误 | 映射为人类可读消息 |
+| 14 | 重试 4xx 错误 | 仅重试 5xx (服务端故障) |
+| 15 | 跳过加载状态 | 获取时显示骨架屏/加载动画 |
+| 16 | 大文件通过 API 服务器上传 | 预签名 URL → 直接到 S3 |
+| 17 | 轮询实时数据 | SSE 或 WebSocket |
+| 18 | 前后端重复类型 | 共享类型、tRPC 或 OpenAPI 代码生成 |
 
 ---
 
-## Reference Documents
+## 常见问题
 
-This skill includes deep-dive references for specialized topics. Read the relevant reference when you need detailed guidance.
+### 问题 1: "这条业务规则放哪?"
 
-| Need to… | Reference |
-|----------|-----------|
-| Write backend tests (unit, integration, e2e, contract, performance) | [references/testing-strategy.md](references/testing-strategy.md) |
-| Validate a release before deployment (6-gate checklist) | [references/release-checklist.md](references/release-checklist.md) |
-| Choose a tech stack (language, framework, database, infra) | [references/technology-selection.md](references/technology-selection.md) |
-| Build with Django / DRF (models, views, serializers, admin) | [references/django-best-practices.md](references/django-best-practices.md) |
-| Design REST/GraphQL/gRPC endpoints (URLs, status codes, pagination) | [references/api-design.md](references/api-design.md) |
-| Design database schema, indexes, migrations, multi-tenancy | [references/db-schema.md](references/db-schema.md) |
-| Auth flow (JWT bearer, token refresh, Next.js SSR, RBAC, middleware order) | [references/auth-flow.md](references/auth-flow.md) |
-| CORS config, env vars per environment, common CORS issues | [references/environment-management.md](references/environment-management.md) |
+**规则:** 如果涉及 HTTP (请求解析、状态码、响应头) → 控制器。如果涉及业务决策 (定价、权限、规则) → 服务。如果涉及数据库 → 仓库。
+
+### 问题 2: "服务变得太大了"
+
+**症状:** 单个服务文件 > 500 行，20+ 个方法。
+
+**解决:** 按子域拆分。`OrderService` → `OrderCreationService` + `OrderFulfillmentService` + `OrderQueryService`。每个聚焦于一个工作流。
+
+### 问题 3: "测试慢因为访问数据库"
+
+**解决:** 单元测试 mock 仓库层 (快)。集成测试使用测试容器或事务回滚 (真实数据库，仍然快)。集成测试中绝不 mock 服务层。
+
+---
+
+## 参考文档
+
+此技能包含专业主题的深度参考。需要详细指导时阅读相关参考。
+
+| 需要… | 参考 |
+|-------|------|
+| 编写后端测试 (单元、集成、e2e、契约、性能) | [references/testing-strategy.md](references/testing-strategy.md) |
+| 部署前验证发布 (6 道关卡清单) | [references/release-checklist.md](references/release-checklist.md) |
+| 选择技术栈 (语言、框架、数据库、基础设施) | [references/technology-selection.md](references/technology-selection.md) |
+| 使用 Django / DRF 构建 (模型、视图、序列化器、admin) | [references/django-best-practices.md](references/django-best-practices.md) |
+| 设计 REST/GraphQL/gRPC 端点 (URL、状态码、分页) | [references/api-design.md](references/api-design.md) |
+| 设计数据库模式、索引、迁移、多租户 | [references/db-schema.md](references/db-schema.md) |
+| 认证流程 (JWT bearer、令牌刷新、Next.js SSR、RBAC、中间件顺序) | [references/auth-flow.md](references/auth-flow.md) |
+| CORS 配置、每环境环境变量、常见 CORS 问题 | [references/environment-management.md](references/environment-management.md) |

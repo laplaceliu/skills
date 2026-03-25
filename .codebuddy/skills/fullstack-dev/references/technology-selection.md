@@ -1,254 +1,254 @@
-# Technology Selection Framework
+# 技术选型框架
 
-Structured decision framework for backend and full-stack technology choices. Prevents analysis paralysis while ensuring rigorous evaluation.
+后端和全栈技术选择的结构化决策框架。在确保严格评估的同时防止分析瘫痪。
 
-**Iron Law: NO TECHNOLOGY CHOICE WITHOUT EXPLICIT TRADE-OFF ANALYSIS.**
+**铁律: 没有明确的权衡分析就不做技术选择。**
 
-"I like it" and "it's trending" are not engineering arguments.
+"我喜欢它"和"它正在流行"不是工程论证。
 
 ---
 
-## Phase 1: Requirements Before Technology
+## 第一阶段: 技术之前的需求
 
-### Non-Functional Requirements (Quantify!)
+### 非功能性需求 (量化!)
 
-| Dimension | Question | Bad Answer | Good Answer |
+| 维度 | 问题 | 糟糕答案 | 好答案 |
 |-----------|----------|-----------|-------------|
-| Scale | How many concurrent users? | "Lots" | "1K concurrent, 500 RPS peak" |
-| Latency | Acceptable p99 response time? | "Fast" | "< 200ms API, < 2s reports" |
-| Availability | Required uptime? | "Always up" | "99.9% (8.7h downtime/year)" |
-| Data volume | Expected storage growth? | "A lot" | "100GB/year, 10M rows" |
-| Consistency | Strong vs eventual? | "Consistent" | "Strong for payments, eventual for feeds" |
-| Compliance | Regulatory? | "Some" | "GDPR data residency EU, SOC 2 Type II" |
+| 规模 | 多少并发用户? | "很多" | "1K 并发, 500 RPS 峰值" |
+| 延迟 | 可接受的 p99 响应时间? | "快" | "< 200ms API, < 2s 报表" |
+| 可用性 | 需要的正常运行时间? | "始终在线" | "99.9% (年停机 8.7 小时)" |
+| 数据量 | 预期存储增长? | "很多" | "100GB/年, 1000万 行" |
+| 一致性 | 强一致 vs 最终一致? | "一致" | "支付强一致, 信息流最终一致" |
+| 合规性 | 监管要求? | "有一些" | "GDPR 数据驻留欧盟, SOC 2 Type II" |
 
-### Team Constraints
+### 团队约束
 
-- Team size and seniority level
-- What the team already knows well
-- Can you hire for this stack? (check job market)
-- Timeline pressure (days vs months to production)
-- Budget for licenses, infrastructure, training
+- 团队规模和资深程度
+- 团队已经熟悉什么
+- 你能为此技术栈招人吗? (检查就业市场)
+- 时间压力 (几天 vs 几个月上线)
+- 许可证、基础设施、培训预算
 
 ---
 
-## Phase 2: Evaluation Matrix
+## 第二阶段: 评估矩阵
 
-Score each option 1-5 on weighted criteria:
+按加权标准对每个选项评分 1-5:
 
-| Criterion | Weight | Option A | Option B | Option C |
+| 标准 | 权重 | 选项 A | 选项 B | 选项 C |
 |-----------|--------|----------|----------|----------|
-| Meets functional requirements | 5× | _ | _ | _ |
-| Meets non-functional requirements | 5× | _ | _ | _ |
-| Team expertise / learning curve | 4× | _ | _ | _ |
-| Ecosystem maturity (libs, tools) | 3× | _ | _ | _ |
-| Community & long-term viability | 3× | _ | _ | _ |
-| Operational complexity | 3× | _ | _ | _ |
-| Hiring pool availability | 2× | _ | _ | _ |
-| Cost (license + infra + training) | 2× | _ | _ | _ |
-| **Weighted Total** | | _ | _ | _ |
+| 满足功能需求 | 5× | _ | _ | _ |
+| 满足非功能需求 | 5× | _ | _ | _ |
+| 团队专业知识 / 学习曲线 | 4× | _ | _ | _ |
+| 生态系统成熟度 (库, 工具) | 3× | _ | _ | _ |
+| 社区与长期可行性 | 3× | _ | _ | _ |
+| 运维复杂度 | 3× | _ | _ | _ |
+| 人才池可用性 | 2× | _ | _ | _ |
+| 成本 (许可证 + 基础设施 + 培训) | 2× | _ | _ | _ |
+| **加权总分** | | _ | _ | _ |
 
-**Rules:**
-- Any option scoring **1 on a 5× criterion** → automatically disqualified
-- Options within **10%** of each other → choose what team knows best
-- Options within **15%** → run a **time-boxed PoC** (2-5 days max)
-
----
-
-## Phase 3: Decision Trees
-
-### Backend Language / Framework
-
-```
-What type of project?
-│
-├─ REST/GraphQL API, rapid development
-│   ├─ Team knows TypeScript → Node.js
-│   │   ├─ Full-featured, enterprise patterns → NestJS
-│   │   ├─ Lightweight, flexible → Fastify / Hono / Express
-│   │   └─ Full-stack with React → Next.js API routes
-│   ├─ Team knows Python
-│   │   ├─ High-perf async API → FastAPI
-│   │   ├─ Full-stack, admin-heavy → Django
-│   │   └─ Lightweight → Flask / Litestar
-│   └─ Team knows Java/Kotlin
-│       ├─ Enterprise, large team → Spring Boot
-│       └─ Lightweight, fast startup → Quarkus / Ktor
-│
-├─ High concurrency, systems-level
-│   ├─ Microservices, network → Go
-│   ├─ Extreme perf, safety → Rust (Axum / Actix)
-│   └─ Fault tolerance → Elixir (Phoenix)
-│
-├─ Real-time (WebSocket, streaming)
-│   ├─ Node.js ecosystem → Socket.io / ws
-│   ├─ Scalable pub/sub → Elixir Phoenix
-│   └─ Low-latency → Go / Rust
-│
-└─ ML / data-intensive
-    └─ Python (FastAPI + ML libs)
-```
-
-### Database
-
-```
-What data model?
-│
-├─ Structured, relational, ACID
-│   ├─ General purpose → PostgreSQL ← DEFAULT CHOICE
-│   ├─ Read-heavy, MySQL ecosystem → MySQL / MariaDB
-│   └─ Embedded / serverless edge → SQLite / Turso / D1
-│
-├─ Semi-structured, flexible schema
-│   ├─ Document-oriented → MongoDB
-│   ├─ Serverless document → DynamoDB / Firestore
-│   └─ Search-heavy → Elasticsearch / OpenSearch
-│
-├─ Key-value / cache
-│   ├─ In-memory + data structures → Redis / Valkey
-│   └─ Planet-scale KV → DynamoDB / Cassandra
-│
-├─ Time-series → TimescaleDB / ClickHouse / InfluxDB
-├─ Graph → Neo4j / Apache AGE (Postgres extension)
-└─ Vector (AI embeddings) → pgvector / Pinecone / Qdrant
-```
-
-**Default:** Start with PostgreSQL. It handles 80% of use cases.
-
-### Caching Strategy
-
-| Pattern | Technology | When |
-|---------|-----------|------|
-| Application cache | Redis / Valkey | Sessions, frequent reads, rate limiting |
-| HTTP cache | CDN (Cloudflare/Vercel) | Static assets, public API responses |
-| Query cache | Materialized views | Complex aggregations, dashboards |
-| In-process cache | LRU (in-memory) | Config, small lookup tables |
-| Edge cache | Cloudflare KV / Vercel KV | Global low-latency reads |
-
-### Message Queue / Event Streaming
-
-| Pattern | Technology | When |
-|---------|-----------|------|
-| Task queue (background jobs) | BullMQ / Celery / SQS | Email, exports, payments |
-| Event streaming (replay, audit) | Kafka / Redpanda | Event sourcing, real-time pipelines |
-| Lightweight pub/sub | Redis Streams / NATS | Simple notifications, broadcasting |
-| Request-reply (sync over async) | NATS / RabbitMQ RPC | Internal service calls |
-
-### Hosting / Deployment
-
-| Model | Technology | When |
-|-------|-----------|------|
-| Serverless (auto-scale) | Vercel / Cloudflare Workers / Lambda | Variable traffic, pay-per-use |
-| Container (predictable) | Cloud Run / Render / Railway / Fly.io | Steady traffic, simple ops |
-| Kubernetes (large scale) | EKS / GKE / AKS | 10+ services, team has K8s expertise |
-| VPS (full control) | DigitalOcean / Hetzner / EC2 | Predictable workload, cost-sensitive |
+**规则:**
+- 任何 **5× 标准评 1 分**的选项 → 自动取消资格
+- 彼此在 **10%** 内的选项 → 选择团队最熟悉的
+- 彼此在 **15%** 内 → 运行**限时 PoC** (最多 2-5 天)
 
 ---
 
-## Phase 4: Decision Documentation
+## 第三阶段: 决策树
 
-### ADR (Architecture Decision Record) Template
+### 后端语言 / 框架
+
+```
+什么类型的项目?
+│
+├─ REST/GraphQL API, 快速开发
+│   ├─ 团队会 TypeScript → Node.js
+│   │   ├─ 全功能, 企业模式 → NestJS
+│   │   ├─ 轻量, 灵活 → Fastify / Hono / Express
+│   │   └─ 带 React 的全栈 → Next.js API 路由
+│   ├─ 团队会 Python
+│   │   ├─ 高性能异步 API → FastAPI
+│   │   ├─ 全栈, 管理后台重 → Django
+│   │   └─ 轻量 → Flask / Litestar
+│   └─ 团队会 Java/Kotlin
+│       ├─ 企业, 大团队 → Spring Boot
+│       └─ 轻量, 快速启动 → Quarkus / Ktor
+│
+├─ 高并发, 系统级
+│   ├─ 微服务, 网络 → Go
+│   ├─ 极致性能, 安全 → Rust (Axum / Actix)
+│   └─ 容错 → Elixir (Phoenix)
+│
+├─ 实时 (WebSocket, 流式)
+│   ├─ Node.js 生态 → Socket.io / ws
+│   ├─ 可扩展 pub/sub → Elixir Phoenix
+│   └─ 低延迟 → Go / Rust
+│
+└─ ML / 数据密集型
+    └─ Python (FastAPI + ML 库)
+```
+
+### 数据库
+
+```
+什么数据模型?
+│
+├─ 结构化, 关系型, ACID
+│   ├─ 通用 → PostgreSQL ← 默认选择
+│   ├─ 读密集, MySQL 生态 → MySQL / MariaDB
+│   └─ 嵌入式 / 无服务器边缘 → SQLite / Turso / D1
+│
+├─ 半结构化, 灵活模式
+│   ├─ 面向文档 → MongoDB
+│   ├─ 无服务器文档 → DynamoDB / Firestore
+│   └─ 搜索密集 → Elasticsearch / OpenSearch
+│
+├─ 键值 / 缓存
+│   ├─ 内存 + 数据结构 → Redis / Valkey
+│   └─ 全球规模 KV → DynamoDB / Cassandra
+│
+├─ 时间序列 → TimescaleDB / ClickHouse / InfluxDB
+├─ 图 → Neo4j / Apache AGE (Postgres 扩展)
+└─ 向量 (AI 嵌入) → pgvector / Pinecone / Qdrant
+```
+
+**默认:** 从 PostgreSQL 开始。它处理 80% 的用例。
+
+### 缓存策略
+
+| 模式 | 技术 | 何时使用 |
+|---------|-----------|------|
+| 应用缓存 | Redis / Valkey | Session, 频繁读取, 速率限制 |
+| HTTP 缓存 | CDN (Cloudflare/Vercel) | 静态资源, 公开 API 响应 |
+| 查询缓存 | 物化视图 | 复杂聚合, 仪表板 |
+| 进程内缓存 | LRU (内存中) | 配置, 小型查找表 |
+| 边缘缓存 | Cloudflare KV / Vercel KV | 全球低延迟读取 |
+
+### 消息队列 / 事件流
+
+| 模式 | 技术 | 何时使用 |
+|---------|-----------|------|
+| 任务队列 (后台任务) | BullMQ / Celery / SQS | 邮件, 导出, 支付 |
+| 事件流 (回放, 审计) | Kafka / Redpanda | 事件溯源, 实时管道 |
+| 轻量 pub/sub | Redis Streams / NATS | 简单通知, 广播 |
+| 请求-回复 (异步上的同步) | NATS / RabbitMQ RPC | 内部服务调用 |
+
+### 托管 / 部署
+
+| 模式 | 技术 | 何时使用 |
+|---------|-----------|------|
+| 无服务器 (自动扩展) | Vercel / Cloudflare Workers / Lambda | 流量可变, 按使用付费 |
+| 容器 (可预测) | Cloud Run / Render / Railway / Fly.io | 稳定流量, 简单运维 |
+| Kubernetes (大规模) | EKS / GKE / AKS | 10+ 服务, 团队有 K8s 专业知识 |
+| VPS (完全控制) | DigitalOcean / Hetzner / EC2 | 可预测工作负载, 成本敏感 |
+
+---
+
+## 第四阶段: 决策文档
+
+### ADR (架构决策记录) 模板
 
 ```markdown
-# ADR-{NNN}: {Title}
+# ADR-{NNN}: {标题}
 
-## Status: Proposed | Accepted | Deprecated | Superseded by ADR-{NNN}
+## 状态: 提议 | 已接受 | 已弃用 | 被 ADR-{NNN} 取代
 
-## Context
-What problem are we solving? What forces are at play?
+## 上下文
+我们在解决什么问题? 有哪些力量在起作用?
 
-## Decision
-What did we choose and why?
+## 决策
+我们选择了什么，为什么?
 
-## Evaluation
-| Criterion | Weight | Chosen | Runner-up |
+## 评估
+| 标准 | 权重 | 选择 | 亚军 |
 |-----------|--------|--------|-----------|
 
-## Consequences
-- Positive: ...
-- Negative: ...
-- Risks: ...
+## 后果
+- 正面: ...
+- 负面: ...
+- 风险: ...
 
-## Alternatives Rejected
-- Option B: rejected because...
-- Option C: rejected because...
+## 被拒绝的替代方案
+- 选项 B: 因为...被拒绝
+- 选项 C: 因为...被拒绝
 ```
 
 ---
 
-## Common Stack Templates
+## 常见技术栈模板
 
-### A: Startup / MVP (Speed)
+### A: 创业 / MVP (速度)
 
-| Layer | Choice | Why |
-|-------|--------|-----|
-| Language | TypeScript | One language front + back |
-| Framework | Next.js (full-stack) or NestJS (API) | Fast iteration |
-| Database | PostgreSQL (Supabase / Neon) | Managed, generous free tier |
-| Auth | Better Auth / Clerk | No auth code to maintain |
-| Cache | Redis (Upstash) | Serverless-friendly |
-| Hosting | Vercel / Railway | Zero-config deploys |
+| 层 | 选择 | 原因 |
+|-------|--------|------|
+| 语言 | TypeScript | 前后端一种语言 |
+| 框架 | Next.js (全栈) 或 NestJS (API) | 快速迭代 |
+| 数据库 | PostgreSQL (Supabase / Neon) | 托管, 慷慨的免费额度 |
+| 认证 | Better Auth / Clerk | 无需维护认证代码 |
+| 缓存 | Redis (Upstash) | 无服务器友好 |
+| 托管 | Vercel / Railway | 零配置部署 |
 
-### B: SaaS / Business App (Balance)
+### B: SaaS / 商业应用 (平衡)
 
-| Layer | Choice | Why |
-|-------|--------|-----|
-| Language | TypeScript or Python | Team preference |
-| Framework | NestJS or FastAPI | Structured, testable |
-| Database | PostgreSQL | Reliable, feature-rich |
-| Queue | BullMQ (Redis) | Simple background jobs |
-| Auth | OAuth 2.0 + JWT | Standard, flexible |
-| Hosting | AWS ECS / Cloud Run | Scalable containers |
-| Monitoring | Datadog / Grafana + Prometheus | Full observability |
+| 层 | 选择 | 原因 |
+|-------|--------|------|
+| 语言 | TypeScript 或 Python | 团队偏好 |
+| 框架 | NestJS 或 FastAPI | 结构化, 可测试 |
+| 数据库 | PostgreSQL | 可靠, 功能丰富 |
+| 队列 | BullMQ (Redis) | 简单后台任务 |
+| 认证 | OAuth 2.0 + JWT | 标准, 灵活 |
+| 托管 | AWS ECS / Cloud Run | 可扩展容器 |
+| 监控 | Datadog / Grafana + Prometheus | 完全可观测性 |
 
-### C: High-Performance (Scale)
+### C: 高性能 (规模)
 
-| Layer | Choice | Why |
-|-------|--------|-----|
-| Language | Go or Rust | Max throughput, low latency |
-| Database | PostgreSQL + Redis + ClickHouse | OLTP + cache + analytics |
-| Queue | Kafka / Redpanda | High-throughput streaming |
-| Hosting | Kubernetes (EKS/GKE) | Fine-grained scaling |
-| Monitoring | Prometheus + Grafana + Jaeger | Metrics + tracing |
+| 层 | 选择 | 原因 |
+|-------|--------|------|
+| 语言 | Go 或 Rust | 最大吞吐量, 低延迟 |
+| 数据库 | PostgreSQL + Redis + ClickHouse | OLTP + 缓存 + 分析 |
+| 队列 | Kafka / Redpanda | 高吞吐量流式 |
+| 托管 | Kubernetes (EKS/GKE) | 细粒度扩展 |
+| 监控 | Prometheus + Grafana + Jaeger | 指标 + 追踪 |
 
-### D: AI / ML Application
+### D: AI / ML 应用
 
-| Layer | Choice | Why |
-|-------|--------|-----|
-| Language | Python (API) + TypeScript (frontend) | ML libs + modern UI |
-| Framework | FastAPI + Next.js | Async + SSR |
-| Database | PostgreSQL + pgvector | Relational + embeddings |
-| Queue | Celery + Redis | ML job processing |
-| Hosting | Modal / AWS GPU / Replicate | GPU access |
+| 层 | 选择 | 原因 |
+|-------|--------|------|
+| 语言 | Python (API) + TypeScript (前端) | ML 库 + 现代 UI |
+| 框架 | FastAPI + Next.js | 异步 + SSR |
+| 数据库 | PostgreSQL + pgvector | 关系型 + 嵌入向量 |
+| 队列 | Celery + Redis | ML 作业处理 |
+| 托管 | Modal / AWS GPU / Replicate | GPU 访问 |
 
 ---
 
-## Anti-Patterns
+## 反模式
 
-| # | ❌ Don't | ✅ Do Instead |
+| # |  不要 |  应该这样做 |
 |---|---------|--------------|
-| 1 | "X is trending on HN" | Evaluate against YOUR requirements |
-| 2 | Resume-Driven Development | Choose what team can maintain |
-| 3 | "Must scale to 1M users" (day 1) | Build for 10× current need, not 1000× |
-| 4 | Evaluate for weeks | Time-box to 3-5 days, then decide |
-| 5 | No decision documentation | Write ADR for every major choice |
-| 6 | Ignore operational cost | Include deploy, monitor, debug cost |
-| 7 | "We'll rewrite later" | Assume you won't. Choose carefully. |
-| 8 | Microservices by default | Start monolith, extract when needed |
-| 9 | Different DB per service (day 1) | One database, split when justified |
-| 10 | "It worked at Google" | You're not Google. Scale to YOUR context. |
+| 1 | "X 在 HN 上 trending" | 根据 YOUR 需求评估 |
+| 2 | 简历驱动开发 | 选择团队能维护的 |
+| 3 | "第一天必须扩展到 100万 用户" | 为当前需求的 10 倍构建, 非 1000 倍 |
+| 4 | 评估数周 | 限时 3-5 天, 然后决定 |
+| 5 | 无决策文档 | 为每个重大选择写 ADR |
+| 6 | 忽略运维成本 | 包含部署, 监控, 调试成本 |
+| 7 | "我们以后会重写" | 假设你不会。谨慎选择。 |
+| 8 | 默认微服务 | 从单体开始, 需要时提取 |
+| 9 | 第一天每个服务不同数据库 | 一个数据库, 有理由时再拆分 |
+| 10 | "Google 用了它有效" | 你不是 Google。扩展到 YOUR 场景。 |
 
 ---
 
-## Common Issues
+## 常见问题
 
-### Issue 1: "Team can't agree on a framework"
+### 问题 1: "团队无法就框架达成一致"
 
-**Fix:** Time-box to 3 days. Fill the evaluation matrix. If scores within 10%, pick what the majority knows. Document in ADR. Move on.
+**修复:** 限时 3 天。填写评估矩阵。如果分数在 10% 内, 选择大多数人熟悉的。记录在 ADR 中。继续前进。
 
-### Issue 2: "We picked X but it doesn't fit"
+### 问题 2: "我们选了 X 但它不合适"
 
-**Fix:** Sunk cost fallacy check. If < 2 weeks invested, switch now. If > 2 weeks, document pain points and plan phased migration.
+**修复:** 沉没成本谬误检查。如果投入 < 2 周, 现在切换。如果 > 2 周, 记录痛点并规划分阶段迁移。
 
-### Issue 3: "Do we need microservices?"
+### 问题 3: "我们需要微服务吗?"
 
-**Fix:** Almost certainly no. Start with a well-structured monolith. Extract to services only when: (a) different scaling needs, (b) different team ownership, (c) different deployment cadence.
+**修复:** 几乎肯定不需要。从结构良好的单体开始。仅当以下条件时才提取到服务: (a) 不同扩展需求, (b) 不同团队所有权, (c) 不同部署节奏。

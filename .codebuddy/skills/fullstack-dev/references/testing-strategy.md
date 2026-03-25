@@ -1,55 +1,55 @@
-# Backend Testing Strategy
+# 后端测试策略
 
-Comprehensive testing guide for backend and full-stack applications. Covers the full testing pyramid with deep focus on API integration tests, database testing, contract testing, and performance testing.
+后端和全栈应用的全面测试指南。涵盖完整的测试金字塔，深入关注 API 集成测试、数据库测试、契约测试和性能测试。
 
-## Quick Start Checklist
+## 快速开始清单
 
-- [ ] **Test runner configured** (Jest/Vitest, Pytest, Go test)
-- [ ] **Test database** ready (Docker container or in-memory)
-- [ ] **Database isolation** per test (transaction rollback or truncation)
-- [ ] **Test factories** for common entities (user, order, product)
-- [ ] **Auth helper** to generate tokens for tests
-- [ ] **CI pipeline** runs tests with real database service
-- [ ] **Coverage threshold** enforced (≥ 80%)
+- [ ] **测试运行器已配置** (Jest/Vitest, Pytest, Go test)
+- [ ] **测试数据库**就绪 (Docker 容器或内存中)
+- [ ] **数据库隔离**每测试 (事务回滚或截断)
+- [ ] **测试工厂**用于常见实体 (user, order, product)
+- [ ] **认证辅助**为测试生成令牌
+- [ ] **CI 流水线**用真实数据库服务运行测试
+- [ ] **覆盖率阈值**强制执行 (≥ 80%)
 
 ---
 
-## The Testing Pyramid
+## 测试金字塔
 
 ```
-         ╱╲        E2E (few, slow) — full flows across services
+         ╱╲        E2E (少量, 慢) — 跨服务的完整流程
         ╱  ╲
-       ╱────╲       Integration (moderate) — API + DB + external
+       ╱────╲       集成 (适量) — API + DB + 外部
       ╱      ╲
-     ╱────────╲      Unit (many, fast) — pure business logic
+     ╱────────╲      单元 (大量, 快) — 纯业务逻辑
     ╱__________╲
 ```
 
-| Level | What | Speed | Count |
+| 层级 | 什么 | 速度 | 数量 |
 |-------|------|-------|-------|
-| Unit | Pure functions, business logic, no I/O | < 10ms | 70%+ of tests |
-| Integration | API routes + real database + mocked externals | 50-500ms | ~20% |
-| E2E | Full user flow across deployed services | 1-30s | ~10% |
-| Contract | API compatibility between services | < 100ms | Per API boundary |
-| Performance | Load, stress, soak | Minutes | Per critical path |
+| 单元 | 纯函数, 业务逻辑, 无 I/O | < 10ms | 70%+ 的测试 |
+| 集成 | API 路由 + 真实数据库 + mock 外部 | 50-500ms | ~20% |
+| E2E | 跨已部署服务的完整用户流程 | 1-30s | ~10% |
+| 契约 | 服务间 API 兼容性 | < 100ms | 每个 API 边界 |
+| 性能 | 负载, 压力, 浸泡 | 分钟 | 每个关键路径 |
 
 ---
 
-## 1. API Integration Testing (CRITICAL)
+## 1. API 集成测试 (关键)
 
-### What to Test for Every Endpoint
+### 每个端点测试什么
 
-| Aspect | Tests to Write |
+| 方面 | 要写的测试 |
 |--------|---------------|
-| Happy path | Correct input → expected response + correct DB state |
-| Auth | No token → 401, bad token → 401, expired → 401 |
-| Authorization | Wrong role → 403, not owner → 403 |
-| Validation | Missing fields → 422, bad types → 422, boundary values |
-| Not found | Invalid ID → 404, deleted resource → 404 |
-| Conflict | Duplicate create → 409, stale update → 409 |
-| Idempotency | Same request twice → same result |
-| Side effects | DB state changed, events emitted, cache invalidated |
-| Error format | All errors match RFC 9457 envelope |
+| 主流程 | 正确输入 → 预期响应 + 正确 DB 状态 |
+| 认证 | 无令牌 → 401, 错误令牌 → 401, 过期 → 401 |
+| 授权 | 错误角色 → 403, 非所有者 → 403 |
+| 验证 | 缺失字段 → 422, 错误类型 → 422, 边界值 |
+| 未找到 | 无效 ID → 404, 已删除资源 → 404 |
+| 冲突 | 重复创建 → 409, 过期更新 → 409 |
+| 幂等性 | 相同请求两次 → 相同结果 |
+| 副作用 | DB 状态改变, 事件发出, 缓存失效 |
+| 错误格式 | 所有错误符合 RFC 9457 信封 |
 
 ### TypeScript (Jest + Supertest)
 
@@ -123,35 +123,35 @@ def test_create_order_empty_items(client, auth_headers):
 
 ---
 
-## 2. Database Testing (HIGH)
+## 2. 数据库测试 (高)
 
-### Test Isolation Strategies
+### 测试隔离策略
 
-| Strategy | Speed | Realism | When |
+| 策略 | 速度 | 真实性 | 何时使用 |
 |----------|-------|---------|------|
-| **Transaction rollback** | ⚡ Fastest | Medium | Default for unit + integration |
-| **Truncation** | Fast | High | When rollback isn't possible |
-| **Test containers** | Slow startup | Highest | CI pipeline, full integration |
+| **事务回滚** |  最快 | 中 | 单元 + 集成的默认 |
+| **截断** | 快 | 高 | 回滚不可能时 |
+| **测试容器** | 启动慢 | 最高 | CI 流水线, 完整集成 |
 
-**Transaction rollback (recommended default):**
+**事务回滚 (推荐默认):**
 ```typescript
 let tx: Transaction;
 beforeEach(async () => { tx = await db.beginTransaction(); });
 afterEach(async () => { await tx.rollback(); });
 ```
 
-**Docker test containers (CI):**
+**Docker 测试容器 (CI):**
 ```yaml
 # docker-compose.test.yml
 services:
   test-db:
     image: postgres:16-alpine
-    tmpfs: /var/lib/postgresql/data   # RAM disk for speed
+    tmpfs: /var/lib/postgresql/data   # RAM 磁盘加速
     environment:
       POSTGRES_DB: myapp_test
 ```
 
-### Test Factories (Not Raw SQL)
+### 测试工厂 (非原始 SQL)
 
 ```typescript
 // factories/user.factory.ts
@@ -185,9 +185,9 @@ class UserFactory(factory.Factory):
 
 ---
 
-## 3. External Service Testing (HIGH)
+## 3. 外部服务测试 (高)
 
-### HTTP-Level Mocking (Not Function Mocking)
+### HTTP 级 Mocking (非函数 Mocking)
 
 **TypeScript (nock):**
 ```typescript
@@ -221,7 +221,7 @@ def test_payment_success():
     assert result.status == "succeeded"
 ```
 
-### Test Containers for Infrastructure
+### 基础设施测试容器
 
 ```typescript
 import { PostgreSqlContainer } from '@testcontainers/postgresql';
@@ -236,11 +236,11 @@ beforeAll(async () => {
 
 ---
 
-## 4. Contract Testing (MEDIUM-HIGH)
+## 4. 契约测试 (中-高)
 
-### Consumer-Driven Contracts (Pact)
+### 消费者驱动契约 (Pact)
 
-**Consumer (OrderService calls UserService):**
+**消费者 (OrderService 调用 UserService):**
 ```typescript
 it('can fetch user by ID', async () => {
   await pact.addInteraction()
@@ -257,7 +257,7 @@ it('can fetch user by ID', async () => {
 });
 ```
 
-**Provider verifies in CI:**
+**提供者在 CI 中验证:**
 ```typescript
 await new Verifier({
   providerBaseUrl: 'http://localhost:3001',
@@ -268,9 +268,9 @@ await new Verifier({
 
 ---
 
-## 5. Performance Testing (MEDIUM)
+## 5. 性能测试 (中)
 
-### k6 Load Test
+### k6 负载测试
 
 ```javascript
 import http from 'k6/http';
@@ -278,9 +278,9 @@ import { check, sleep } from 'k6';
 
 export const options = {
   stages: [
-    { duration: '30s', target: 20 },    // ramp up
-    { duration: '1m',  target: 100 },   // sustain
-    { duration: '30s', target: 0 },     // ramp down
+    { duration: '30s', target: 20 },    // 爬坡
+    { duration: '1m',  target: 100 },   // 持续
+    { duration: '30s', target: 0 },     // 降坡
   ],
   thresholds: {
     http_req_duration: ['p(95)<500', 'p(99)<1000'],
@@ -295,86 +295,86 @@ export default function () {
 }
 ```
 
-### Performance Budgets
+### 性能预算
 
-| Metric | Target | Action if Exceeded |
+| 指标 | 目标 | 超标时操作 |
 |--------|--------|--------------------|
-| p95 response time | < 500ms | Optimize queries/caching |
-| p99 response time | < 1000ms | Check outlier queries |
-| Error rate | < 0.1% | Investigate spikes |
-| DB query time | < 100ms each | Add indexes |
+| p95 响应时间 | < 500ms | 优化查询/缓存 |
+| p99 响应时间 | < 1000ms | 检查异常查询 |
+| 错误率 | < 0.1% | 调查激增 |
+| DB 查询时间 | < 100ms 每个 | 添加索引 |
 
-### When to Run
+### 何时运行
 
-| Trigger | Test Type |
+| 触发条件 | 测试类型 |
 |---------|-----------|
-| Before major release | Full load test |
-| New DB query/index | Query benchmark |
-| Infrastructure change | Baseline comparison |
-| Weekly (CI) | Smoke load test |
+| 主要发布前 | 完整负载测试 |
+| 新 DB 查询/索引 | 查询基准测试 |
+| 基础设施变更 | 基线比较 |
+| 每周 (CI) | 冒烟负载测试 |
 
 ---
 
-## Test File Organization
+## 测试文件组织
 
 ```
 tests/
-  unit/                      # Pure logic, mocked dependencies
+  unit/                      # 纯逻辑, mock 依赖
     order.service.test.ts
-  integration/               # API + real DB
+  integration/               # API + 真实 DB
     orders.api.test.ts
     auth.api.test.ts
-  contracts/                 # Consumer-driven contracts
+  contracts/                 # 消费者驱动契约
     user-service.consumer.pact.ts
-  performance/               # Load tests
+  performance/               # 负载测试
     load-test.js
   fixtures/
-    factories/               # Test data factories
+    factories/               # 测试数据工厂
       user.factory.ts
     seeds/
       test-data.ts
   helpers/
-    setup.ts                 # Global test config
-    auth.helper.ts           # Token generation
-    db.helper.ts             # DB cleanup
+    setup.ts                 # 全局测试配置
+    auth.helper.ts           # 令牌生成
+    db.helper.ts             # DB 清理
 ```
 
 ---
 
-## Anti-Patterns
+## 反模式
 
-| # | ❌ Don't | ✅ Do Instead |
+| # |  不要 |  应该这样做 |
 |---|---------|--------------|
-| 1 | Test only happy paths | Test errors, auth, validation, edge cases |
-| 2 | Mock everything (no real DB) | Use test containers or test DB |
-| 3 | Tests depend on execution order | Each test sets up / tears down own state |
-| 4 | Hardcode test data | Use factories (faker + overrides) |
-| 5 | Test implementation details | Test behavior: input → output |
-| 6 | Share mutable state | Isolate per test (transaction rollback) |
-| 7 | Skip migration testing in CI | Run migrations from scratch in CI |
-| 8 | No performance test before release | Load test every major release |
-| 9 | Test against production data | Generated test data only |
-| 10 | Test suite > 10 minutes | Parallelize, RAM disk, optimize setup |
+| 1 | 仅测试主流程 | 测试错误, 认证, 验证, 边界情况 |
+| 2 | 所有内容都 mock (无真实 DB) | 使用测试容器或测试 DB |
+| 3 | 测试依赖执行顺序 | 每个测试设置/拆卸自己的状态 |
+| 4 | 硬编码测试数据 | 使用工厂 (faker + 覆盖) |
+| 5 | 测试实现细节 | 测试行为: 输入 → 输出 |
+| 6 | 共享可变状态 | 每测试隔离 (事务回滚) |
+| 7 | CI 中跳过迁移测试 | 在 CI 中从零运行迁移 |
+| 8 | 发布前无性能测试 | 每个主要发布都进行负载测试 |
+| 9 | 针对生产数据测试 | 仅生成测试数据 |
+| 10 | 测试套件 > 10 分钟 | 并行化, RAM 磁盘, 优化设置 |
 
 ---
 
-## Common Issues
+## 常见问题
 
-### Issue 1: "Tests pass alone but fail together"
+### 问题 1: "测试单独通过但一起失败"
 
-**Cause:** Shared database state between tests. Missing cleanup.
+**原因:** 测试间共享数据库状态。缺少清理。
 
-**Fix:**
+**修复:**
 ```typescript
 beforeEach(async () => { await db.raw('TRUNCATE orders, users CASCADE'); });
-// OR use transaction rollback per test
+// 或每测试使用事务回滚
 ```
 
-### Issue 2: "Jest did not exit one second after test run"
+### 问题 2: "Jest 在测试运行后一秒未退出"
 
-**Cause:** Unclosed database connections or HTTP servers.
+**原因:** 未关闭的数据库连接或 HTTP 服务器。
 
-**Fix:**
+**修复:**
 ```typescript
 afterAll(async () => {
   await db.destroy();
@@ -382,23 +382,23 @@ afterAll(async () => {
 });
 ```
 
-### Issue 3: "Async callback was not invoked within timeout"
+### 问题 3: "异步回调在超时内未被调用"
 
-**Cause:** Missing `async/await` or unhandled promise.
+**原因:** 缺少 `async/await` 或未处理的 promise。
 
-**Fix:**
+**修复:**
 ```typescript
-// ❌ Promise not awaited
+//  Promise 未等待
 it('should work', () => { request(app).get('/users'); });
 
-// ✅ Properly awaited
+//  正确等待
 it('should work', async () => { await request(app).get('/users'); });
 ```
 
-### Issue 4: "Integration tests too slow in CI"
+### 问题 4: "CI 中集成测试太慢"
 
-**Fix:**
-1. Use `tmpfs` for PostgreSQL data dir (RAM disk)
-2. Run migrations once in `beforeAll`, truncate in `beforeEach`
-3. Parallelize test suites with `--maxWorkers`
-4. Skip performance tests on feature branches (only main)
+**修复:**
+1. PostgreSQL 数据目录用 `tmpfs` (RAM 磁盘)
+2. `beforeAll` 中运行迁移一次, `beforeEach` 中截断
+3. 用 `--maxWorkers` 并行化测试套件
+4. 功能分支跳过性能测试 (仅 main 分支)

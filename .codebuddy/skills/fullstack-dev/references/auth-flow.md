@@ -1,48 +1,48 @@
-# Authentication Flow Patterns
+# 认证流程模式
 
-Complete auth flow across frontend and backend. Covers JWT bearer flow, automatic token refresh, Next.js server-side auth, RBAC, and backend middleware order.
-
----
-
-## JWT Bearer Flow (Most Common)
-
-```
-1. Login
-   Client → POST /api/auth/login { email, password }
-   Server → { accessToken (15min), refreshToken (7d, httpOnly cookie) }
-
-2. Authenticated Requests
-   Client → GET /api/orders  Authorization: Bearer <accessToken>
-   Server → validates JWT → returns data
-
-3. Token Refresh (transparent)
-   Client → 401 received → POST /api/auth/refresh (cookie auto-sent)
-   Server → new accessToken
-   Client → retry original request with new token
-
-4. Logout
-   Client → POST /api/auth/logout
-   Server → invalidate refresh token → clear cookie
-```
+跨前后端的完整认证流程。涵盖 JWT bearer 流程、自动令牌刷新、Next.js 服务端认证、RBAC 和后端中间件顺序。
 
 ---
 
-## Frontend: Automatic Token Refresh
+## JWT Bearer 流程 (最常见)
+
+```
+1. 登录
+   客户端 → POST /api/auth/login { email, password }
+   服务端 → { accessToken (15分钟), refreshToken (7天, httpOnly cookie) }
+
+2. 认证请求
+   客户端 → GET /api/orders  Authorization: Bearer <accessToken>
+   服务端 → 验证 JWT → 返回数据
+
+3. 令牌刷新 (透明)
+   客户端 → 收到 401 → POST /api/auth/refresh (cookie 自动发送)
+   服务端 → 新 accessToken
+   客户端 → 使用新令牌重试原始请求
+
+4. 登出
+   客户端 → POST /api/auth/logout
+   服务端 → 使刷新令牌失效 → 清除 cookie
+```
+
+---
+
+## 前端: 自动令牌刷新
 
 ```typescript
-// lib/api-client.ts — add to existing fetch wrapper
+// lib/api-client.ts — 添加到现有的 fetch 包装器
 async function apiWithRefresh<T>(path: string, options: RequestInit = {}): Promise<T> {
   try {
     return await api<T>(path, options);
   } catch (err) {
     if (err instanceof ApiError && err.status === 401) {
-      // Try refresh
+      // 尝试刷新
       const refreshed = await api<{ accessToken: string }>('/api/auth/refresh', {
         method: 'POST',
-        credentials: 'include',  // send httpOnly cookie
+        credentials: 'include',  // 发送 httpOnly cookie
       });
       setAuthToken(refreshed.accessToken);
-      // Retry original request
+      // 重试原始请求
       return api<T>(path, options);
     }
     throw err;
@@ -52,10 +52,10 @@ async function apiWithRefresh<T>(path: string, options: RequestInit = {}): Promi
 
 ---
 
-## Next.js: Server-Side Auth (App Router)
+## Next.js: 服务端认证 (App Router)
 
 ```typescript
-// middleware.ts — protect routes server-side
+// middleware.ts — 服务端保护路由
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
@@ -67,7 +67,7 @@ export function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-// app/dashboard/page.tsx — server component with auth
+// app/dashboard/page.tsx — 带认证的服务端组件
 import { cookies } from 'next/headers';
 
 export default async function Dashboard() {
@@ -82,29 +82,29 @@ export default async function Dashboard() {
 
 ---
 
-## Backend: Standard Middleware Order
+## 后端: 标准中间件顺序
 
 ```
-Request → 1.RequestID → 2.Logging → 3.CORS → 4.RateLimit → 5.BodyParse
-       → 6.Auth → 7.Authz → 8.Validation → 9.Handler → 10.ErrorHandler → Response
-```
-
----
-
-## Backend: JWT Rules
-
-```
-✅ Short expiry access token (15min) + refresh token (server-stored)
-✅ Minimal claims: userId, roles (not entire user object)
-✅ Rotate signing keys periodically
-
-❌ Never store tokens in localStorage (XSS risk)
-❌ Never pass tokens in URL query params
+请求 → 1.RequestID → 2.Logging → 3.CORS → 4.RateLimit → 5.BodyParse
+     → 6.Auth → 7.Authz → 8.Validation → 9.Handler → 10.ErrorHandler → 响应
 ```
 
 ---
 
-## Backend: RBAC Pattern
+## 后端: JWT 规则
+
+```
+短期访问令牌 (15分钟) + 刷新令牌 (服务端存储)
+最小声明: userId, roles (非整个用户对象)
+定期轮换签名密钥
+
+绝不将令牌存储在 localStorage (XSS 风险)
+绝不在 URL 查询参数中传递令牌
+```
+
+---
+
+## 后端: RBAC 模式
 
 ```typescript
 function authorize(...roles: Role[]) {
@@ -119,47 +119,47 @@ router.delete('/users/:id', authenticate, authorize('admin'), deleteUser);
 
 ---
 
-## Auth Decision Table
+## 认证决策表
 
-| Method | When | Frontend |
+| 方法 | 何时使用 | 前端 |
 |--------|------|----------|
-| Session | Same-domain, SSR, Django templates | Django templates / htmx |
-| JWT | Different domain, SPA, mobile | React, Vue, mobile apps |
-| OAuth2 | Third-party login, API consumers | Any |
+| Session | 同域, SSR, Django 模板 | Django 模板 / htmx |
+| JWT | 不同域, SPA, 移动端 | React, Vue, 移动应用 |
+| OAuth2 | 第三方登录, API 消费者 | 任意 |
 
 ---
 
-## Iron Rules
+## 铁律
 
 ```
-✅ Access token: short-lived (15min), in memory
-✅ Refresh token: httpOnly cookie (XSS-safe)
-✅ Automatic transparent refresh on 401
-✅ Redirect to login when refresh fails
+访问令牌: 短期 (15分钟), 内存中
+刷新令牌: httpOnly cookie (防 XSS)
+401 时自动透明刷新
+刷新失败时重定向到登录
 
-❌ Never store tokens in localStorage (XSS risk)
-❌ Never send tokens in URL query params (logged)
-❌ Never trust client-side auth checks alone (server must validate)
+绝不将令牌存储在 localStorage (XSS 风险)
+绝不在 URL 查询参数中发送令牌 (会被记录)
+绝不单独信任客户端认证检查 (服务端必须验证)
 ```
 
 ---
 
-## Common Issues
+## 常见问题
 
-### Issue 1: "Auth works on page load but breaks on navigation"
+### 问题 1: "页面加载时认证有效，但导航时失效"
 
-**Cause:** Token stored in component state (lost on unmount).
+**原因:** 令牌存储在组件状态中 (卸载时丢失)。
 
-**Fix:** Store access token in a persistent location:
-- React Context (survives navigation, lost on refresh)
-- Cookie (survives refresh)
-- React Query cache with `staleTime: Infinity` for session
+**解决:** 将访问令牌存储在持久位置:
+- React Context (导航时保留, 刷新时丢失)
+- Cookie (刷新时保留)
+- React Query 缓存配合 `staleTime: Infinity` 用于 session
 
-### Issue 2: "CORS error with auth requests"
+### 问题 2: "认证请求出现 CORS 错误"
 
-**Cause:** Missing `credentials: 'include'` on frontend or `credentials: true` on backend CORS config.
+**原因:** 前端缺少 `credentials: 'include'` 或后端 CORS 配置缺少 `credentials: true`。
 
-**Fix:**
-1. Frontend: `fetch(url, { credentials: 'include' })`
-2. Backend: `cors({ origin: 'https://your-frontend.com', credentials: true })`
-3. Backend: explicit origin (not `*`) when using credentials
+**解决:**
+1. 前端: `fetch(url, { credentials: 'include' })`
+2. 后端: `cors({ origin: 'https://your-frontend.com', credentials: true })`
+3. 后端: 使用凭证时显式指定来源 (非 `*`)

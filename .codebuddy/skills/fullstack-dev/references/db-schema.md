@@ -1,6 +1,6 @@
 ---
 name: fullstack-dev-db-schema
-description: "Database schema design and migrations. Use when creating tables, defining ORM models, adding indexes, or designing relationships. Covers zero-downtime migrations and multi-tenancy."
+description: "数据库模式设计和迁移。在创建表、定义 ORM 模型、添加索引或设计关系时使用。涵盖零停机迁移和多租户。"
 license: MIT
 metadata:
   version: "1.0.0"
@@ -11,122 +11,122 @@ metadata:
     - Database Reliability Engineering (Laine Campbell & Charity Majors)
 ---
 
-# Database Schema Design
+# 数据库模式设计
 
-ORM-agnostic guide for relational database schema design. Covers data modeling, normalization, indexing, migrations, multi-tenancy, and common application patterns. Primarily PostgreSQL-focused but principles apply to MySQL/MariaDB.
+ORM 无关的关系型数据库模式设计指南。涵盖数据建模、规范化、索引、迁移、多租户和常见应用模式。主要面向 PostgreSQL，但原则适用于 MySQL/MariaDB。
 
-## Scope
+## 适用范围
 
-**USE this skill when:**
-- Designing a schema for a new project or feature
-- Deciding between normalization and denormalization
-- Choosing which indexes to create
-- Planning a zero-downtime migration on a live database
-- Implementing multi-tenant data isolation
-- Adding audit trails, soft delete, or versioning
-- Diagnosing slow queries caused by schema problems
+**使用此技能的情况:**
+- 为新项目或功能设计模式
+- 在规范化和反规范化之间决策
+- 选择要创建的索引
+- 在实时数据库上规划零停机迁移
+- 实现多租户数据隔离
+- 添加审计追踪、软删除或版本控制
+- 诊断由模式问题导致的慢查询
 
-**NOT for:**
-- Choosing which database technology to use (→ `technology-selection`)
-- PostgreSQL-specific query tuning (use PostgreSQL performance docs)
-- ORM-specific configuration (→ `django-best-practices` or your ORM's docs)
-- Application-layer caching (→ `fullstack-dev-practices`)
+**不适用的情况:**
+- 选择使用哪种数据库技术 (→ `technology-selection`)
+- PostgreSQL 特定的查询调优 (使用 PostgreSQL 性能文档)
+- ORM 特定配置 (→ `django-best-practices` 或你的 ORM 文档)
+- 应用层缓存 (→ `fullstack-dev-practices`)
 
-## Context Required
+## 所需上下文
 
-| Required | Optional |
+| 必需 | 可选 |
 |----------|----------|
-| Database engine (PostgreSQL / MySQL) | Expected data volume (rows, growth rate) |
-| Domain entities and relationships | Read/write ratio |
-| Key access patterns (queries) | Multi-tenant requirements |
+| 数据库引擎 (PostgreSQL / MySQL) | 预期数据量 (行数, 增长率) |
+| 领域实体和关系 | 读/写比例 |
+| 关键访问模式 (查询) | 多租户需求 |
 
 ---
 
-## Quick Start Checklist
+## 快速开始清单
 
-Designing a new schema:
+设计新模式:
 
-- [ ] **Domain entities identified** — map 1 entity = 1 table (not 1 class = 1 table)
-- [ ] **Primary keys**: UUID for public IDs, serial/bigserial for internal-only
-- [ ] **Foreign keys** with explicit `ON DELETE` behavior
-- [ ] **NOT NULL** by default — nullable only when business logic requires it
-- [ ] **Timestamps**: `created_at` + `updated_at` on every table
-- [ ] **Indexes** created for every WHERE, JOIN, ORDER BY column
-- [ ] **No premature denormalization** — start normalized, denormalize when measured
-- [ ] **Naming convention** consistent: `snake_case`, plural table names
+- [ ] **已识别领域实体** — 映射 1 实体 = 1 表 (非 1 类 = 1 表)
+- [ ] **主键**: 公开 ID 用 UUID，内部仅用序列/bigserial
+- [ ] **外键**带显式 `ON DELETE` 行为
+- [ ] **NOT NULL** 默认 — 仅业务逻辑需要时才可空
+- [ ] **时间戳**: 每个表都有 `created_at` + `updated_at`
+- [ ] **索引**为每个 WHERE, JOIN, ORDER BY 列创建
+- [ ] **不提前反规范化** — 从规范化开始，测量后才反规范化
+- [ ] **命名约定**一致: `snake_case`, 表名复数
 
 ---
 
-## Quick Navigation
+## 快速导航
 
-| Need to… | Jump to |
+| 需要… | 跳转到 |
 |----------|---------|
-| Model entities and relationships | [1. Data Modeling](#1-data-modeling-critical) |
-| Decide normalize vs denormalize | [2. Normalization](#2-normalization-vs-denormalization-critical) |
-| Choose the right index | [3. Indexing](#3-indexing-strategy-critical) |
-| Run migrations safely on live DB | [4. Migrations](#4-zero-downtime-migrations-high) |
-| Design multi-tenant schema | [5. Multi-Tenancy](#5-multi-tenant-design-high) |
-| Add soft delete / audit trails | [6. Common Patterns](#6-common-schema-patterns-medium) |
-| Partition large tables | [7. Partitioning](#7-table-partitioning-medium) |
-| See anti-patterns | [Anti-Patterns](#anti-patterns) |
+| 建模实体和关系 | [1. 数据建模](#1-数据建模-关键) |
+| 决定规范化 vs 反规范化 | [2. 规范化](#2-规范化-vs-反规范化-关键) |
+| 选择正确的索引 | [3. 索引](#3-索引策略-关键) |
+| 在实时 DB 上安全运行迁移 | [4. 迁移](#4-零停机迁移-高) |
+| 设计多租户模式 | [5. 多租户](#5-多租户设计-高) |
+| 添加软删除 / 审计追踪 | [6. 常见模式](#6-常见模式-中) |
+| 分区大表 | [7. 分区](#7-表分区-中) |
+| 查看反模式 | [反模式](#反模式) |
 
 ---
 
-## Core Principles (7 Rules)
+## 核心原则 (7 条规则)
 
 ```
-1. ✅ Start normalized (3NF) — denormalize only when you have measured evidence
-2. ✅ Every table has a primary key, created_at, updated_at
-3. ✅ UUID for public-facing IDs, serial for internal join keys
-4. ✅ NOT NULL by default — null is a business decision, not a lazy default
-5. ✅ Index every column used in WHERE, JOIN, ORDER BY
-6. ✅ Foreign keys enforced in database (not just application code)
-7. ✅ Migrations are additive — never drop/rename in production without a multi-step plan
+1. 从规范化 (3NF) 开始 — 仅当有测量证据时才反规范化
+2. 每个表都有主键、created_at、updated_at
+3. 公开 ID 用 UUID，内部连接键用序列
+4. 默认 NOT NULL — null 是业务决策，非懒默认
+5. 为 WHERE, JOIN, ORDER BY 中使用的每个列建索引
+6. 外键在数据库中强制执行 (非仅在应用代码中)
+7. 迁移是增量的 — 无多步计划绝不在生产环境删除/重命名
 ```
 
 ---
 
-## 1. Data Modeling (CRITICAL)
+## 1. 数据建模 (关键)
 
-### Table Naming
+### 表命名
 
 ```sql
--- ✅ Plural, snake_case
+--  复数, snake_case
 CREATE TABLE orders (...);
 CREATE TABLE order_items (...);
 CREATE TABLE user_profiles (...);
 
--- ❌ Singular, mixed case
+--  单数, 混合大小写
 CREATE TABLE Order (...);
 CREATE TABLE OrderItem (...);
-CREATE TABLE tbl_usr_prof (...);    -- cryptic abbreviation
+CREATE TABLE tbl_usr_prof (...);    -- 晦涩缩写
 ```
 
-### Primary Keys
+### 主键
 
-| Strategy | When | Pros | Cons |
+| 策略 | 何时使用 | 优点 | 缺点 |
 |----------|------|------|------|
-| `bigserial` (auto-increment) | Internal tables, FK joins | Compact, fast joins | Enumerable, not safe for public IDs |
-| `uuid` (v4 random) | Public-facing resources | Non-guessable, globally unique | Larger (16 bytes), random I/O on B-Tree |
-| `uuid` v7 (time-sorted) | Public + needs ordering | Non-guessable + insert-friendly | Newer, less ecosystem support |
-| `text` slug | URL-friendly resources | Human-readable | Must enforce uniqueness, updates expensive |
+| `bigserial` (自增) | 内部表, FK 连接 | 紧凑, 快速连接 | 可枚举, 不适合公开 ID |
+| `uuid` (v4 随机) | 公开资源 | 不可猜测, 全局唯一 | 较大 (16 字节), B-Tree 随机 I/O |
+| `uuid` v7 (时间排序) | 公开 + 需要排序 | 不可猜测 + 插入友好 | 较新, 生态系统支持较少 |
+| `text` slug | URL 友好资源 | 人类可读 | 必须强制执行唯一性, 更新昂贵 |
 
-**Recommended default:**
+**推荐默认:**
 
 ```sql
 CREATE TABLE orders (
-    id          bigserial PRIMARY KEY,             -- internal FK target
-    public_id   uuid NOT NULL DEFAULT gen_random_uuid() UNIQUE,  -- API-facing
+    id          bigserial PRIMARY KEY,             -- 内部 FK 目标
+    public_id   uuid NOT NULL DEFAULT gen_random_uuid() UNIQUE,  -- API 面向
     -- ...
     created_at  timestamptz NOT NULL DEFAULT now(),
     updated_at  timestamptz NOT NULL DEFAULT now()
 );
 ```
 
-### Relationships
+### 关系
 
 ```sql
--- One-to-Many: user → orders
+-- 一对多: user → orders
 CREATE TABLE orders (
     id         bigserial PRIMARY KEY,
     user_id    bigint NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -134,17 +134,17 @@ CREATE TABLE orders (
 );
 CREATE INDEX idx_orders_user_id ON orders(user_id);
 
--- Many-to-Many: orders ↔ products (via junction table)
+-- 多对多: orders ↔ products (通过连接表)
 CREATE TABLE order_items (
     id         bigserial PRIMARY KEY,
     order_id   bigint NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
     product_id bigint NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
     quantity   int NOT NULL CHECK (quantity > 0),
     unit_price numeric(10,2) NOT NULL,
-    UNIQUE (order_id, product_id)  -- prevent duplicate line items
+    UNIQUE (order_id, product_id)  -- 防止重复行项目
 );
 
--- One-to-One: user → profile
+-- 一对一: user → profile
 CREATE TABLE user_profiles (
     user_id    bigint PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
     bio        text,
@@ -153,57 +153,57 @@ CREATE TABLE user_profiles (
 );
 ```
 
-### ON DELETE Behavior
+### ON DELETE 行为
 
-| Behavior | When | Example |
+| 行为 | 何时使用 | 示例 |
 |----------|------|---------|
-| `CASCADE` | Child meaningless without parent | order_items when order deleted |
-| `RESTRICT` | Prevent accidental deletion | products referenced by order_items |
-| `SET NULL` | Preserve child, clear reference | orders.assigned_to when employee leaves |
-| `SET DEFAULT` | Fallback to default value | Rare, for status columns |
+| `CASCADE` | 子项无父项无意义 | order_items 当 order 被删除时 |
+| `RESTRICT` | 防止意外删除 | order_items 引用的 products |
+| `SET NULL` | 保留子项, 清除引用 | orders.assigned_to 当员工离职时 |
+| `SET DEFAULT` | 回退到默认值 | 罕见, 用于状态列 |
 
 ---
 
-## 2. Normalization vs Denormalization (CRITICAL)
+## 2. 规范化 vs 反规范化 (关键)
 
-### Start Normalized (3NF)
+### 从规范化开始 (3NF)
 
-**Normal forms in practice:**
+**实践中的范式:**
 
-| Form | Rule | Example Violation |
+| 范式 | 规则 | 违规示例 |
 |------|------|-------------------|
-| 1NF | No repeating groups, atomic values | `tags = "go,python,rust"` in one column |
-| 2NF | No partial dependencies (composite keys) | `order_items.product_name` depends on `product_id` alone |
-| 3NF | No transitive dependencies | `orders.customer_city` depends on `customer_id`, not `order_id` |
+| 1NF | 无重复组, 原子值 | `tags = "go,python,rust"` 在一列中 |
+| 2NF | 无部分依赖 (复合键) | `order_items.product_name` 仅依赖 `product_id` |
+| 3NF | 无传递依赖 | `orders.customer_city` 依赖 `customer_id`, 非 `order_id` |
 
-**1NF violation fix:**
+**1NF 违规修复:**
 ```sql
--- ❌ Tags as comma-separated string
+--  Tags 作为逗号分隔字符串
 CREATE TABLE posts (id serial, tags text);  -- tags = "go,python"
 
--- ✅ Separate table (or array/JSONB if simple)
+--  单独表 (或简单时用 array/JSONB)
 CREATE TABLE post_tags (
     post_id bigint REFERENCES posts(id) ON DELETE CASCADE,
     tag_id  bigint REFERENCES tags(id) ON DELETE CASCADE,
     PRIMARY KEY (post_id, tag_id)
 );
 
--- ✅ Alternative: PostgreSQL array (if tags are just strings, no metadata)
+--  替代方案: PostgreSQL 数组 (如果 tags 只是字符串, 无元数据)
 CREATE TABLE posts (id serial, tags text[] NOT NULL DEFAULT '{}');
 CREATE INDEX idx_posts_tags ON posts USING GIN(tags);
 ```
 
-### When to Denormalize
+### 何时反规范化
 
-**Denormalize ONLY when:**
-1. You have **measured** a performance problem (EXPLAIN ANALYZE, not "I think it's slow")
-2. The denormalized data is **read-heavy** (read:write ratio > 100:1)
-3. You accept the **consistency maintenance cost** (triggers, application logic, or materialized views)
+**仅当以下条件时才反规范化:**
+1. 你**测量**了性能问题 (EXPLAIN ANALYZE, 非"我认为它慢")
+2. 反规范化数据是**读密集型** (读:写比例 > 100:1)
+3. 你接受**一致性维护成本** (触发器, 应用逻辑, 或物化视图)
 
-**Safe denormalization patterns:**
+**安全的反规范化模式:**
 
 ```sql
--- Pattern 1: Materialized view (computed, refreshable)
+-- 模式 1: 物化视图 (计算, 可刷新)
 CREATE MATERIALIZED VIEW order_summary AS
 SELECT o.id, o.user_id, o.total,
        COUNT(oi.id) AS item_count,
@@ -213,170 +213,170 @@ JOIN order_items oi ON oi.order_id = o.id
 JOIN users u ON u.id = o.user_id
 GROUP BY o.id, u.email;
 
-REFRESH MATERIALIZED VIEW CONCURRENTLY order_summary;  -- non-blocking
+REFRESH MATERIALIZED VIEW CONCURRENTLY order_summary;  -- 非阻塞
 
--- Pattern 2: Cached aggregate column (application-maintained)
+-- 模式 2: 缓存聚合列 (应用维护)
 ALTER TABLE orders ADD COLUMN item_count int NOT NULL DEFAULT 0;
--- Update via trigger or application code on order_item insert/delete
+-- 通过触发器或应用代码在 order_item 插入/删除时更新
 
--- Pattern 3: JSONB snapshot (freeze-at-write-time)
--- Store a copy of the product details at the time of purchase
+-- 模式 3: JSONB 快照 (写入时冻结)
+-- 存储购买时的产品详情副本
 CREATE TABLE order_items (
     id          bigserial PRIMARY KEY,
     order_id    bigint NOT NULL REFERENCES orders(id),
     product_id  bigint REFERENCES products(id),
     quantity    int NOT NULL,
-    unit_price  numeric(10,2) NOT NULL,      -- frozen price
-    product_snapshot jsonb NOT NULL           -- frozen name, description, image
+    unit_price  numeric(10,2) NOT NULL,      -- 冻结价格
+    product_snapshot jsonb NOT NULL           -- 冻结名称, 描述, 图片
 );
 ```
 
 ---
 
-## 3. Indexing Strategy (CRITICAL)
+## 3. 索引策略 (关键)
 
-### Index Types (PostgreSQL)
+### 索引类型 (PostgreSQL)
 
-| Type | When | Example |
+| 类型 | 何时使用 | 示例 |
 |------|------|---------|
-| **B-Tree** (default) | Equality, range, ORDER BY | `WHERE status = 'active'`, `WHERE created_at > '2025-01-01'` |
-| **Hash** | Equality only (rare, B-Tree usually better) | `WHERE id = 123` (large tables, Postgres 10+) |
-| **GIN** | Arrays, JSONB, full-text search | `WHERE tags @> '{go}'`, `WHERE data->>'key' = 'val'` |
-| **GiST** | Geometry, ranges, nearest-neighbor | PostGIS, tsrange, ltree |
-| **BRIN** | Very large tables with natural ordering | Time-series data sorted by timestamp |
+| **B-Tree** (默认) | 相等, 范围, ORDER BY | `WHERE status = 'active'`, `WHERE created_at > '2025-01-01'` |
+| **Hash** | 仅相等 (罕见, B-Tree 通常更好) | `WHERE id = 123` (大表, Postgres 10+) |
+| **GIN** | 数组, JSONB, 全文搜索 | `WHERE tags @> '{go}'`, `WHERE data->>'key' = 'val'` |
+| **GiST** | 几何, 范围, 最近邻 | PostGIS, tsrange, ltree |
+| **BRIN** | 具有自然顺序的超大表 | 按时间戳排序的时间序列数据 |
 
-### Index Decision Rules
+### 索引决策规则
 
 ```
-Rule 1: Index every column in WHERE clauses
-Rule 2: Index every column used in JOIN ON conditions
-Rule 3: Index every column in ORDER BY (if queried with LIMIT)
-Rule 4: Composite index for multi-column WHERE (leftmost prefix rule)
-Rule 5: Partial index when filtering a subset (e.g., only active records)
-Rule 6: Covering index (INCLUDE) to avoid table lookup
-Rule 7: DON'T index low-cardinality columns alone (e.g., boolean)
+规则 1: 为 WHERE 子句中的每个列建索引
+规则 2: 为 JOIN ON 条件中使用的每个列建索引
+规则 3: 为 ORDER BY 中的每个列建索引 (如果与 LIMIT 一起查询)
+规则 4: 多列 WHERE 使用复合索引 (最左前缀规则)
+规则 5: 过滤子集时使用部分索引 (如仅活跃记录)
+规则 6: 覆盖索引 (INCLUDE) 避免表查找
+规则 7: 不单独为低基数列建索引 (如 boolean)
 ```
 
-### Composite Index: Column Order Matters
+### 复合索引: 列顺序很重要
 
 ```sql
--- Query: WHERE user_id = ? AND status = ? ORDER BY created_at DESC
--- ✅ Optimal: matches query pattern left-to-right
+-- 查询: WHERE user_id = ? AND status = ? ORDER BY created_at DESC
+--  最优: 从左到右匹配查询模式
 CREATE INDEX idx_orders_user_status_created
 ON orders(user_id, status, created_at DESC);
 
--- ❌ Wrong order: can't use for this query efficiently
+--  错误顺序: 无法高效用于此查询
 CREATE INDEX idx_orders_created_user_status
 ON orders(created_at DESC, user_id, status);
 ```
 
-**Leftmost prefix rule:** Index on `(A, B, C)` supports queries on `(A)`, `(A, B)`, `(A, B, C)` but NOT `(B)`, `(C)`, or `(B, C)`.
+**最左前缀规则:** `(A, B, C)` 上的索引支持 `(A)`, `(A, B)`, `(A, B, C)` 的查询，但**不支持** `(B)`, `(C)`, 或 `(B, C)`。
 
-### Partial Index (Index Only What Matters)
+### 部分索引 (仅索引重要内容)
 
 ```sql
--- Only 5% of orders are 'pending', but queried frequently
+-- 仅 5% 的 orders 是 'pending', 但频繁查询
 CREATE INDEX idx_orders_pending
 ON orders(created_at DESC)
 WHERE status = 'pending';
 
--- Only active users matter for login
+-- 仅活跃用户对登录重要
 CREATE INDEX idx_users_active_email
 ON users(email)
 WHERE is_active = true;
 ```
 
-### Covering Index (Avoid Table Lookup)
+### 覆盖索引 (避免表查找)
 
 ```sql
--- Query only needs id and status, no need to read the table row
+-- 查询只需要 id 和 status, 无需读取表行
 CREATE INDEX idx_orders_user_covering
 ON orders(user_id) INCLUDE (status, total);
 
--- Now this query is index-only:
+-- 现在此查询是仅索引的:
 SELECT status, total FROM orders WHERE user_id = 123;
 ```
 
-### When NOT to Index
+### 何时不建索引
 
 ```
-❌ Columns rarely used in WHERE/JOIN/ORDER BY
-❌ Tables with < 1,000 rows (sequential scan is faster)
-❌ Columns with very low cardinality alone (e.g., boolean is_active)
-❌ Write-heavy tables where index maintenance cost > read benefit
-❌ Duplicate indexes (check pg_stat_user_indexes for unused indexes)
+ 很少用于 WHERE/JOIN/ORDER BY 的列
+ 行数 < 1,000 的表 (顺序扫描更快)
+ 基数非常低的单列 (如 boolean is_active)
+ 写密集型表，索引维护成本 > 读收益
+ 重复索引 (检查 pg_stat_user_indexes 中未使用的索引)
 ```
 
 ---
 
-## 4. Zero-Downtime Migrations (HIGH)
+## 4. 零停机迁移 (高)
 
-### The Golden Rule
-
-```
-NEVER make destructive changes in one step.
-Always: ADD → MIGRATE DATA → REMOVE OLD (in separate deploys).
-```
-
-### Safe Migration Patterns
-
-**Rename a column (3 deploys):**
+### 黄金法则
 
 ```
-Deploy 1: Add new column
+绝不要一步做出破坏性变更。
+始终: 添加 → 迁移数据 → 删除旧列 (分开发布)。
+```
+
+### 安全迁移模式
+
+**重命名列 (3 次发布):**
+
+```
+发布 1: 添加新列
   ALTER TABLE users ADD COLUMN full_name text;
-  UPDATE users SET full_name = name;           -- backfill
-  -- App writes to BOTH name and full_name
+  UPDATE users SET full_name = name;           -- 回填
+  -- 应用写入 name 和 full_name 两者
 
-Deploy 2: Switch reads to new column
-  -- App reads from full_name, still writes to both
+发布 2: 切换到新列读取
+  -- 应用从 full_name 读取, 仍写入两者
 
-Deploy 3: Drop old column
+发布 3: 删除旧列
   ALTER TABLE users DROP COLUMN name;
-  -- App only uses full_name
+  -- 应用仅使用 full_name
 ```
 
-**Add a NOT NULL column (2 deploys):**
+**添加 NOT NULL 列 (2 次发布):**
 
 ```sql
--- Deploy 1: Add nullable column, backfill
-ALTER TABLE orders ADD COLUMN currency text;              -- nullable first
-UPDATE orders SET currency = 'USD' WHERE currency IS NULL; -- backfill
+-- 发布 1: 先添加可空列, 回填
+ALTER TABLE orders ADD COLUMN currency text;              -- 先可空
+UPDATE orders SET currency = 'USD' WHERE currency IS NULL; -- 回填
 
--- Deploy 2: Add constraint (after all rows backfilled)
+-- 发布 2: 添加约束 (所有行回填后)
 ALTER TABLE orders ALTER COLUMN currency SET NOT NULL;
 ALTER TABLE orders ALTER COLUMN currency SET DEFAULT 'USD';
 ```
 
-**Add an index without locking:**
+**无锁定添加索引:**
 
 ```sql
--- ✅ CONCURRENTLY: no table lock, can run on live DB
+--  CONCURRENTLY: 无表锁, 可在实时 DB 上运行
 CREATE INDEX CONCURRENTLY idx_orders_status ON orders(status);
 
--- ❌ Without CONCURRENTLY: locks table for writes during build
+--  无 CONCURRENTLY: 构建期间锁定表写入
 CREATE INDEX idx_orders_status ON orders(status);
 ```
 
-### Migration Safety Checklist
+### 迁移安全检查清单
 
 ```
-✅ Migration runs in < 30 seconds on production data size
-✅ No exclusive table locks (use CONCURRENTLY for indexes)
-✅ Rollback plan documented and tested
-✅ Backfill runs in batches (not one giant UPDATE)
-✅ New column added as nullable first, constraint added later
-✅ Old column kept until all code references removed
+ 迁移在生产数据量上运行 < 30 秒
+ 无排他表锁 (索引使用 CONCURRENTLY)
+ 回滚计划已记录并测试
+ 回填分批运行 (非一个巨大 UPDATE)
+ 新列先添加为可空, 约束稍后添加
+ 旧列保留到所有代码引用移除
 
-❌ Never rename/drop columns in one deploy
-❌ Never ALTER TYPE on large tables without testing timing
-❌ Never run data backfill in a transaction (OOM on large tables)
+绝不要一次发布中重命名/删除列
+绝不在无测试的情况下对大表 ALTER TYPE
+绝不在事务中运行数据回填 (大表会 OOM)
 ```
 
-### Batch Backfill Template
+### 批量回填模板
 
 ```sql
--- Backfill in batches of 10,000 (avoids long-running transactions)
+-- 每批 10,000 回填 (避免长时间运行的事务)
 DO $$
 DECLARE
   batch_size int := 10000;
@@ -391,27 +391,27 @@ BEGIN
     GET DIAGNOSTICS affected = ROW_COUNT;
     RAISE NOTICE 'Updated % rows', affected;
     EXIT WHEN affected = 0;
-    PERFORM pg_sleep(0.1);  -- brief pause to reduce load
+    PERFORM pg_sleep(0.1);  -- 短暂暂停以减少负载
   END LOOP;
 END $$;
 ```
 
 ---
 
-## 5. Multi-Tenant Design (HIGH)
+## 5. 多租户设计 (高)
 
-### Three Approaches
+### 三种方案
 
-| Approach | Isolation | Complexity | When |
+| 方案 | 隔离性 | 复杂度 | 何时使用 |
 |----------|-----------|------------|------|
-| **Row-level** (shared tables + `tenant_id`) | Low | Low | SaaS MVP, < 1,000 tenants |
-| **Schema-per-tenant** | Medium | Medium | Regulated industries, moderate scale |
-| **Database-per-tenant** | High | High | Enterprise, strict data isolation |
+| **行级** (共享表 + `tenant_id`) | 低 | 低 | SaaS MVP, < 1,000 租户 |
+| **每租户一 Schema** | 中 | 中 | 受监管行业, 中等规模 |
+| **每租户一数据库** | 高 | 高 | 企业, 严格数据隔离 |
 
-### Row-Level Tenancy (Most Common)
+### 行级租户 (最常见)
 
 ```sql
--- Every table has tenant_id
+-- 每个表都有 tenant_id
 CREATE TABLE orders (
     id         bigserial PRIMARY KEY,
     tenant_id  bigint NOT NULL REFERENCES tenants(id),
@@ -420,20 +420,20 @@ CREATE TABLE orders (
     -- ...
 );
 
--- Composite index: tenant first (most queries filter by tenant)
+-- 复合索引: tenant 优先 (大多数查询按 tenant 过滤)
 CREATE INDEX idx_orders_tenant_user ON orders(tenant_id, user_id);
 CREATE INDEX idx_orders_tenant_status ON orders(tenant_id, status);
 
--- Row-Level Security (PostgreSQL)
+-- 行级安全 (PostgreSQL)
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 CREATE POLICY tenant_isolation ON orders
   USING (tenant_id = current_setting('app.tenant_id')::bigint);
 ```
 
-**Application-level enforcement:**
+**应用级强制执行:**
 
 ```typescript
-// Middleware: set tenant context on every request
+// 中间件: 在每个请求上设置租户上下文
 app.use((req, res, next) => {
   const tenantId = req.headers['x-tenant-id'];
   if (!tenantId) return res.status(400).json({ error: 'Missing tenant' });
@@ -441,50 +441,50 @@ app.use((req, res, next) => {
   next();
 });
 
-// Repository: ALWAYS filter by tenant
+// 仓库: 始终按租户过滤
 async findOrders(tenantId: string, userId: string) {
   return db.order.findMany({
-    where: { tenantId, userId },  // ← tenant_id in EVERY query
+    where: { tenantId, userId },  // ← 每个查询都有 tenant_id
   });
 }
 ```
 
-### Rules
+### 规则
 
 ```
-✅ tenant_id in EVERY table that holds tenant data
-✅ tenant_id as FIRST column in every composite index
-✅ Application middleware enforces tenant context
-✅ Use RLS (PostgreSQL) as defense-in-depth, not sole protection
-✅ Test with 2+ tenants to verify isolation
+ tenant_id 在每个持有租户数据的表中
+ tenant_id 在每个复合索引的第一列
+ 应用中间件强制执行租户上下文
+ 使用 RLS (PostgreSQL) 作为纵深防御, 非唯一保护
+ 用 2+ 租户测试以验证隔离
 
-❌ Never allow cross-tenant queries in application code
-❌ Never skip tenant_id in WHERE clauses (even in admin tools)
+绝不允许应用代码中的跨租户查询
+绝不在 WHERE 子句中跳过 tenant_id (即使在管理员工具中)
 ```
 
 ---
 
-## 6. Common Schema Patterns (MEDIUM)
+## 6. 常见模式 (中)
 
-### Soft Delete
+### 软删除
 
 ```sql
 ALTER TABLE orders ADD COLUMN deleted_at timestamptz;
 
--- All queries filter deleted records
+-- 所有查询过滤已删除记录
 CREATE VIEW active_orders AS
 SELECT * FROM orders WHERE deleted_at IS NULL;
 
--- Partial index: only index non-deleted rows
+-- 部分索引: 仅索引未删除行
 CREATE INDEX idx_orders_active_status
 ON orders(status, created_at DESC)
 WHERE deleted_at IS NULL;
 ```
 
-**ORM integration:**
+**ORM 集成:**
 
 ```typescript
-// Prisma middleware: auto-filter soft-deleted records
+// Prisma 中间件: 自动过滤软删除记录
 prisma.$use(async (params, next) => {
   if (params.action === 'findMany' || params.action === 'findFirst') {
     params.args.where = { ...params.args.where, deletedAt: null };
@@ -493,14 +493,14 @@ prisma.$use(async (params, next) => {
 });
 ```
 
-### Audit Trail
+### 审计追踪
 
 ```sql
--- Option A: Audit columns on every table
+-- 选项 A: 每个表上的审计列
 ALTER TABLE orders ADD COLUMN created_by bigint REFERENCES users(id);
 ALTER TABLE orders ADD COLUMN updated_by bigint REFERENCES users(id);
 
--- Option B: Separate audit log table (more detail)
+-- 选项 B: 单独的审计日志表 (更多细节)
 CREATE TABLE audit_log (
     id          bigserial PRIMARY KEY,
     table_name  text NOT NULL,
@@ -515,39 +515,39 @@ CREATE INDEX idx_audit_table_record ON audit_log(table_name, record_id);
 CREATE INDEX idx_audit_changed_at ON audit_log(changed_at DESC);
 ```
 
-### Enum Columns
+### 枚举列
 
 ```sql
--- Option A: PostgreSQL enum type (strict, but ALTER TYPE is painful)
+-- 选项 A: PostgreSQL 枚举类型 (严格, 但 ALTER TYPE 很痛苦)
 CREATE TYPE order_status AS ENUM ('pending', 'confirmed', 'shipped', 'delivered', 'cancelled');
 ALTER TABLE orders ADD COLUMN status order_status NOT NULL DEFAULT 'pending';
 
--- Option B: Text + CHECK constraint (easier to migrate)
+-- 选项 B: Text + CHECK 约束 (更容易迁移)
 ALTER TABLE orders ADD COLUMN status text NOT NULL DEFAULT 'pending'
   CHECK (status IN ('pending', 'confirmed', 'shipped', 'delivered', 'cancelled'));
 
--- Option C: Lookup table (most flexible, best for UI-driven lists)
+-- 选项 C: 查找表 (最灵活, 最适合 UI 驱动列表)
 CREATE TABLE order_statuses (
     id    serial PRIMARY KEY,
     name  text UNIQUE NOT NULL,
-    label text NOT NULL      -- display name
+    label text NOT NULL      -- 显示名称
 );
 ```
 
-**Recommendation:** Option B (text + CHECK) for most cases. Option C if statuses are managed by non-developers.
+**推荐:** 大多数情况用选项 B (text + CHECK)。如果状态由非开发者管理则用选项 C。
 
-### Polymorphic Associations
+### 多态关联
 
 ```sql
--- ❌ Anti-pattern: polymorphic FK (no referential integrity)
+--  反模式: 多态 FK (无引用完整性)
 CREATE TABLE comments (
     id             bigserial PRIMARY KEY,
-    commentable_type text,    -- 'Post' or 'Photo'
-    commentable_id   bigint,  -- no FK constraint possible!
+    commentable_type text,    -- 'Post' 或 'Photo'
+    commentable_id   bigint,  -- 无法 FK 约束!
     body           text
 );
 
--- ✅ Pattern A: Separate FK columns (nullable)
+--  模式 A: 单独的 FK 列 (可空)
 CREATE TABLE comments (
     id       bigserial PRIMARY KEY,
     post_id  bigint REFERENCES posts(id) ON DELETE CASCADE,
@@ -559,54 +559,54 @@ CREATE TABLE comments (
     )
 );
 
--- ✅ Pattern B: Separate tables (cleanest, best for different schemas)
+--  模式 B: 单独的表 (最干净, 最适合不同模式)
 CREATE TABLE post_comments (..., post_id bigint REFERENCES posts(id));
 CREATE TABLE photo_comments (..., photo_id bigint REFERENCES photos(id));
 ```
 
-### JSONB Columns (Semi-Structured Data)
+### JSONB 列 (半结构化数据)
 
 ```sql
--- Good uses: metadata, settings, flexible attributes
+-- 良好用途: 元数据, 设置, 灵活属性
 CREATE TABLE products (
     id         bigserial PRIMARY KEY,
     name       text NOT NULL,
     price      numeric(10,2) NOT NULL,
-    attributes jsonb NOT NULL DEFAULT '{}'  -- color, size, weight...
+    attributes jsonb NOT NULL DEFAULT '{}'  -- 颜色, 尺寸, 重量...
 );
 
--- Index for JSONB queries
+-- 为 JSONB 查询建索引
 CREATE INDEX idx_products_attrs ON products USING GIN(attributes);
 
--- Query
+-- 查询
 SELECT * FROM products WHERE attributes->>'color' = 'red';
 SELECT * FROM products WHERE attributes @> '{"size": "XL"}';
 ```
 
 ```
-✅ Use JSONB for truly flexible/optional data (metadata, settings, preferences)
-✅ Index JSONB columns with GIN when queried
+ 对真正灵活/可选的数据使用 JSONB (元数据, 设置, 偏好)
+ 查询时使用 GIN 索引 JSONB 列
 
-❌ Never use JSONB for data that should be columns (email, status, price)
-❌ Never use JSONB to avoid schema design (it's not MongoDB-in-Postgres)
+绝不对应该是列的数据使用 JSONB (email, status, price)
+绝不用 JSONB 来避免模式设计 (它不是 MongoDB-in-Postgres)
 ```
 
 ---
 
-## 7. Table Partitioning (MEDIUM)
+## 7. 表分区 (中)
 
-### When to Partition
+### 何时分区
 
 ```
-✅ Table > 100M rows AND growing
-✅ Most queries filter on the partition key (date range, tenant)
-✅ Old data can be dropped/archived by partition (efficient DELETE)
+ 表 > 1亿 行且持续增长
+ 大多数查询在分区键上过滤 (日期范围, 租户)
+ 旧数据可以按分区删除/归档 (高效 DELETE)
 
-❌ Table < 10M rows (overhead not worth it)
-❌ Queries don't filter on partition key (scans all partitions)
+ 表 < 1千万 行 (开销不值得)
+ 查询不在分区键上过滤 (扫描所有分区)
 ```
 
-### Range Partitioning (Time-Series)
+### 范围分区 (时间序列)
 
 ```sql
 CREATE TABLE events (
@@ -617,16 +617,16 @@ CREATE TABLE events (
     created_at timestamptz NOT NULL DEFAULT now()
 ) PARTITION BY RANGE (created_at);
 
--- Monthly partitions
+-- 按月分区
 CREATE TABLE events_2025_01 PARTITION OF events
   FOR VALUES FROM ('2025-01-01') TO ('2025-02-01');
 CREATE TABLE events_2025_02 PARTITION OF events
   FOR VALUES FROM ('2025-02-01') TO ('2025-03-01');
 
--- Automate partition creation with pg_partman or cron
+-- 使用 pg_partman 或 cron 自动创建分区
 ```
 
-### List Partitioning (Multi-Tenant)
+### 列表分区 (多租户)
 
 ```sql
 CREATE TABLE orders (
@@ -641,64 +641,64 @@ CREATE TABLE orders_tenant_2 PARTITION OF orders FOR VALUES IN (2);
 
 ---
 
-## Anti-Patterns
+## 反模式
 
-| # | ❌ Don't | ✅ Do Instead |
+| # |  不要 |  应该这样做 |
 |---|---------|--------------|
-| 1 | Premature denormalization | Start 3NF, denormalize when measured |
-| 2 | Auto-increment IDs as public API identifiers | UUID for public, serial for internal |
-| 3 | No foreign key constraints | FK enforced in database, always |
-| 4 | Nullable by default | NOT NULL by default, nullable when required |
-| 5 | No indexes on FK columns | Index every FK column |
-| 6 | Single-step destructive migration | ADD → MIGRATE → REMOVE in separate deploys |
-| 7 | `CREATE INDEX` without `CONCURRENTLY` | Always `CONCURRENTLY` on live tables |
-| 8 | Polymorphic FK (`commentable_type + commentable_id`) | Separate FK columns or separate tables |
-| 9 | JSONB for everything | JSONB for flexible data only, columns for structured |
-| 10 | No `created_at` / `updated_at` | Timestamp pair on every table |
-| 11 | Comma-separated values in one column | Separate table or PostgreSQL array |
-| 12 | `text` without length validation | CHECK constraint or application validation |
+| 1 | 提前反规范化 | 从 3NF 开始, 测量后反规范化 |
+| 2 | 自增 ID 作为公开 API 标识符 | 公开用 UUID, 内部用序列 |
+| 3 | 无外键约束 | FK 始终在数据库中强制执行 |
+| 4 | 默认可空 | 默认 NOT NULL, 需要时才可空 |
+| 5 | FK 列无索引 | 每个 FK 列都建索引 |
+| 6 | 单步破坏性迁移 | 分开发布: 添加 → 迁移 → 删除 |
+| 7 | `CREATE INDEX` 无 `CONCURRENTLY` | 实时表始终用 `CONCURRENTLY` |
+| 8 | 多态 FK (`commentable_type + commentable_id`) | 单独 FK 列或单独表 |
+| 9 | 所有内容都用 JSONB | JSONB 仅用于灵活数据, 结构化用列 |
+| 10 | 无 `created_at` / `updated_at` | 每个表都有时间戳对 |
+| 11 | 单列中逗号分隔值 | 单独表或 PostgreSQL 数组 |
+| 12 | `text` 无长度验证 | CHECK 约束或应用验证 |
 
 ---
 
-## Common Issues
+## 常见问题
 
-### Issue 1: "Query is slow but I already have an index"
+### 问题 1: "查询慢但我已经有索引了"
 
-**Symptom:** `EXPLAIN ANALYZE` shows Sequential Scan despite existing index.
+**症状:** `EXPLAIN ANALYZE` 显示顺序扫描尽管有索引。
 
-**Causes:**
-1. **Wrong index column order** — composite index `(A, B)` won't help `WHERE B = ?`
-2. **Low selectivity** — index on boolean column (50% of rows match), planner prefers seq scan
-3. **Stale statistics** — run `ANALYZE table_name;`
-4. **Type mismatch** — comparing `varchar` column with `integer` parameter → no index use
+**原因:**
+1. **错误的索引列顺序** — 复合索引 `(A, B)` 对 `WHERE B = ?` 无帮助
+2. **低选择性** — boolean 列上的索引 (50% 行匹配), 规划器偏好顺序扫描
+3. **统计信息过时** — 运行 `ANALYZE table_name;`
+4. **类型不匹配** — 将 `varchar` 列与 `integer` 参数比较 → 无索引使用
 
-**Fix:** Check `EXPLAIN (ANALYZE, BUFFERS)`, verify index matches query pattern, run `ANALYZE`.
+**修复:** 检查 `EXPLAIN (ANALYZE, BUFFERS)`, 验证索引匹配查询模式, 运行 `ANALYZE`。
 
-### Issue 2: "Migration locks the table for minutes"
+### 问题 2: "迁移锁定表数分钟"
 
-**Symptom:** `ALTER TABLE` blocks all writes during execution.
+**症状:** `ALTER TABLE` 执行期间阻塞所有写入。
 
-**Cause:** Adding NOT NULL constraint, changing column type, or creating index without `CONCURRENTLY`.
+**原因:** 添加 NOT NULL 约束, 更改列类型, 或无 `CONCURRENTLY` 创建索引。
 
-**Fix:**
+**修复:**
 ```sql
--- Add index without lock
+-- 无锁添加索引
 CREATE INDEX CONCURRENTLY idx_name ON table(col);
 
--- Add NOT NULL constraint without lock (Postgres 12+)
+-- 无锁添加 NOT NULL 约束 (Postgres 12+)
 ALTER TABLE t ADD CONSTRAINT t_col_nn CHECK (col IS NOT NULL) NOT VALID;
-ALTER TABLE t VALIDATE CONSTRAINT t_col_nn;  -- non-blocking validation
+ALTER TABLE t VALIDATE CONSTRAINT t_col_nn;  -- 非阻塞验证
 ```
 
-### Issue 3: "How many indexes is too many?"
+### 问题 3: "多少索引算太多?"
 
-**Rule of thumb:**
-- Read-heavy table (reports, product catalog): 5-10 indexes is fine
-- Write-heavy table (events, logs): 2-3 indexes max
-- Monitor with `pg_stat_user_indexes` — drop indexes with `idx_scan = 0`
+**经验法则:**
+- 读密集型表 (报表, 产品目录): 5-10 个索引可以
+- 写密集型表 (事件, 日志): 最多 2-3 个索引
+- 用 `pg_stat_user_indexes` 监控 — 删除 `idx_scan = 0` 的索引
 
 ```sql
--- Find unused indexes
+-- 查找未使用的索引
 SELECT schemaname, relname, indexrelname, idx_scan
 FROM pg_stat_user_indexes
 WHERE idx_scan = 0 AND indexrelname NOT LIKE '%pkey%'

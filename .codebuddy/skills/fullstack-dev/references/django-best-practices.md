@@ -1,45 +1,45 @@
-# Django Best Practices
+# Django 最佳实践
 
-Production-grade guide for Django 5.x and Django REST Framework. 40+ rules across 8 categories.
+面向 Django 5.x 和 Django REST Framework 的生产级指南。8 个类别的 40+ 条规则。
 
-## Core Principles (7 Rules)
+## 核心原则 (7 条规则)
 
 ```
-1. ✅ Custom User model BEFORE first migration (can't change later)
-2. ✅ One Django app per domain concept (users, orders, payments)
-3. ✅ Fat models, thin views — business logic in models/managers, not views
-4. ✅ Always use select_related/prefetch_related (prevent N+1)
-5. ✅ Settings split by environment (base + dev + prod)
-6. ✅ Test with pytest-django + factory_boy (not fixtures)
-7. ✅ Never use runserver in production (Gunicorn + Nginx)
+1. 在第一次迁移前自定义 User 模型 (以后无法更改)
+2. 每个领域概念一个 Django 应用 (users, orders, payments)
+3. 胖模型, 瘦视图 — 业务逻辑在模型/管理器中, 不在视图中
+4. 始终使用 select_related/prefetch_related (防止 N+1)
+5. 按环境拆分设置 (base + dev + prod)
+6. 用 pytest-django + factory_boy 测试 (不用 fixtures)
+7. 生产环境绝不用 runserver (Gunicorn + Nginx)
 ```
 
 ---
 
-## 1. Project Structure (CRITICAL)
+## 1. 项目结构 (关键)
 
-### App-Per-Domain
+### 每领域一个应用
 
 ```
 myproject/
-├── config/                     # Project config
+├── config/                     # 项目配置
 │   ├── __init__.py
 │   ├── settings/
-│   │   ├── base.py             # Shared settings
-│   │   ├── dev.py              # DEBUG=True, SQLite ok
+│   │   ├── base.py             # 共享设置
+│   │   ├── dev.py              # DEBUG=True, SQLite 可以
 │   │   └── prod.py             # DEBUG=False, Postgres, HTTPS
 │   ├── urls.py
 │   ├── wsgi.py
 │   └── asgi.py
 ├── apps/
-│   ├── users/                  # Custom User model
+│   ├── users/                  # 自定义 User 模型
 │   │   ├── models.py
 │   │   ├── serializers.py
 │   │   ├── views.py
 │   │   ├── urls.py
 │   │   ├── admin.py
-│   │   ├── services.py         # Business logic
-│   │   ├── selectors.py        # Complex queries
+│   │   ├── services.py         # 业务逻辑
+│   │   ├── selectors.py        # 复杂查询
 │   │   └── tests/
 │   │       ├── test_models.py
 │   │       ├── test_views.py
@@ -54,23 +54,23 @@ myproject/
 └── docker-compose.yml
 ```
 
-### Rules
+### 规则
 
 ```
-✅ One app = one bounded context (users, orders, payments)
-✅ Business logic in services.py / selectors.py, not views
-✅ Each app has its own urls.py, admin.py, tests/
+ 一个应用 = 一个限界上下文 (users, orders, payments)
+ 业务逻辑在 services.py / selectors.py, 不在视图中
+ 每个应用有自己的 urls.py, admin.py, tests/
 
-❌ Never put everything in one app
-❌ Never import across app boundaries at the model level (use IDs)
-❌ Never put business logic in views or serializers
+绝不要把所有内容放在一个应用中
+绝不要在模型层跨应用边界导入 (使用 ID)
+绝不要把业务逻辑放在视图或序列化器中
 ```
 
 ---
 
-## 2. Models & Migrations (CRITICAL)
+## 2. 模型与迁移 (关键)
 
-### Custom User Model (Day 1!)
+### 自定义 User 模型 (第一天!)
 
 ```python
 # apps/users/models.py
@@ -92,9 +92,9 @@ class User(AbstractUser):
 AUTH_USER_MODEL = 'users.User'
 ```
 
-**This MUST be done before `migrate`. Cannot change after.**
+**这必须在 `migrate` 之前完成。之后无法更改。**
 
-### Model Best Practices
+### 模型最佳实践
 
 ```python
 class TimeStampedModel(models.Model):
@@ -126,23 +126,23 @@ class Order(TimeStampedModel):
         self.save(update_fields=['status', 'updated_at'])
 ```
 
-### Migration Rules
+### 迁移规则
 
 ```
-✅ Review migration SQL: python manage.py sqlmigrate app_name 0001
-✅ Name migrations descriptively: --name add_status_index_to_orders
-✅ Separate data migrations from schema migrations
-✅ Non-destructive first: add column → backfill → remove old column
+ 审查迁移 SQL: python manage.py sqlmigrate app_name 0001
+ 描述性命名迁移: --name add_status_index_to_orders
+ 数据迁移与模式迁移分开
+ 非破坏性优先: 添加列 → 回填 → 删除旧列
 
-❌ Never edit or delete applied migrations
-❌ Never use RunPython without reverse function
+绝不编辑或删除已应用的迁移
+绝不在无 reverse 函数的情况下使用 RunPython
 ```
 
 ---
 
-## 3. Views & Serializers — DRF (HIGH)
+## 3. 视图与序列化器 — DRF (高)
 
-### Service Layer Pattern
+### 服务层模式
 
 ```python
 # apps/orders/services.py
@@ -166,7 +166,7 @@ class OrderService:
         return order
 ```
 
-### Serializers
+### 序列化器
 
 ```python
 class OrderSerializer(serializers.ModelSerializer):
@@ -177,7 +177,7 @@ class OrderSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'total', 'created_at']
 
 class CreateOrderSerializer(serializers.Serializer):
-    """Input-only serializer — separate from output."""
+    """仅输入序列化器 — 与输出分开。"""
     items = serializers.ListField(
         child=serializers.DictField(), min_length=1, max_length=50,
     )
@@ -188,7 +188,7 @@ class CreateOrderSerializer(serializers.Serializer):
         return items
 ```
 
-### Views (Thin!)
+### 视图 (瘦!)
 
 ```python
 @api_view(['POST'])
@@ -200,28 +200,28 @@ def create_order(request):
     return Response({'data': OrderSerializer(order).data}, status=status.HTTP_201_CREATED)
 ```
 
-### Rules
+### 规则
 
 ```
-✅ Separate input serializers from output serializers
-✅ Views only: validate → call service → serialize → respond
-✅ Use @transaction.atomic for multi-model writes
+ 输入序列化器与输出序列化器分开
+ 视图仅: 验证 → 调用服务 → 序列化 → 响应
+ 多模型写入使用 @transaction.atomic
 
-❌ Never put business logic in views or serializers
-❌ Never use ModelSerializer for write operations (too implicit)
+绝不要把业务逻辑放在视图或序列化器中
+绝不要对写操作使用 ModelSerializer (太隐式)
 ```
 
 ---
 
-## 4. Authentication (HIGH)
+## 4. 认证 (高)
 
-| Method | When | Frontend |
+| 方法 | 何时使用 | 前端 |
 |--------|------|----------|
-| Session | Same-domain, SSR, Django templates | Django templates / htmx |
-| JWT | Different domain, SPA, mobile | React, Vue, mobile apps |
-| OAuth2 | Third-party login, API consumers | Any |
+| Session | 同域, SSR, Django 模板 | Django 模板 / htmx |
+| JWT | 不同域, SPA, 移动端 | React, Vue, 移动应用 |
+| OAuth2 | 第三方登录, API 消费者 | 任意 |
 
-### JWT Config (djangorestframework-simplejwt)
+### JWT 配置 (djangorestframework-simplejwt)
 
 ```python
 SIMPLE_JWT = {
@@ -234,42 +234,42 @@ SIMPLE_JWT = {
 
 ---
 
-## 5. Performance Optimization (HIGH)
+## 5. 性能优化 (高)
 
-### N+1 Query Prevention
+### N+1 查询预防
 
 ```python
-# ❌ N+1: 1 query for orders + N queries for users
+#  N+1: 1 次 orders 查询 + N 次 users 查询
 orders = Order.objects.all()
 for o in orders:
-    print(o.user.email)     # hits DB each iteration
+    print(o.user.email)     # 每次迭代都访问 DB
 
-# ✅ select_related (FK/OneToOne — JOIN)
+#  select_related (FK/OneToOne — JOIN)
 orders = Order.objects.select_related('user').all()
 
-# ✅ prefetch_related (ManyToMany/reverse FK — 2 queries)
+#  prefetch_related (ManyToMany/反向 FK — 2 次查询)
 orders = Order.objects.prefetch_related('items').all()
 
-# ✅ Combined
+#  组合
 orders = Order.objects.select_related('user').prefetch_related('items').all()
 ```
 
-### Query Optimization Toolkit
+### 查询优化工具包
 
 ```python
-# Only fetch needed columns
+# 仅获取需要的列
 User.objects.values('id', 'email')
 User.objects.values_list('email', flat=True)
 
-# Annotate instead of Python loops
+# 用注解代替 Python 循环
 from django.db.models import Count, Sum
 Order.objects.annotate(item_count=Count('items'), revenue=Sum('items__price'))
 
-# Bulk operations
+# 批量操作
 OrderItem.objects.bulk_create([...])
 Order.objects.filter(status='pending').update(status='cancelled')
 
-# Database indexes
+# 数据库索引
 class Meta:
     indexes = [
         models.Index(fields=['user', 'status']),
@@ -277,14 +277,14 @@ class Meta:
         models.Index(fields=['email'], condition=Q(is_active=True)),
     ]
 
-# Pagination
+# 分页
 from rest_framework.pagination import CursorPagination
 class OrderPagination(CursorPagination):
     page_size = 20
     ordering = '-created_at'
 ```
 
-### Caching
+### 缓存
 
 ```python
 from django.core.cache import cache
@@ -300,7 +300,7 @@ def get_product(product_id: str):
 
 ---
 
-## 6. Testing (MEDIUM-HIGH)
+## 6. 测试 (中-高)
 
 ### pytest-django + factory_boy
 
@@ -349,7 +349,7 @@ class TestListOrders:
 
 ---
 
-## 7. Admin Customization (MEDIUM)
+## 7. 管理后台定制 (中)
 
 ```python
 class OrderItemInline(admin.TabularInline):
@@ -372,9 +372,9 @@ class OrderAdmin(admin.ModelAdmin):
 
 ---
 
-## 8. Production Deployment (MEDIUM)
+## 8. 生产部署 (中)
 
-### Security Settings
+### 安全设置
 
 ```python
 # settings/prod.py
@@ -387,14 +387,14 @@ CSRF_COOKIE_SECURE = True
 SECURE_HSTS_SECONDS = 31536000
 ```
 
-### Deployment Stack
+### 部署栈
 
 ```
 Nginx → Gunicorn → Django
          ↕
-      PostgreSQL + Redis (cache)
+      PostgreSQL + Redis (缓存)
          ↕
-      Celery (background tasks)
+      Celery (后台任务)
 ```
 
 ```bash
@@ -405,62 +405,62 @@ gunicorn config.wsgi:application \
   --access-logfile -
 ```
 
-### WhiteNoise for Static Files
+### WhiteNoise 用于静态文件
 
 ```python
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # right after Security
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # 紧跟 Security 之后
     ...
 ]
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 ```
 
-### Rules
+### 规则
 
 ```
-✅ Gunicorn + Nginx (or Cloud Run / Railway)
-✅ PostgreSQL (not SQLite)
-✅ python manage.py check --deploy
-✅ Sentry for error tracking
+ Gunicorn + Nginx (或 Cloud Run / Railway)
+ PostgreSQL (非 SQLite)
+ python manage.py check --deploy
+ Sentry 用于错误追踪
 
-❌ Never use runserver in production
-❌ Never use DEBUG=True in production
-❌ Never use SQLite in production
+生产环境绝不用 runserver
+生产环境绝不用 DEBUG=True
+生产环境绝不用 SQLite
 ```
 
 ---
 
-## Anti-Patterns
+## 反模式
 
-| # | ❌ Don't | ✅ Do Instead |
+| # |  不要 |  应该这样做 |
 |---|---------|--------------|
-| 1 | Business logic in views | Service layer (`services.py`) |
-| 2 | One giant app | App-per-domain |
-| 3 | Default User model | Custom User before first migrate |
-| 4 | No `select_related` | Always eager-load related objects |
-| 5 | Django fixtures for tests | `factory_boy` factories |
-| 6 | `settings.py` single file | Split: base + dev + prod |
-| 7 | `runserver` in production | Gunicorn + Nginx |
-| 8 | SQLite in production | PostgreSQL |
-| 9 | `ModelSerializer` for writes | Explicit input serializer |
-| 10 | Raw SQL in views | ORM querysets + `selectors.py` |
+| 1 | 视图中的业务逻辑 | 服务层 (`services.py`) |
+| 2 | 一个巨大应用 | 每领域一个应用 |
+| 3 | 默认 User 模型 | 第一次 migrate 前自定义 User |
+| 4 | 无 `select_related` | 始终急切加载相关对象 |
+| 5 | Django fixtures 用于测试 | `factory_boy` factories |
+| 6 | 单个 `settings.py` 文件 | 拆分: base + dev + prod |
+| 7 | 生产环境用 `runserver` | Gunicorn + Nginx |
+| 8 | 生产环境用 SQLite | PostgreSQL |
+| 9 | 写操作用 `ModelSerializer` | 显式输入序列化器 |
+| 10 | 视图中用原始 SQL | ORM querysets + `selectors.py` |
 
 ---
 
-## Common Issues
+## 常见问题
 
-### Issue 1: "Can't change User model after first migration"
+### 问题 1: "第一次迁移后无法更改 User 模型"
 
-**Fix:** If starting fresh: delete all migrations + DB, set custom User, re-migrate. If data exists: complex migration (use `django-allauth` or incremental field migration).
+**修复:** 如果全新开始: 删除所有迁移 + DB, 设置自定义 User, 重新迁移。如果有数据: 复杂迁移 (使用 `django-allauth` 或增量字段迁移)。
 
-### Issue 2: "Serializer is too slow on large querysets"
+### 问题 2: "大型查询集上序列化器太慢"
 
-**Fix:** Missing `select_related` / `prefetch_related` → N+1 queries.
+**修复:** 缺少 `select_related` / `prefetch_related` → N+1 查询。
 ```python
 queryset = Order.objects.select_related('user').prefetch_related('items')
 ```
 
-### Issue 3: "Circular import between apps"
+### 问题 3: "应用间循环导入"
 
-**Fix:** Use string references: `models.ForeignKey('orders.Order', ...)` instead of importing the model class. For services, import inside the function.
+**修复:** 使用字符串引用: `models.ForeignKey('orders.Order', ...)` 代替导入模型类。对于服务, 在函数内部导入。

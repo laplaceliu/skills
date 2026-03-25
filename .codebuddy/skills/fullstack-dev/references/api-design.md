@@ -1,6 +1,6 @@
 ---
 name: fullstack-dev-api-design
-description: "API design patterns and best practices. Use when creating endpoints, choosing methods/status codes, implementing pagination, or writing OpenAPI specs. Prevents common REST/GraphQL/gRPC mistakes."
+description: "API 设计模式与最佳实践。在创建端点、选择方法/状态码、实现分页或编写 OpenAPI 规范时使用。预防常见的 REST/GraphQL/gRPC 错误。"
 license: MIT
 metadata:
   version: "2.0.0"
@@ -13,162 +13,162 @@ metadata:
     - RFC 9110 (HTTP Semantics)
 ---
 
-# API Design Guidelines
+# API 设计指南
 
-Framework-agnostic API design guide for backend and full-stack engineers. 50+ rules across 10 categories, prioritized by impact. Covers REST, GraphQL, and gRPC.
+面向后端和全栈工程师的框架无关 API 设计指南。涵盖 10 个类别的 50+ 条规则，按影响程度优先排序。覆盖 REST、GraphQL 和 gRPC。
 
-## Scope
+## 适用范围
 
-**USE this skill when:**
-- Designing a new API or adding endpoints
-- Reviewing API pull requests
-- Choosing between REST / GraphQL / gRPC
-- Writing OpenAPI specifications
-- Migrating or versioning an existing API
+**使用此技能的情况:**
+- 设计新 API 或添加端点
+- 审查 API 拉取请求
+- 在 REST / GraphQL / gRPC 之间选择
+- 编写 OpenAPI 规范
+- 迁移或版本控制现有 API
 
-**NOT for:**
-- Framework-specific implementation details (use your framework's own skill/docs)
-- Frontend data fetching patterns (use React Query / SWR docs)
-- Authentication implementation details (use your auth library's docs)
-- Database schema design (→ `database-schema-design`)
+**不适用的情况:**
+- 框架特定的实现细节 (使用你框架自己的技能/文档)
+- 前端数据获取模式 (使用 React Query / SWR 文档)
+- 认证实现细节 (使用你认证库的文档)
+- 数据库模式设计 (→ `database-schema-design`)
 
-## Context Required
+## 所需上下文
 
-Before applying this skill, gather:
+在应用此技能前，收集以下信息:
 
-| Required | Optional |
+| 必需 | 可选 |
 |----------|----------|
-| Target consumers (browser, mobile, service) | Existing API conventions in the project |
-| Expected request volume (RPS estimate) | Current OpenAPI / Swagger spec |
-| Authentication method (JWT, API key, OAuth) | Rate limiting requirements |
-| Data model / domain entities | Caching strategy |
+| 目标消费者 (浏览器、移动端、服务) | 项目中现有的 API 约定 |
+| 预期请求量 (RPS 估算) | 当前的 OpenAPI / Swagger 规范 |
+| 认证方式 (JWT、API 密钥、OAuth) | 速率限制要求 |
+| 数据模型 / 领域实体 | 缓存策略 |
 
 ---
 
-## Quick Start Checklist
+## 快速开始清单
 
-New API endpoint? Run through this before writing code:
+新 API 端点? 在编写代码前运行以下检查:
 
-- [ ] Resource named as **plural noun** (`/orders`, not `/getOrders`)
-- [ ] URL in **kebab-case**, body fields in **camelCase**
-- [ ] Correct **HTTP method** (GET=read, POST=create, PUT=replace, PATCH=partial, DELETE=remove)
-- [ ] Correct **status code** (201 Created, 422 Validation, 404 Not Found…)
-- [ ] Error response follows **RFC 9457** envelope
-- [ ] **Pagination** on all list endpoints (default 20, max 100)
-- [ ] **Authentication** required (Bearer token, not query param)
-- [ ] **Request ID** in response header (`X-Request-Id`)
-- [ ] **Rate limit** headers included
-- [ ] Endpoint documented in **OpenAPI spec**
+- [ ] 资源命名为**复数名词** (`/orders`, 非 `/getOrders`)
+- [ ] URL 使用**短横线命名法**，主体字段使用**驼峰命名法**
+- [ ] 正确的 **HTTP 方法** (GET=读取, POST=创建, PUT=替换, PATCH=部分更新, DELETE=删除)
+- [ ] 正确的**状态码** (201 Created, 422 Validation, 404 Not Found…)
+- [ ] 错误响应遵循 **RFC 9457** 信封格式
+- [ ] 所有列表端点都有**分页** (默认 20, 最大 100)
+- [ ] 需要**认证** (Bearer 令牌, 非查询参数)
+- [ ] 响应头中包含 **Request ID** (`X-Request-Id`)
+- [ ] 包含 **Rate limit** 响应头
+- [ ] 端点已在 **OpenAPI 规范**中记录
 
 ---
 
-## Quick Navigation
+## 快速导航
 
-| Need to… | Jump to |
+| 需要… | 跳转到 |
 |----------|---------|
-| Name a resource URL | [1. Resource Modeling](#1-resource-modeling-critical) |
-| Pick HTTP method + status code | [3. HTTP Methods & Status Codes](#3-http-methods--status-codes-critical) |
-| Format error responses | [4. Error Handling](#4-error-handling-high) |
-| Add pagination or filtering | [6. Pagination & Filtering](#6-pagination--filtering-high) |
-| Choose API style (REST vs GraphQL vs gRPC) | [10. API Style Decision](#10-api-style-decision-tree) |
-| Version an existing API | [7. Versioning](#7-versioning-medium-high) |
-| Avoid common mistakes | [Anti-Patterns](#anti-patterns-checklist) |
+| 命名资源 URL | [1. 资源建模](#1-资源建模-关键) |
+| 选择 HTTP 方法 + 状态码 | [3. HTTP 方法与状态码](#3-http-方法与状态码-关键) |
+| 格式化错误响应 | [4. 错误处理](#4-错误处理-高) |
+| 添加分页或过滤 | [6. 分页与过滤](#6-分页与过滤-高) |
+| 选择 API 风格 (REST vs GraphQL vs gRPC) | [10. API 风格决策](#10-api-风格决策树) |
+| 版本控制现有 API | [7. 版本控制](#7-版本控制-中-高) |
+| 避免常见错误 | [反模式](#反模式清单) |
 
 ---
 
-## 1. Resource Modeling (CRITICAL)
+## 1. 资源建模 (关键)
 
-### Core Rules
-
-```
-✅ /users                         — plural noun
-✅ /users/{id}/orders              — 1 level nesting
-✅ /reviews?orderId={oid}          — flatten deep nesting with query params
-
-❌ /getUsers                       — verb in URL
-❌ /user                           — singular
-❌ /users/{uid}/orders/{oid}/items/{iid}/reviews  — 3+ levels deep
-```
-
-**Max nesting: 2 levels.** Beyond that, promote to top-level resource with filters.
-
-### Domain Alignment
-
-Resources map to **domain concepts**, not database tables:
+### 核心规则
 
 ```
-✅ /checkout-sessions       (domain aggregate)
-✅ /shipping-labels          (domain concept)
+/users                         — 复数名词
+/users/{id}/orders              — 1 级嵌套
+/reviews?orderId={oid}          — 使用查询参数扁平化深层嵌套
 
-❌ /tbl_order_header          (database table leak)
-❌ /join_user_role            (internal schema leak)
+/getUsers                       — URL 中包含动词
+/user                           — 单数
+/users/{uid}/orders/{oid}/items/{iid}/reviews  — 3+ 层深度
+```
+
+**最大嵌套: 2 层。** 超过则提升为顶级资源并使用过滤器。
+
+### 领域对齐
+
+资源映射到**领域概念**，而非数据库表:
+
+```
+/checkout-sessions       (领域聚合)
+/shipping-labels          (领域概念)
+
+/tbl_order_header          (数据库表泄漏)
+/join_user_role            (内部模式泄漏)
 ```
 
 ---
 
-## 2. URL & Naming (CRITICAL)
+## 2. URL 与命名 (关键)
 
-| Context | Convention | Example |
+| 上下文 | 约定 | 示例 |
 |---------|-----------|---------|
-| URL path | kebab-case | `/order-items` |
-| JSON body fields | camelCase | `{ "firstName": "Jane" }` |
-| Query params | camelCase or snake_case (be consistent) | `?sortBy=createdAt` |
-| Headers | Train-Case | `X-Request-Id` |
+| URL 路径 | 短横线命名法 | `/order-items` |
+| JSON 主体字段 | 驼峰命名法 | `{ "firstName": "Jane" }` |
+| 查询参数 | 驼峰命名法或蛇形命名法 (保持一致) | `?sortBy=createdAt` |
+| 响应头 | 首字母大写命名法 | `X-Request-Id` |
 
-**Python exception:** If your entire stack is Python/snake_case, you MAY use `snake_case` in JSON — but be **consistent across all endpoints**.
+**Python 例外:** 如果你的整个技术栈是 Python/蛇形命名法，你可以在 JSON 中使用 `snake_case` — 但在**所有端点中保持一致**。
 
 ```
-✅ GET /users          ❌ GET /users/
-✅ GET /reports/annual  ❌ GET /reports/annual.json
-✅ POST /users          ❌ POST /users/create
+GET /users          GET /users/
+GET /reports/annual  GET /reports/annual.json
+POST /users          POST /users/create
 ```
 
 ---
 
-## 3. HTTP Methods & Status Codes (CRITICAL)
+## 3. HTTP 方法与状态码 (关键)
 
-### Method Semantics
+### 方法语义
 
-| Method | Semantics | Idempotent | Safe | Request Body |
+| 方法 | 语义 | 幂等 | 安全 | 请求体 |
 |--------|-----------|-----------|------|-------------|
-| GET | Read | ✅ | ✅ | ❌ Never |
-| POST | Create / Action | ❌ | ❌ | ✅ Always |
-| PUT | Full replace | ✅ | ❌ | ✅ Always |
-| PATCH | Partial update | ❌* | ❌ | ✅ Always |
-| DELETE | Remove | ✅ | ❌ | ❌ Rarely |
+| GET | 读取 |  |  |  Never |
+| POST | 创建 / 操作 |  |  |  Always |
+| PUT | 完全替换 |  |  |  Always |
+| PATCH | 部分更新 | * |  |  Always |
+| DELETE | 删除 |  |  |  Rarely |
 
-### Status Code Quick Reference
+### 状态码快速参考
 
-**Success:**
+**成功:**
 
-| Code | When | Response Body |
+| 代码 | 何时使用 | 响应体 |
 |------|------|--------------|
-| 200 OK | GET, PUT, PATCH success | Resource / result |
-| 201 Created | POST created resource | Created resource + `Location` header |
-| 202 Accepted | Async operation started | Job ID / status URL |
-| 204 No Content | DELETE success, PUT with no body | None |
+| 200 OK | GET, PUT, PATCH 成功 | 资源 / 结果 |
+| 201 Created | POST 创建资源 | 创建的资源 + `Location` 响应头 |
+| 202 Accepted | 异步操作已启动 | 任务 ID / 状态 URL |
+| 204 No Content | DELETE 成功, PUT 无响应体 | 无 |
 
-**Client Errors:**
+**客户端错误:**
 
-| Code | When | Key Distinction |
+| 代码 | 何时使用 | 关键区别 |
 |------|------|-----------------|
-| 400 Bad Request | Malformed syntax | Can't even parse |
-| 401 Unauthorized | Missing / invalid auth | "Who are you?" |
-| 403 Forbidden | Authenticated, no permission | "I know you, but no" |
-| 404 Not Found | Resource doesn't exist | Also use to hide 403 |
-| 409 Conflict | Duplicate, version mismatch | State conflict |
-| 422 Unprocessable | Valid syntax, failed validation | Semantic errors |
-| 429 Too Many Requests | Rate limit hit | Include `Retry-After` |
+| 400 Bad Request | 语法格式错误 | 无法解析 |
+| 401 Unauthorized | 缺少/无效认证 | "你是谁?" |
+| 403 Forbidden | 已认证, 无权限 | "我认识你, 但不行" |
+| 404 Not Found | 资源不存在 | 也用于隐藏 403 |
+| 409 Conflict | 重复, 版本不匹配 | 状态冲突 |
+| 422 Unprocessable | 语法正确, 验证失败 | 语义错误 |
+| 429 Too Many Requests | 触发速率限制 | 包含 `Retry-After` |
 
-**Server Errors:** 500 (unexpected), 502 (upstream fail), 503 (overloaded), 504 (upstream timeout)
+**服务端错误:** 500 (意外错误), 502 (上游失败), 503 (过载), 504 (上游超时)
 
 ---
 
-## 4. Error Handling (HIGH)
+## 4. 错误处理 (高)
 
-### Standard Error Envelope (RFC 9457)
+### 标准错误信封 (RFC 9457)
 
-Every error response uses this format:
+每个错误响应使用此格式:
 
 ```json
 {
@@ -184,7 +184,7 @@ Every error response uses this format:
 }
 ```
 
-### Multi-Language Implementation
+### 多语言实现
 
 **TypeScript (Express):**
 ```typescript
@@ -197,7 +197,7 @@ class AppError extends Error {
   ) { super(detail); }
 }
 
-// Middleware
+// 中间件
 app.use((err, req, res, next) => {
   if (err instanceof AppError) {
     return res.status(err.status).json({
@@ -228,32 +228,32 @@ async def app_error_handler(request: Request, exc: AppError):
     })
 ```
 
-### Iron Rules
+### 铁律
 
 ```
-✅ Return RFC 9457 error envelope for ALL errors
-✅ Include request_id in every error response
-✅ Return per-field validation errors in `errors` array
+为所有错误返回 RFC 9457 错误信封
+在每个错误响应中包含 request_id
+在 `errors` 数组中返回字段级验证错误
 
-❌ Never expose stack traces in production
-❌ Never return 200 for errors
-❌ Never swallow errors silently
+绝不在生产环境暴露堆栈跟踪
+绝不为错误返回 200
+绝不静默吞掉错误
 ```
 
 ---
 
-## 5. Authentication & Authorization (HIGH)
+## 5. 认证与授权 (高)
 
 ```
-✅ Authorization: Bearer eyJhbGci...      (header)
-❌ GET /users?token=eyJhbGci...            (URL — appears in logs)
+Authorization: Bearer eyJhbGci...      (响应头)
+GET /users?token=eyJhbGci...            (URL — 出现在日志中)
 
-✅ 401 → "Who are you?"  (missing/invalid credentials)
-✅ 403 → "You can't do this"  (authenticated, no permission)
-✅ 404 → Hide resource existence  (use instead of 403 when needed)
+401 → "你是谁?"  (缺少/无效凭证)
+403 → "你不能这样做"  (已认证, 无权限)
+404 → 隐藏资源存在性  (需要时替代 403)
 ```
 
-**Rate Limit Headers (always include):**
+**速率限制响应头 (始终包含):**
 ```
 X-RateLimit-Limit: 100
 X-RateLimit-Remaining: 42
@@ -263,16 +263,16 @@ Retry-After: 30
 
 ---
 
-## 6. Pagination & Filtering (HIGH)
+## 6. 分页与过滤 (高)
 
-### Cursor vs Offset
+### 游标 vs 偏移量
 
-| Strategy | When | Pros | Cons |
+| 策略 | 何时使用 | 优点 | 缺点 |
 |----------|------|------|------|
-| **Cursor** (preferred) | Large/dynamic datasets | Consistent, no skips | Can't jump to page N |
-| **Offset** | Small/stable datasets, admin UIs | Simple, page jumps | Drift on insert/delete |
+| **游标** (推荐) | 大型/动态数据集 | 一致, 无跳过 | 无法跳转到第 N 页 |
+| **偏移量** | 小型/稳定数据集, 管理后台 UI | 简单, 可跳转页面 | 插入/删除时漂移 |
 
-**Cursor pagination response:**
+**游标分页响应:**
 ```json
 {
   "data": [...],
@@ -280,7 +280,7 @@ Retry-After: 30
 }
 ```
 
-**Offset pagination response:**
+**偏移量分页响应:**
 ```json
 {
   "data": [...],
@@ -288,38 +288,38 @@ Retry-After: 30
 }
 ```
 
-**Always enforce:** Default 20 items, max 100 items.
+**始终强制执行:** 默认 20 条, 最大 100 条。
 
-### Standard Filter Patterns
+### 标准过滤模式
 
 ```
 GET /orders?status=shipped&created_after=2025-01-01&sort=-created_at&fields=id,status
 ```
 
-| Pattern | Convention |
+| 模式 | 约定 |
 |---------|-----------|
-| Exact match | `?status=shipped` |
-| Range | `?price_gte=10&price_lte=100` |
-| Date range | `?created_after=2025-01-01&created_before=2025-12-31` |
-| Sort | `?sort=field` (asc), `?sort=-field` (desc) |
-| Sparse fields | `?fields=id,name,email` |
-| Search | `?q=search+term` |
+| 精确匹配 | `?status=shipped` |
+| 范围 | `?price_gte=10&price_lte=100` |
+| 日期范围 | `?created_after=2025-01-01&created_before=2025-12-31` |
+| 排序 | `?sort=field` (升序), `?sort=-field` (降序) |
+| 稀疏字段 | `?fields=id,name,email` |
+| 搜索 | `?q=search+term` |
 
 ---
 
-## 7. Versioning (MEDIUM-HIGH)
+## 7. 版本控制 (中-高)
 
-| Strategy | Format | Best For |
+| 策略 | 格式 | 最适合 |
 |----------|--------|----------|
-| **URL path** (recommended) | `/v1/users` | Public APIs |
-| **Header** | `Api-Version: 2` | Internal APIs |
-| **Query param** | `?version=2` | Legacy (avoid) |
+| **URL 路径** (推荐) | `/v1/users` | 公开 API |
+| **响应头** | `Api-Version: 2` | 内部 API |
+| **查询参数** | `?version=2` | 遗留系统 (避免) |
 
-**Non-breaking changes (no version bump):** New optional response fields, new endpoints, new optional params.
+**非破坏性变更 (无需版本升级):** 新增可选响应字段, 新端点, 新增可选参数。
 
-**Breaking changes (new version required):** Removing/renaming fields, changing types, stricter validation, removing endpoints.
+**破坏性变更 (需要新版本):** 删除/重命名字段, 更改类型, 更严格的验证, 删除端点。
 
-**Deprecation headers:**
+**弃用响应头:**
 ```
 Sunset: Sat, 01 Mar 2026 00:00:00 GMT
 Deprecation: true
@@ -328,9 +328,9 @@ Link: <https://api.example.com/v2/users>; rel="successor-version"
 
 ---
 
-## 8. Request / Response Design (MEDIUM)
+## 8. 请求 / 响应设计 (中)
 
-### Consistent Envelope
+### 一致的信封
 
 ```json
 {
@@ -339,106 +339,106 @@ Link: <https://api.example.com/v2/users>; rel="successor-version"
 }
 ```
 
-### Key Rules
+### 关键规则
 
-| Rule | Correct | Wrong |
+| 规则 | 正确 | 错误 |
 |------|---------|-------|
-| Timestamps | `"2025-06-15T10:30:00Z"` (ISO 8601) | `"06/15/2025"` or `1718447400` |
-| Public IDs | UUID `"550e8400-..."` | Auto-increment `42` |
-| Null vs absent (PATCH) | `{ "nickname": null }` = clear field | Absent field = don't change |
-| HATEOAS (public APIs) | `"links": { "cancel": "/orders/123/cancel" }` | No discoverability |
+| 时间戳 | `"2025-06-15T10:30:00Z"` (ISO 8601) | `"06/15/2025"` 或 `1718447400` |
+| 公开 ID | UUID `"550e8400-..."` | 自增 `42` |
+| Null vs 缺失 (PATCH) | `{ "nickname": null }` = 清空字段 | 缺失字段 = 不更改 |
+| HATEOAS (公开 API) | `"links": { "cancel": "/orders/123/cancel" }` | 无可发现性 |
 
 ---
 
-## 9. Documentation — OpenAPI (MEDIUM)
+## 9. 文档 — OpenAPI (中)
 
-**Design-first workflow:**
+**设计优先工作流:**
 
 ```
-1. Write OpenAPI 3.1 spec
-2. Review spec with stakeholders
-3. Generate server stubs + client SDKs
-4. Implement handlers
-5. Validate responses against spec in CI
+1. 编写 OpenAPI 3.1 规范
+2. 与利益相关者审查规范
+3. 生成服务端存根 + 客户端 SDK
+4. 实现处理器
+5. 在 CI 中验证响应是否符合规范
 ```
 
-Every endpoint documents: summary, all parameters, request body + examples, all response codes + schemas, auth requirements.
+每个端点文档包括: 摘要, 所有参数, 请求体 + 示例, 所有响应代码 + 模式, 认证要求。
 
 ---
 
-## 10. API Style Decision Tree
+## 10. API 风格决策树
 
 ```
-What kind of API?
+什么类型的 API?
 │
-├─ Browser + mobile clients, flexible queries
+├─ 浏览器 + 移动客户端, 灵活查询
 │   └─ GraphQL
-│       Rules: DataLoader (no N+1), depth limit ≤7, Relay pagination
+│       规则: DataLoader (防止 N+1), 深度限制 ≤7, Relay 分页
 │
-├─ Standard CRUD, public consumers, caching important
-│   └─ REST (this guide)
-│       Rules: Resources, HTTP methods, status codes, OpenAPI
+├─ 标准 CRUD, 公开消费者, 缓存重要
+│   └─ REST (本指南)
+│       规则: 资源, HTTP 方法, 状态码, OpenAPI
 │
-├─ Service-to-service, high throughput, strong typing
+├─ 服务间通信, 高吞吐量, 强类型
 │   └─ gRPC
-│       Rules: Protobuf schemas, streaming for large data, deadlines
+│       规则: Protobuf 模式, 大数据流式, 截止时间
 │
-├─ Full-stack TypeScript, same team owns client + server
+├─ 全栈 TypeScript, 同一团队维护客户端 + 服务端
 │   └─ tRPC
-│       Rules: Shared types, no code generation needed
+│       规则: 共享类型, 无需代码生成
 │
-└─ Real-time bidirectional
+└─ 实时双向
     └─ WebSocket / SSE
-        Rules: Heartbeat, reconnection, message ordering
+        规则: 心跳, 重连, 消息排序
 ```
 
 ---
 
-## Anti-Patterns Checklist
+## 反模式清单
 
-| # | ❌ Don't | ✅ Do Instead |
+| # |  不要 |  应该这样做 |
 |---|---------|--------------|
-| 1 | Verbs in URLs (`/getUser`) | HTTP methods + noun resources |
-| 2 | Return 200 for errors | Correct 4xx/5xx status codes |
-| 3 | Mix naming styles | One convention per context |
-| 4 | Expose database IDs | UUIDs for public identifiers |
-| 5 | No pagination on lists | Always paginate (default 20) |
-| 6 | Swallow errors silently | Structured RFC 9457 errors |
-| 7 | Token in URL query | Authorization header |
-| 8 | Deep nesting (3+ levels) | Flatten with query params |
-| 9 | Break changes without version | Maintain compatibility or version |
-| 10 | No rate limiting | Implement + communicate via headers |
-| 11 | No request ID | `X-Request-Id` on every response |
-| 12 | Stack traces in production | Safe error message + internal log |
+| 1 | URL 中使用动词 (`/getUser`) | HTTP 方法 + 名词资源 |
+| 2 | 为错误返回 200 | 正确的 4xx/5xx 状态码 |
+| 3 | 混合命名风格 | 每个上下文一种约定 |
+| 4 | 暴露数据库 ID | 公开标识符使用 UUID |
+| 5 | 列表无分页 | 始终分页 (默认 20) |
+| 6 | 静默吞掉错误 | 结构化的 RFC 9457 错误 |
+| 7 | 令牌放在 URL 查询参数中 | Authorization 响应头 |
+| 8 | 深层嵌套 (3+ 层) | 使用查询参数扁平化 |
+| 9 | 无版本控制的破坏性变更 | 保持兼容性或版本控制 |
+| 10 | 无限速 | 实现并通过响应头传达 |
+| 11 | 无请求 ID | 每个响应都带 `X-Request-Id` |
+| 12 | 生产环境暴露堆栈跟踪 | 安全错误消息 + 内部日志 |
 
 ---
 
-## Common Issues
+## 常见问题
 
-### Issue 1: "Should this be a new resource or a sub-resource?"
+### 问题 1: "这应该是新资源还是子资源?"
 
-**Symptom:** URL path keeps growing (`/users/{id}/orders/{id}/items/{id}/reviews`)
+**症状:** URL 路径不断增长 (`/users/{id}/orders/{id}/items/{id}/reviews`)
 
-**Rule:** If the child entity makes sense on its own, promote it. If it only exists within the parent context, keep it nested (max 2 levels).
+**规则:** 如果子实体独立有意义，则提升它。如果它只存在于父上下文中，则保持嵌套 (最多 2 层)。
 
 ```
-/reviews?orderId=123      ✅  (reviews exist independently)
-/orders/{id}/items         ✅  (items belong to orders, 1 level)
+/reviews?orderId=123      (reviews 独立存在)
+/orders/{id}/items         (items 属于 orders, 1 层)
 ```
 
-### Issue 2: "PUT or PATCH?"
+### 问题 2: "PUT 还是 PATCH?"
 
-**Symptom:** Team can't agree on update semantics.
+**症状:** 团队无法就更新语义达成一致。
 
-**Rule:**
-- PUT = client sends **complete** resource (missing fields → set to default/null)
-- PATCH = client sends **only changed fields** (missing fields → unchanged)
-- When unsure → **PATCH** (safer, less surprising)
+**规则:**
+- PUT = 客户端发送**完整**资源 (缺失字段 → 设为默认值/null)
+- PATCH = 客户端发送**仅更改的字段** (缺失字段 → 不变)
+- 不确定时 → **PATCH** (更安全, 更不容易令人惊讶)
 
-### Issue 3: "400 or 422?"
+### 问题 3: "400 还是 422?"
 
-**Symptom:** Inconsistent validation error codes.
+**症状:** 验证错误代码不一致。
 
-**Rule:**
-- 400 = can't parse request at all (malformed JSON, wrong content-type)
-- 422 = parsed OK, but values fail validation (invalid email, negative quantity)
+**规则:**
+- 400 = 根本无法解析请求 (格式错误的 JSON, 错误的 content-type)
+- 422 = 解析成功, 但值验证失败 (无效邮箱, 负数数量)

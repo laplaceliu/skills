@@ -1,278 +1,278 @@
-# Release & Acceptance Checklist
+# 发布与验收清单
 
-6-gate release checklist for backend and full-stack applications. Prevents "it works on my machine" and "we forgot to check X" failures.
+后端和全栈应用的 6 道关卡发布清单。防止"在我机器上能用"和"我们忘了检查 X"的失败。
 
-**Iron Law: NO RELEASE WITHOUT ALL GATES PASSING.**
-
----
-
-## Release Gates Overview
-
-```
-Feature Complete
-    ↓
-Gate 1: Functional Acceptance        → Does it do what it should?
-    ↓
-Gate 2: Non-Functional Acceptance    → Is it fast, reliable, observable?
-    ↓
-Gate 3: Security Review              → Is it safe?
-    ↓
-Gate 4: Deployment Readiness         → Can we deploy and rollback safely?
-    ↓
-Gate 5: Release Execution            → Deploy with canary + monitoring
-    ↓
-Gate 6: Post-Release Validation      → Did it actually work in production?
-```
+**铁律: 所有关卡通过前绝不发布。**
 
 ---
 
-## Gate 1: Functional Acceptance
+## 发布关卡概览
 
-**Question: Does it do what the requirements say?**
+```
+功能完成
+    ↓
+关卡 1: 功能验收        → 它是否按预期工作?
+    ↓
+关卡 2: 非功能验收      → 它是否快速、可靠、可观测?
+    ↓
+关卡 3: 安全审查        → 它是否安全?
+    ↓
+关卡 4: 部署就绪        → 我们能否安全部署和回滚?
+    ↓
+关卡 5: 发布执行        → 金丝雀发布 + 监控
+    ↓
+关卡 6: 发布后验证      → 它在生产环境实际工作了吗?
+```
 
-- [ ] All acceptance criteria from ticket/PRD have passing tests
-- [ ] Happy path works end-to-end
-- [ ] Edge cases tested (empty inputs, max lengths, Unicode)
-- [ ] Error cases tested (invalid input, not found, timeout)
-- [ ] Data integrity verified (CRUD cycle produces correct state)
-- [ ] Backward compatibility confirmed (existing clients not broken)
-- [ ] API contract matches OpenAPI spec
-- [ ] Idempotency verified (retries don't create duplicates)
+---
 
-### Evidence Template
+## 关卡 1: 功能验收
 
-| Requirement | Test | Status | Notes |
+**问题: 它是否按需求工作?**
+
+- [ ] 工单/PRD 中的所有验收标准都有通过的测试
+- [ ] 主流程端到端工作
+- [ ] 边界情况已测试 (空输入, 最大长度, Unicode)
+- [ ] 错误情况已测试 (无效输入, 未找到, 超时)
+- [ ] 数据完整性已验证 (CRUD 周期产生正确状态)
+- [ ] 向后兼容性已确认 (现有客户端未损坏)
+- [ ] API 契约符合 OpenAPI 规范
+- [ ] 幂等性已验证 (重试不会创建重复项)
+
+### 证据模板
+
+| 需求 | 测试 | 状态 | 备注 |
 |-------------|------|--------|-------|
-| User can create order | `orders.api.test:creates order` | ✅ PASS | |
-| Empty cart → error | `orders.api.test:rejects empty` | ✅ PASS | |
-| Payment failure handled | `payments.test:handles decline` | ✅ PASS | |
+| 用户可以创建订单 | `orders.api.test:creates order` |  PASS | |
+| 空购物车 → 错误 | `orders.api.test:rejects empty` |  PASS | |
+| 支付失败处理 | `payments.test:handles decline` |  PASS | |
 
 ---
 
-## Gate 2: Non-Functional Acceptance
+## 关卡 2: 非功能验收
 
-**Question: Is it fast, reliable, and observable?**
+**问题: 它是否快速、可靠且可观测?**
 
-### Performance
+### 性能
 
-- [ ] Response time within budget (p95 < ___ms) — measured, not assumed
-- [ ] No N+1 queries (checked with query logging)
-- [ ] New queries use indexes (`EXPLAIN ANALYZE`)
-- [ ] Pagination works on large datasets
-- [ ] Caching effective (hit rate > 80%)
-- [ ] Connection pool healthy under load
+- [ ] 响应时间在预算内 (p95 < ___ms) — 测量, 非假设
+- [ ] 无 N+1 查询 (用查询日志检查)
+- [ ] 新查询使用索引 (`EXPLAIN ANALYZE`)
+- [ ] 大数据集上分页工作正常
+- [ ] 缓存有效 (命中率 > 80%)
+- [ ] 连接池在负载下健康
 
-### Reliability
+### 可靠性
 
-- [ ] Graceful degradation when dependencies fail (circuit breaker)
-- [ ] Retry logic works for transient failures
-- [ ] All external calls have timeouts
-- [ ] Rate limiting returns 429 correctly
-- [ ] Health check endpoints verified (`/health`, `/ready`)
+- [ ] 依赖失败时优雅降级 (熔断器)
+- [ ] 瞬态失败的重试逻辑工作正常
+- [ ] 所有外部调用都有超时
+- [ ] 速率限制正确返回 429
+- [ ] 健康检查端点已验证 (`/health`, `/ready`)
 
-### Observability
+### 可观测性
 
-- [ ] Structured logging with request ID (not `console.log`)
-- [ ] Metrics exposed (request count, latency, error rate)
-- [ ] Alerts configured (error spike, latency spike)
-- [ ] Request tracing works end-to-end
-- [ ] Dashboard updated for new feature
+- [ ] 结构化日志带请求 ID (非 `console.log`)
+- [ ] 指标已暴露 (请求数, 延迟, 错误率)
+- [ ] 告警已配置 (错误激增, 延迟激增)
+- [ ] 请求追踪端到端工作
+- [ ] 仪表板已更新新功能
 
-### Evidence
+### 证据
 
-| Metric | Target | Actual | Status |
+| 指标 | 目标 | 实际 | 状态 |
 |--------|--------|--------|--------|
-| p95 response | < 500ms | ___ms | ✅/❌ |
-| p99 response | < 1000ms | ___ms | ✅/❌ |
-| Error rate (load) | < 0.1% | ___% | ✅/❌ |
-| Throughput | > ___ RPS | ___ RPS | ✅/❌ |
+| p95 响应 | < 500ms | ___ms | / |
+| p99 响应 | < 1000ms | ___ms | / |
+| 错误率 (负载) | < 0.1% | ___% | / |
+| 吞吐量 | > ___ RPS | ___ RPS | / |
 
 ---
 
-## Gate 3: Security Review
+## 关卡 3: 安全审查
 
-**Question: Does this introduce vulnerabilities?**
+**问题: 这是否引入了漏洞?**
 
-### Input & Output
+### 输入与输出
 
-- [ ] All input validated server-side (never trust client)
-- [ ] SQL injection prevented (parameterized queries only)
-- [ ] XSS prevented (output encoding)
-- [ ] File upload validated (type, size, name sanitized)
-- [ ] Rate limiting on sensitive endpoints (login, reset, APIs)
+- [ ] 所有输入都在服务端验证 (绝不信任客户端)
+- [ ] SQL 注入已防止 (仅参数化查询)
+- [ ] XSS 已防止 (输出编码)
+- [ ] 文件上传已验证 (类型, 大小, 名称已清理)
+- [ ] 敏感端点有速率限制 (登录, 重置, API)
 
-### Auth & Data
+### 认证与数据
 
-- [ ] Protected endpoints require valid credentials
-- [ ] Users can only access their own resources
-- [ ] Admin routes require admin role
-- [ ] Tokens expire (short-lived access + refresh)
-- [ ] Passwords hashed (bcrypt/argon2, not MD5/SHA)
-- [ ] Sensitive data not logged (passwords, tokens, PII)
-- [ ] Secrets in env vars (not hardcoded)
-- [ ] Error messages don't leak internals
+- [ ] 受保护端点需要有效凭证
+- [ ] 用户只能访问自己的资源
+- [ ] 管理路由需要管理员角色
+- [ ] 令牌有过期时间 (短期访问 + 刷新)
+- [ ] 密码已哈希 (bcrypt/argon2, 非 MD5/SHA)
+- [ ] 敏感数据未记录 (密码, 令牌, PII)
+- [ ] 密钥在环境变量中 (非硬编码)
+- [ ] 错误消息不泄露内部信息
 
-### Dependencies
+### 依赖
 
-- [ ] No known vulnerabilities (`npm audit` / `pip audit` / `govulncheck`)
-- [ ] Dependencies pinned in lockfile
-- [ ] Unused dependencies removed
+- [ ] 无已知漏洞 (`npm audit` / `pip audit` / `govulncheck`)
+- [ ] 依赖在 lockfile 中固定
+- [ ] 未使用的依赖已移除
 
 ---
 
-## Gate 4: Deployment Readiness
+## 关卡 4: 部署就绪
 
-**Question: Can we deploy safely and roll back if needed?**
+**问题: 我们能否安全部署并在需要时回滚?**
 
-### Code
+### 代码
 
-- [ ] All tests pass in CI (not "it passed locally")
-- [ ] Linter clean, build succeeds
-- [ ] Code reviewed and approved
-- [ ] No unresolved TODO/FIXME/HACK
+- [ ] 所有测试在 CI 中通过 (非"我本地通过了")
+- [ ] Linter 干净, 构建成功
+- [ ] 代码已审查并批准
+- [ ] 无未解决的 TODO/FIXME/HACK
 
-### Database
+### 数据库
 
-- [ ] Migration tested on staging with production-like data
-- [ ] Down migration works (tested!)
-- [ ] Migration is non-destructive (additive only)
-- [ ] Migration timing estimated on production data size
-- [ ] Backfill plan documented (if needed)
+- [ ] 迁移已在预发布环境用生产级数据测试
+- [ ] 回滚迁移工作 (已测试!)
+- [ ] 迁移是非破坏性的 (仅增量)
+- [ ] 迁移时间已按生产数据量估算
+- [ ] 回填计划已记录 (如需要)
 
-### Configuration
+### 配置
 
-- [ ] New env vars documented in `.env.example`
-- [ ] Env vars set in staging and verified
-- [ ] Env vars set in production
-- [ ] Feature flags configured (if applicable)
+- [ ] 新环境变量已在 `.env.example` 中记录
+- [ ] 环境变量已在预发布环境设置并验证
+- [ ] 环境变量已在生产环境设置
+- [ ] 功能开关已配置 (如适用)
 
-### Rollback Plan Template
+### 回滚计划模板
 
 ```markdown
-## Rollback Plan: [Feature]
+## 回滚计划: [功能]
 
-### When to rollback
-- Error rate > 1% sustained 5 minutes
-- p99 latency > 3000ms sustained 10 minutes
-- Critical business function broken
+### 何时回滚
+- 错误率 > 1% 持续 5 分钟
+- p99 延迟 > 3000ms 持续 10 分钟
+- 关键业务功能损坏
 
-### Steps
-1. Revert deploy: [command]
-2. Rollback migration (if applied): [command]
-3. Invalidate cache: [command]
-4. Notify team: #incidents channel
-5. Verify rollback: [verification steps]
+### 步骤
+1. 回滚部署: [命令]
+2. 回滚迁移 (如已应用): [命令]
+3. 使缓存失效: [命令]
+4. 通知团队: #incidents 频道
+5. 验证回滚: [验证步骤]
 
-### Estimated time: [X minutes]
-### Data recovery: [procedure if data was modified]
+### 预计时间: [X 分钟]
+### 数据恢复: [如数据被修改的恢复程序]
 ```
 
 ---
 
-## Gate 5: Release Execution
+## 关卡 5: 发布执行
 
-### Deployment Sequence
+### 部署序列
 
 ```
-1. 📢 ANNOUNCE in release channel
+1.  在发布频道中宣布
 
-2. 🗄️ DATABASE — Apply migration
-   - Run migration
-   - Verify completion
-   - Check data integrity
+2.  数据库 — 应用迁移
+   - 运行迁移
+   - 验证完成
+   - 检查数据完整性
 
-3. 🚀 DEPLOY — Roll out code
-   - Canary first (10% traffic)
-   - Monitor 5 minutes
-   - If OK → 50% → monitor → 100%
-   - If NOT OK → STOP immediately
+3.  部署 — 推出代码
+   - 先金丝雀 (10% 流量)
+   - 监控 5 分钟
+   - 如果正常 → 50% → 监控 → 100%
+   - 如果不正常 → 立即停止
 
-4. 🔍 SMOKE TEST
-   - Health check → 200
-   - Login works
-   - Core operation works
-   - No error spikes
+4.  冒烟测试
+   - 健康检查 → 200
+   - 登录工作
+   - 核心操作工作
+   - 无错误激增
 
-5. ✅ ANNOUNCE "Release complete. Monitoring 30 min."
+5.  宣布 "发布完成。监控 30 分钟。"
 ```
 
-### Canary Decision Table
+### 金丝雀决策表
 
-| Metric | Baseline | Canary OK | STOP | ROLLBACK |
+| 指标 | 基线 | 金丝雀正常 | 停止 | 回滚 |
 |--------|----------|-----------|------|----------|
-| Error rate | 0.05% | < 0.1% | 0.5% | > 1% |
-| p95 latency | 300ms | < 500ms | 700ms | > 1000ms |
+| 错误率 | 0.05% | < 0.1% | 0.5% | > 1% |
+| p95 延迟 | 300ms | < 500ms | 700ms | > 1000ms |
 
 ---
 
-## Gate 6: Post-Release Validation
+## 关卡 6: 发布后验证
 
-### Immediate (0-30 min)
+### 立即 (0-30 分钟)
 
-- [ ] Health checks green on all instances
-- [ ] Error rate within normal range
-- [ ] Latency normal (p95, p99)
-- [ ] Core user journey manually tested
-- [ ] Logs clean — no unexpected errors
-- [ ] Alerts silent
+- [ ] 所有实例健康检查正常
+- [ ] 错误率在正常范围内
+- [ ] 延迟正常 (p95, p99)
+- [ ] 核心用户旅程已手动测试
+- [ ] 日志干净 — 无意外错误
+- [ ] 告警静默
 
-### Short-term (1-24 hours)
+### 短期 (1-24 小时)
 
-- [ ] No customer complaints
-- [ ] Business metrics stable (conversion, revenue, signups)
-- [ ] Memory/CPU stable (no creeping usage)
-- [ ] Queue backlogs clear
-- [ ] Database performance stable
+- [ ] 无客户投诉
+- [ ] 业务指标稳定 (转化, 收入, 注册)
+- [ ] 内存/CPU 稳定 (无缓慢增长)
+- [ ] 队列积压已清除
+- [ ] 数据库性能稳定
 
-### Post-Release Report Template
+### 发布后报告模板
 
 ```markdown
-## Release Report: [Feature]
-- Deployed: [timestamp] by @[engineer]
-- Duration: [minutes]
+## 发布报告: [功能]
+- 部署时间: [时间戳] 由 @[工程师]
+- 持续时间: [分钟]
 
-| Check | Status | Notes |
+| 检查 | 状态 | 备注 |
 |-------|--------|-------|
-| Health checks | ✅ | All healthy |
-| Error rate | ✅ | 0.03% (baseline: 0.05%) |
-| p95 latency | ✅ | 310ms (baseline: 300ms) |
-| Core flow | ✅ | Order creation verified |
+| 健康检查 |  | 全部健康 |
+| 错误率 |  | 0.03% (基线: 0.05%) |
+| p95 延迟 |  | 310ms (基线: 300ms) |
+| 核心流程 |  | 订单创建已验证 |
 
-Issues found: None / [details]
-Rollback used: No / Yes: [reason]
+发现问题: 无 / [详情]
+使用了回滚: 否 / 是: [原因]
 ```
 
 ---
 
-## Release Readiness Score
+## 发布就绪评分
 
-Score each gate **0-2**: (0 = not checked, 1 = partially, 2 = fully verified with evidence)
+每道关卡评分 **0-2**: (0 = 未检查, 1 = 部分, 2 = 完全验证有证据)
 
-| Gate | Score |
+| 关卡 | 评分 |
 |------|-------|
-| 1. Functional Acceptance | /2 |
-| 2. Non-Functional Acceptance | /2 |
-| 3. Security Review | /2 |
-| 4. Deployment Readiness | /2 |
-| 5. Release Execution Plan | /2 |
-| 6. Post-Release Validation Plan | /2 |
-| **Total** | **/12** |
+| 1. 功能验收 | /2 |
+| 2. 非功能验收 | /2 |
+| 3. 安全审查 | /2 |
+| 4. 部署就绪 | /2 |
+| 5. 发布执行计划 | /2 |
+| 6. 发布后验证计划 | /2 |
+| **总计** | **/12** |
 
-**Decision:**
-- **12/12** → Ship it ✅
-- **10-11** → Ship with documented exceptions + owner assigned
-- **< 10** → Do NOT release. Fix gaps first.
+**决策:**
+- **12/12** → 发布 
+- **10-11** → 带记录的例外 + 分配负责人发布
+- **< 10** →  不要发布。先修复缺口。
 
 ---
 
-## Common Rationalizations
+## 常见辩解
 
-| ❌ Excuse | ✅ Reality |
+|  借口 |  现实 |
 |----------|-----------|
-| "It's a small change" | Small changes cause outages every day |
-| "We tested locally" | Local ≠ production |
-| "We'll fix it if it breaks" | You'll fix it at 3 AM. Prevent now. |
-| "Deadline is today" | Broken code costs more than late code |
-| "CI passed" | CI doesn't check everything. Run the checklist. |
-| "We can always rollback" | Only if you planned and tested rollback |
-| "We did this last time fine" | Survivorship bias. Checklist every time. |
+| "这只是个小改动" | 小改动每天都会导致故障 |
+| "我们在本地测试了" | 本地 ≠ 生产环境 |
+| "如果出问题我们会修复" | 你会在凌晨 3 点修复。现在就预防。 |
+| "截止日期是今天" | 损坏的代码比延迟的代码成本更高 |
+| "CI 通过了" | CI 不能检查所有内容。运行清单。 |
+| "我们随时可以回滚" | 只有在你计划并测试了回滚的情况下 |
+| "我们上次这么做没问题" | 幸存者偏差。每次都检查清单。 |
