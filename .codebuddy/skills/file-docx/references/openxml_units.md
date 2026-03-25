@@ -1,46 +1,46 @@
-# OpenXML Unit Conversion Quick Reference
+# OpenXML 单位换算快速参考
 
-## Master Conversion Table
+## 主换算表
 
-| Unit | 1 inch | 1 cm | 1 mm | 1 pt | Description |
-|------|--------|------|------|------|-------------|
-| DXA (twips) | 1440 | 567 | 56.7 | 20 | 1/20 of a point. Used for margins, indents, spacing, page size. |
-| EMU | 914400 | 360000 | 36000 | 12700 | English Metric Unit. Used for images, drawings, shapes. |
-| Half-points | 144 | 56.7 | 5.67 | 2 | Used for font sizes (`w:sz`, `w:szCs`). |
-| Points | 72 | 28.35 | 2.835 | 1 | Standard typographic unit. Not used directly in most attributes. |
-| Eighths of a point | 576 | 226.8 | 22.68 | 8 | Used for `w:spacing` character spacing. |
+| 单位 | 1 英寸 | 1 厘米 | 1 毫米 | 1 磅 | 描述 |
+|------|--------|--------|--------|------|------|
+| DXA (twips) | 1440 | 567 | 56.7 | 20 | 1/20 磅。用于边距、缩进、间距、页面大小。 |
+| EMU | 914400 | 360000 | 36000 | 12700 | 英制公制单位。用于图片、绘图、形状。 |
+| 半点 | 144 | 56.7 | 5.67 | 2 | 用于字体大小 (`w:sz`、`w:szCs`)。 |
+| 磅 | 72 | 28.35 | 2.835 | 1 | 标准排版单位。大多数属性不直接使用。 |
+| 八分之一磅 | 576 | 226.8 | 22.68 | 8 | 用于 `w:spacing` 字符间距。 |
 
-## Common Page Sizes
+## 常见页面大小
 
-| Size | Width (DXA) | Height (DXA) | Width (mm) | Height (mm) |
-|------|-------------|--------------|------------|-------------|
+| 大小 | 宽 (DXA) | 高 (DXA) | 宽 (mm) | 高 (mm) |
+|------|----------|----------|---------|---------|
 | A4 | 11906 | 16838 | 210 | 297 |
 | Letter | 12240 | 15840 | 215.9 | 279.4 |
 | Legal | 12240 | 20160 | 215.9 | 355.6 |
 | A3 | 16838 | 23811 | 297 | 420 |
 | A5 | 8391 | 11906 | 148 | 210 |
 
-## Common Margin Values
+## 常见边距值
 
-| Margin | DXA | Inches | cm |
-|--------|-----|--------|----|
-| 0.5 inch | 720 | 0.5 | 1.27 |
-| 0.75 inch | 1080 | 0.75 | 1.91 |
-| 1 inch | 1440 | 1.0 | 2.54 |
-| 1.25 inch | 1800 | 1.25 | 3.18 |
-| 1.5 inch | 2160 | 1.5 | 3.81 |
+| 边距 | DXA | 英寸 | 厘米 |
+|------|-----|------|------|
+| 0.5 英寸 | 720 | 0.5 | 1.27 |
+| 0.75 英寸 | 1080 | 0.75 | 1.91 |
+| 1 英寸 | 1440 | 1.0 | 2.54 |
+| 1.25 英寸 | 1800 | 1.25 | 3.18 |
+| 1.5 英寸 | 2160 | 1.5 | 3.81 |
 
-## Font Size Values (`w:sz`)
+## 字体大小值 (`w:sz`)
 
-| Display Size | w:sz value | Notes |
-|-------------|-----------|-------|
+| 显示大小 | w:sz 值 | 备注 |
+|----------|---------|------|
 | 8pt | 16 | |
 | 9pt | 18 | |
 | 10pt | 20 | |
-| 10.5pt | 21 | Common CJK body size |
-| 11pt | 22 | Default Calibri body |
-| 12pt | 24 | Default TNR body |
-| 14pt | 28 | Small heading |
+| 10.5pt | 21 | 常见 CJK 正文大小 |
+| 11pt | 22 | 默认 Calibri 正文 |
+| 12pt | 24 | 默认 TNR 正文 |
+| 14pt | 28 | 小标题 |
 | 16pt | 32 | |
 | 18pt | 36 | |
 | 20pt | 40 | |
@@ -48,25 +48,25 @@
 | 28pt | 56 | |
 | 36pt | 72 | |
 
-## Line Spacing Values
+## 行距值
 
-Line spacing in `w:spacing` uses the `w:line` attribute in 240ths of a line (when `w:lineRule="auto"`):
+`w:spacing` 中的行距在 `w:lineRule="auto"` 时使用行的 240 分之一作为 `w:line` 属性：
 
-| Spacing | w:line value | w:lineRule |
-|---------|-------------|-----------|
-| Single | 240 | auto |
-| 1.15 (Word default) | 276 | auto |
+| 间距 | w:line 值 | w:lineRule |
+|------|-----------|------------|
+| 单倍 | 240 | auto |
+| 1.15 (Word 默认) | 276 | auto |
 | 1.5 | 360 | auto |
-| Double | 480 | auto |
-| Exact 12pt | 240 | exact |
-| At least 12pt | 240 | atLeast |
+| 双倍 | 480 | auto |
+| 精确 12pt | 240 | exact |
+| 至少 12pt | 240 | atLeast |
 
-Note: When `lineRule="exact"` or `"atLeast"`, `w:line` is in **twips** (DXA), not 240ths. So `line="240"` with `lineRule="exact"` means exactly 12pt (240/20 = 12pt).
+注意：`lineRule="exact"` 或 `"atLeast"` 时，`w:line` 是 **twips** (DXA)，不是 240 分之一。所以 `line="240"` 且 `lineRule="exact"` 表示精确 12pt（240/20 = 12pt）。
 
-## Conversion Formulas
+## 换算公式
 
 ```
-DXA     = inches × 1440  = cm × 567     = pt × 20
-EMU     = inches × 914400 = cm × 360000 = pt × 12700
-sz      = pt × 2          (half-points)
+DXA     = 英寸 × 1440  = 厘米 × 567     = 磅 × 20
+EMU     = 英寸 × 914400 = 厘米 × 360000 = 磅 × 12700
+sz      = 磅 × 2          (半点)
 ```

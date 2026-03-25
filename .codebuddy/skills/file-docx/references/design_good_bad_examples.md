@@ -1,125 +1,122 @@
-# GOOD vs BAD Document Design — Concrete OpenXML Examples
+# 文档设计的好与坏 —— 具体 OpenXML 示例
 
-A side-by-side reference showing common design mistakes and their fixes, with exact OpenXML parameter values. Use this to develop an intuitive sense of what makes a document look professional versus amateur.
+并排参考，展示常见设计错误及其修复方法，包含精确的 OpenXML 参数值。使用此文档培养对专业文档与业余文档设计差异的直觉。
 
-Format: Each comparison shows the **BAD** version first (the mistake), then the **GOOD** version (the fix), with OpenXML markup and a short explanation.
+格式：每个比较先显示**坏**版本（错误），然后是**好**版本（修复），包含 OpenXML 标记和简短说明。
 
 ---
 
-## 1. Font Size Disasters
+## 1. 字体大小灾难
 
-### 1a. No Hierarchy — Everything the Same Size
+### 1a. 无层次 —— 所有内容大小相同
 
-**BAD: Body=12pt, H1=12pt bold**
+**坏：正文=12pt，H1=12pt 粗体**
 ```
 ┌──────────────────────────────────┐
-│ INTRODUCTION                     │  ← 12pt bold... same visual weight
-│ This is the body text of the     │  ← 12pt regular
-│ report. It discusses findings    │
-│ from the quarterly review.       │
-│ METHODOLOGY                      │  ← Where does the section start?
-│ We collected data from three     │
-│ sources across the enterprise.   │
+│ 引言                             │  ← 12pt 粗体... 相同视觉权重
+│ 这是报告的                       │  ← 12pt 常规
+│ 正文。它讨论                     │
+│ 季度审查的结果。                 │
+│ 方法                             │  ← 节从哪里开始？
+│ 我们从企业                       │
+│ 的三个来源收集了数据。           │
 └──────────────────────────────────┘
 ```
 ```xml
-<!-- H1: bold but same size as body — no visual separation -->
+<!-- H1：粗体但大小与正文相同 —— 无视觉分隔 -->
 <w:rPr><w:b/><w:sz w:val="24"/></w:rPr>
-<!-- Body -->
+<!-- 正文 -->
 <w:rPr><w:sz w:val="24"/></w:rPr>
 ```
 
-**GOOD: Modular scale — body=11pt, H3=13pt, H2=16pt, H1=20pt**
+**好：模数比例 —— 正文=11pt，H3=13pt，H2=16pt，H1=20pt**
 ```
 ┌──────────────────────────────────┐
 │                                  │
-│ Introduction                     │  ← 20pt, clearly a title
+│ 引言                             │  ← 20pt，明显是标题
 │                                  │
-│ This is the body text of the     │  ← 11pt, comfortable reading size
-│ report. It discusses findings    │
-│ from the quarterly review.       │
+│ 这是报告的                       │  ← 11pt，舒适的阅读大小
+│ 正文。它讨论                     │
+│ 季度审查的结果。                 │
 │                                  │
-│ Methodology                      │  ← 20pt, section break is obvious
+│ 方法                             │  ← 20pt，明显的节分隔
 │                                  │
-│ We collected data from three     │
-│ sources across the enterprise.   │
+│ 我们从企业                       │
+│ 的三个来源收集了数据。           │
 └──────────────────────────────────┘
 ```
 ```xml
-<!-- H1: 20pt = w:sz 40 -->
+<!-- H1：20pt = w:sz 40 -->
 <w:rPr><w:rFonts w:ascii="Calibri Light"/><w:sz w:val="40"/></w:rPr>
-<!-- H2: 16pt = w:sz 32 -->
+<!-- H2：16pt = w:sz 32 -->
 <w:rPr><w:rFonts w:ascii="Calibri Light"/><w:sz w:val="32"/></w:rPr>
-<!-- H3: 13pt = w:sz 26, bold -->
+<!-- H3：13pt = w:sz 26，粗体 -->
 <w:rPr><w:rFonts w:ascii="Calibri"/><w:b/><w:sz w:val="26"/></w:rPr>
-<!-- Body: 11pt = w:sz 22 -->
+<!-- 正文：11pt = w:sz 22 -->
 <w:rPr><w:rFonts w:ascii="Calibri"/><w:sz w:val="22"/></w:rPr>
 ```
-**Why better:** A clear size progression (ratio ~1.25x per step) lets readers instantly identify structure without reading a word.
+**为什么更好：** 清晰的大小递进（每步比例约 1.25x）让读者无需阅读一个字就能立即识别结构。
 
 ---
 
-### 1b. Too Much Contrast — Children's Book Look
+### 1b. 对比过度 —— 儿童书外观
 
-**BAD: H1=28pt with body=10pt (ratio 2.8x)**
+**坏：H1=28pt，正文=10pt（比例 2.8x）**
 ```
 ┌──────────────────────────────────┐
 │                                  │
-│ QUARTERLY REPORT                 │  ← 28pt, dominates the page
+│ 季度报告                         │  ← 28pt，主导页面
 │                                  │
-│ This is body text set very small │  ← 10pt, straining to read
-│ and the contrast with the title  │
-│ makes it feel like a poster.     │
+│ 这是设得很小的                   │  ← 10pt，阅读费力
+│ 正文，与标题                     │
+│ 的对比使它感觉                   │
+│ 像海报。                         │
 └──────────────────────────────────┘
 ```
 ```xml
-<w:rPr><w:b/><w:sz w:val="56"/></w:rPr>  <!-- 28pt heading -->
-<w:rPr><w:sz w:val="20"/></w:rPr>         <!-- 10pt body -->
+<w:rPr><w:b/><w:sz w:val="56"/></w:rPr>  <!-- 28pt 标题 -->
+<w:rPr><w:sz w:val="20"/></w:rPr>         <!-- 10pt 正文 -->
 ```
 
-**GOOD: H1=20pt with body=11pt (ratio ~1.8x)**
+**好：H1=20pt，正文=11pt（比例约 1.8x）**
 ```xml
-<w:rPr><w:sz w:val="40"/></w:rPr>  <!-- 20pt heading -->
-<w:rPr><w:sz w:val="22"/></w:rPr>  <!-- 11pt body -->
+<w:rPr><w:sz w:val="40"/></w:rPr>  <!-- 20pt 标题 -->
+<w:rPr><w:sz w:val="22"/></w:rPr>  <!-- 11pt 正文 -->
 ```
-**Why better:** A heading-to-body ratio between 1.5x and 2.0x reads as "structured" rather than "shouting."
+**为什么更好：** 1.5x 到 2.0x 的标题-正文比例读起来是"结构化"而不是"大喊"。
 
 ---
 
-## 2. Spacing Crimes
+## 2. 间距罪行
 
-### 2a. Wall of Text — No Paragraph or Line Spacing
+### 2a. 文本墙 —— 无段落或行距
 
-**BAD: Single line spacing, 0pt between paragraphs**
+**坏：单倍行距，段落间 0pt**
 ```
 ┌──────────────────────────────────┐
-│The findings indicate a strong    │
-│correlation between training hours│
-│and performance metrics.          │
-│Further analysis revealed that    │  ← No gap — where does the new
-│departments with higher budgets   │     paragraph start?
-│achieved better outcomes in all   │
-│measured categories.              │
-└──────────────────────────────────┘
+│结果表明培训时长与                │
+│绩效指标之间存在强相关性。进一步  │
+│分析揭示预算较高的部门在所有      │
+│测量类别中都取得了更好的结果。    │
+│                                  │
 ```
 ```xml
 <w:pPr>
-  <w:spacing w:line="240" w:lineRule="auto"/>  <!-- 1.0 spacing (240/240) -->
-  <w:spacing w:after="0"/>                     <!-- no paragraph gap -->
+  <w:spacing w:line="240" w:lineRule="auto"/>  <!-- 1.0 行距 (240/240) -->
+  <w:spacing w:after="0"/>                     <!-- 无段落间隙 -->
 </w:pPr>
 ```
 
-**GOOD: 1.15x line spacing, 8pt after each paragraph**
+**好：1.15x 行距，每段后 8pt**
 ```
 ┌──────────────────────────────────┐
-│The findings indicate a strong    │
-│correlation between training      │  ← Slightly more air between lines
-│hours and performance metrics.    │
-│                                  │  ← 8pt gap signals new paragraph
-│Further analysis revealed that    │
-│departments with higher budgets   │
-│achieved better outcomes in all   │
-│measured categories.              │
+│结果表明培训时长与                │
+│绩效指标之间存在                  │  ← 行之间稍微更多空间
+│强相关性。                        │
+│                                  │  ← 8pt 间隙表示新段落
+│进一步分析揭示                    │
+│预算较高的部门在所有              │
+│测量类别中都取得了更好的结果。    │
 └──────────────────────────────────┘
 ```
 ```xml
@@ -128,142 +125,142 @@ Format: Each comparison shows the **BAD** version first (the mistake), then the 
   <w:spacing w:after="160"/>                   <!-- 8pt = 160 twips -->
 </w:pPr>
 ```
-**Why better:** Line spacing gives each line room to breathe; paragraph spacing separates ideas without wasting a full blank line.
+**为什么更好：** 行距给每行呼吸空间；段落间距在不浪费整行空白的情况下分隔想法。
 
 ---
 
-### 2b. Floating Headings — Same Space Above and Below
+### 2b. 漂浮标题 —— 上下间距相同
 
-**BAD: 12pt before and 12pt after heading**
+**坏：标题前后 12pt**
 ```
 ┌──────────────────────────────────┐
-│ ...end of previous section.      │
-│                                  │  ← 12pt gap
-│ Section Two                      │  ← Heading floats in the middle
-│                                  │  ← 12pt gap
-│ Start of section two content.    │
+│ ...前一节结束。                  │
+│                                  │  ← 12pt 间隙
+│ 第二节                           │  ← 标题漂浮在中间
+│                                  │  ← 12pt 间隙
+│ 第二节内容开始。                 │
 └──────────────────────────────────┘
 ```
 ```xml
 <w:pPr>
-  <w:spacing w:before="240" w:after="240"/>  <!-- 12pt both sides -->
+  <w:spacing w:before="240" w:after="240"/>  <!-- 两侧 12pt -->
 </w:pPr>
 ```
 
-**GOOD: 24pt before, 8pt after heading**
+**好：前 24pt，后 8pt**
 ```
 ┌──────────────────────────────────┐
-│ ...end of previous section.      │
+│ ...前一节结束。                  │
 │                                  │
-│                                  │  ← 24pt gap — clear section break
-│ Section Two                      │  ← Heading is close to its content
-│                                  │  ← 8pt gap
-│ Start of section two content.    │
+│                                  │  ← 24pt 间隙 —— 明显的节分隔
+│ 第二节                           │  ← 标题靠近其内容
+│                                  │  ← 8pt 间隙
+│ 第二节内容开始。                 │
 └──────────────────────────────────┘
 ```
 ```xml
 <w:pPr>
-  <w:spacing w:before="480" w:after="160"/>  <!-- 24pt before, 8pt after -->
+  <w:spacing w:before="480" w:after="160"/>  <!-- 前 24pt，后 8pt -->
 </w:pPr>
 ```
-**Why better:** Proximity principle: a heading belongs to the text that follows it, so more space above and less space below anchors it to its content.
+**为什么更好：** 接近原则：标题属于它引入的文本，所以上面更多空间、下面更少空间将它锚定到其内容。
 
 ---
 
-### 2c. Wasteful Gaps — Huge Spacing Everywhere
+### 2c. 浪费的间隙 —— 到处都是大间距
 
-**BAD: 24pt after every paragraph, including body text**
+**坏：每段后 24pt，包括正文**
 ```
 ┌──────────────────────────────────┐
-│ First paragraph of text here.    │
+│ 第一段文本在这里。               │
 │                                  │
-│                                  │  ← 24pt gap after every paragraph
+│                                  │  ← 每段后 24pt 间隙
 │                                  │
-│ Second paragraph of text here.   │
+│ 第二段文本在这里。               │
 │                                  │
 │                                  │
 │                                  │
-│ Third paragraph.                 │  ← Document looks mostly white space
+│ 第三段。                         │  ← 文档看起来大部分是空白
 └──────────────────────────────────┘
 ```
 ```xml
-<w:spacing w:after="480"/>  <!-- 24pt = 480 twips after every paragraph -->
+<w:spacing w:after="480"/>  <!-- 每段后 24pt = 480 twips -->
 ```
 
-**GOOD: Proportional spacing — body=8pt, H2=6pt after, H1=10pt after**
+**好：比例间距 —— 正文=8pt，H2=6pt 后，H1=10pt 后**
 ```xml
-<!-- Body paragraph -->
-<w:spacing w:after="160"/>   <!-- 8pt after body -->
+<!-- 正文段落 -->
+<w:spacing w:after="160"/>   <!-- 正文后 8pt -->
 <!-- H1 -->
-<w:spacing w:before="480" w:after="200"/>  <!-- 24pt before, 10pt after -->
+<w:spacing w:before="480" w:after="200"/>  <!-- 前 24pt，后 10pt -->
 <!-- H2 -->
-<w:spacing w:before="320" w:after="120"/>  <!-- 16pt before, 6pt after -->
+<w:spacing w:before="320" w:after="120"/>  <!-- 前 16pt，后 6pt -->
 ```
-**Why better:** Spacing should vary by element role, creating a visual rhythm rather than uniform gaps.
+**为什么更好：** 间距应该按元素角色变化，创建视觉节奏而不是统一间隙。
 
 ---
 
-## 3. Margin Mistakes
+## 3. 边距错误
 
-### 3a. Cramped Margins — Text Running to the Edge
+### 3a. 紧凑边距 —— 文本跑到边缘
 
-**BAD: 0.5in margins all around**
+**坏：四周 0.5 英寸边距**
 ```
 ┌────────────────────────────────────────────────┐
-│Text starts almost at the paper edge and runs   │
-│all the way across making extremely long lines  │
-│that are hard to track from end back to start.  │
-│The eye loses its place on every line return.   │
+│文本几乎从纸张边缘开始并一直                    │
+│横跨，形成极长的行，难以从                      │
+│末尾跟踪回开头。眼睛在每次换行                  │
+│时都会丢失位置。                                │
 └────────────────────────────────────────────────┘
 ```
 ```xml
 <w:pgMar w:top="720" w:right="720" w:bottom="720" w:left="720"/>
-<!-- 720 twips = 0.5in — line length ~7.5in on letter paper -->
+<!-- 720 twips = 0.5英寸 —— Letter 纸张上行长约 7.5 英寸 -->
 ```
 
-**GOOD: 1in margins (standard)**
+**好：1 英寸边距（标准）**
 ```xml
 <w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440"/>
-<!-- 1440 twips = 1.0in — line length ~6.5in, ideal for 11pt body -->
+<!-- 1440 twips = 1.0英寸 —— 行长约 6.5 英寸，11pt 正文的理想长度 -->
 ```
-**Why better:** Optimal line length is 60-75 characters. At 11pt Calibri, 6.5in width achieves roughly 70 characters per line.
+**为什么更好：** 最佳行长是 60-75 个字符。11pt Calibri，6.5 英寸宽度实现约每行 70 个字符。
 
 ---
 
-### 3b. Over-Padded Margins — Looks Like the Content is Hiding
+### 3b. 过度填充边距 —— 内容像在躲藏
 
-**BAD: 2in margins on a short document**
+**坏：短文档 2 英寸边距**
 ```xml
 <w:pgMar w:top="2880" w:right="2880" w:bottom="2880" w:left="2880"/>
-<!-- 2880 twips = 2.0in — only 4.5in of text width, looks padded -->
+<!-- 2880 twips = 2.0英寸 —— 只有 4.5 英寸文本宽度，看起来填充过厚 -->
 ```
 
-**GOOD: 1in standard, or 1.25in for formal documents**
+**好：标准 1 英寸，或正式文档 1.25 英寸**
 ```xml
-<!-- Standard -->
+<!-- 标准 -->
 <w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440"/>
-<!-- Formal / bound documents with gutter -->
+<!-- 正式/装订文档带装订边 -->
 <w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1800" w:gutter="0"/>
-<!-- 1800 twips = 1.25in left for binding margin -->
+<!-- 1800 twips = 1.25 英寸左侧用于装订边距 -->
 ```
-**Why better:** Margins should frame the content, not overwhelm it. 1-1.25in works for virtually all business and academic documents.
+**为什么更好：** 边距应该框住内容，而不是压倒它。1-1.25 英寸适用于几乎所有商业和学术文档。
 
 ---
 
-## 4. Table Ugliness
+## 4. 表格丑陋
 
-### 4a. Prison Grid — Full Borders on Every Cell
+### 4a. 监狱网格 —— 每个单元格全边框
 
-**BAD: Every cell with 1pt borders on all four sides**
+**坏：每个单元格四边都有 1pt 边框**
 ```
 ┌───────┬───────┬───────┬───────┐
-│ Name  │ Dept  │ Score │ Grade │
+│ 姓名  │ 部门  │ 分数  │ 等级  │
 ├───────┼───────┼───────┼───────┤
-│ Alice │ Eng   │ 92    │ A     │
+│ Alice │ 工程  │ 92    │ A     │
 ├───────┼───────┼───────┼───────┤
-│ Bob   │ Sales │ 85    │ B     │
+│ Bob   │ 销售  │ 85    │ B     │
 ├───────┼───────┼───────┼───────┤
-│ Carol │ Eng   │ 78    │ C+    │
+│ Carol │ 工程  │ 78    │ C+    │
 └───────┴───────┴───────┴───────┘
 ```
 ```xml
@@ -275,39 +272,39 @@ Format: Each comparison shows the **BAD** version first (the mistake), then the 
 </w:tcBorders>
 ```
 
-**GOOD: Three-line table (三线表) — top thick, header-bottom medium, table-bottom thick**
+**好：三线表 —— 顶粗、表头底中、表底粗**
 ```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  ← 1.5pt top border
-  Name    Dept    Score   Grade
-──────────────────────────────────  ← 0.75pt header separator
-  Alice   Eng     92      A
-  Bob     Sales   85      B
-  Carol   Eng     78      C+
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  ← 1.5pt bottom border
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  ← 1.5pt 顶边框
+  姓名    部门    分数   等级
+──────────────────────────────  ← 0.75pt 表头分隔线
+  Alice   工程     92      A
+  Bob     销售     85      B
+  Carol   工程     78      C+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  ← 1.5pt 底边框
 ```
 ```xml
-<!-- Top border of header row cells -->
+<!-- 表头行单元格顶边框 -->
 <w:top w:val="single" w:sz="12" w:color="000000"/>    <!-- 1.5pt -->
 <w:left w:val="nil"/><w:right w:val="nil"/>
 <w:bottom w:val="single" w:sz="6" w:color="000000"/>  <!-- 0.75pt -->
 
-<!-- Data row cells: no left/right/top borders -->
+<!-- 数据行单元格：无左/右/顶边框 -->
 <w:top w:val="nil"/><w:left w:val="nil"/><w:right w:val="nil"/>
 <w:bottom w:val="nil"/>
 
-<!-- Last row bottom border -->
+<!-- 最后一行底边框 -->
 <w:bottom w:val="single" w:sz="12" w:color="000000"/> <!-- 1.5pt -->
 ```
-**Why better:** Removing inner borders lets the eye scan data freely. Three lines provide structure without visual clutter.
+**为什么更好：** 移除内边框让眼睛自由扫描数据。三条线提供结构而不视觉杂乱。
 
 ---
 
-### 4b. Text Touching Borders — No Cell Padding
+### 4b. 文本触边 —— 无单元格内边距
 
-**BAD: Zero cell margins**
+**坏：零单元格边距**
 ```
 ┌──────────┬──────────┐
-│Name      │Department│  ← Text cramped against borders
+│姓名      │部门      │  ← 文本紧贴边框
 ├──────────┼──────────┤
 │Alice     │Engineering│
 └──────────┴──────────┘
@@ -321,187 +318,187 @@ Format: Each comparison shows the **BAD** version first (the mistake), then the 
 </w:tcMar>
 ```
 
-**GOOD: 0.08in vertical, 0.12in horizontal padding**
+**好：0.08 英寸垂直，0.12 英寸水平内边距**
 ```xml
 <w:tcMar>
-  <w:top w:w="115" w:type="dxa"/>      <!-- ~0.08in = 115 twips -->
-  <w:start w:w="173" w:type="dxa"/>    <!-- ~0.12in = 173 twips -->
+  <w:top w:w="115" w:type="dxa"/>      <!-- 约 0.08 英寸 = 115 twips -->
+  <w:start w:w="173" w:type="dxa"/>    <!-- 约 0.12 英寸 = 173 twips -->
   <w:bottom w:w="115" w:type="dxa"/>
   <w:end w:w="173" w:type="dxa"/>
 </w:tcMar>
 ```
-**Why better:** Padding gives text breathing room inside cells, making every value easier to read.
+**为什么更好：** 内边距给单元格内文本呼吸空间，使每个值更容易阅读。
 
 ---
 
-### 4c. Invisible Headers — Header Row Same Style as Data
+### 4c. 隐形表头 —— 表头行与数据样式相同
 
-**BAD: Header row indistinguishable from data**
+**坏：表头行与数据无法区分**
 ```xml
-<!-- Header cell run properties — identical to data -->
+<!-- 表头单元格 run 属性 —— 与数据相同 -->
 <w:rPr><w:sz w:val="22"/></w:rPr>
 ```
 
-**GOOD: Bold header text, subtle background fill, bottom border**
+**好：粗体表头文本、微妙背景填充、底边框**
 ```xml
-<!-- Header cell run properties -->
+<!-- 表头单元格 run 属性 -->
 <w:rPr><w:b/><w:sz w:val="22"/><w:color w:val="333333"/></w:rPr>
 
-<!-- Header cell shading -->
+<!-- 表头单元格底纹 -->
 <w:tcPr>
-  <w:shd w:val="clear" w:color="auto" w:fill="F2F2F2"/>  <!-- light gray bg -->
+  <w:shd w:val="clear" w:color="auto" w:fill="F2F2F2"/>  <!-- 浅灰背景 -->
   <w:tcBorders>
-    <w:bottom w:val="single" w:sz="8" w:color="666666"/>  <!-- 1pt separator -->
+    <w:bottom w:val="single" w:sz="8" w:color="666666"/>  <!-- 1pt 分隔线 -->
   </w:tcBorders>
 </w:tcPr>
 
-<!-- Mark row as header (repeats on page break) -->
+<!-- 将行标记为表头（分页时重复） -->
 <w:trPr><w:tblHeader/></w:trPr>
 ```
-**Why better:** Distinct header styling lets readers instantly locate column meanings, especially in long tables that span pages. The `w:tblHeader` element ensures the header row repeats on every page.
+**为什么更好：** 不同的表头样式让读者立即定位列含义，尤其是在跨页的长表中。`w:tblHeader` 元素确保表头行在每页重复。
 
 ---
 
-## 5. Font Pairing Failures
+## 5. 字体搭配失败
 
-### 5a. Visual Chaos — Too Many Fonts
+### 5a. 视觉混乱 —— 太多字体
 
-**BAD: 4+ fonts in one document**
+**坏：一个文档 4+ 字体**
 ```xml
-<!-- H1 in Impact -->
+<!-- H1 用 Impact -->
 <w:rPr><w:rFonts w:ascii="Impact"/><w:sz w:val="40"/></w:rPr>
-<!-- H2 in Georgia -->
+<!-- H2 用 Georgia -->
 <w:rPr><w:rFonts w:ascii="Georgia"/><w:sz w:val="32"/></w:rPr>
-<!-- Body in Verdana -->
+<!-- 正文用 Verdana -->
 <w:rPr><w:rFonts w:ascii="Verdana"/><w:sz w:val="22"/></w:rPr>
-<!-- Captions in Courier New -->
+<!-- 标题用 Courier New -->
 <w:rPr><w:rFonts w:ascii="Courier New"/><w:sz w:val="18"/></w:rPr>
 ```
 
-**GOOD: One font family with weight variation, or two complementary families**
+**好：一个字体家族配粗细变化，或两个互补家族**
 ```xml
-<!-- H1: Calibri Light (thin weight of Calibri family) -->
+<!-- H1：Calibri Light（Calibri 家族的细粗细） -->
 <w:rPr><w:rFonts w:ascii="Calibri Light"/><w:sz w:val="40"/></w:rPr>
-<!-- H2: Calibri Light -->
+<!-- H2：Calibri Light -->
 <w:rPr><w:rFonts w:ascii="Calibri Light"/><w:sz w:val="32"/></w:rPr>
-<!-- Body: Calibri (regular weight) -->
+<!-- 正文：Calibri（常规粗细） -->
 <w:rPr><w:rFonts w:ascii="Calibri"/><w:sz w:val="22"/></w:rPr>
-<!-- Captions: Calibri -->
+<!-- 标题：Calibri -->
 <w:rPr><w:rFonts w:ascii="Calibri"/><w:sz w:val="18"/></w:rPr>
 ```
-**Why better:** Limiting to one or two font families creates visual coherence. Vary by size and weight, not by font.
+**为什么更好：** 限制为 1-2 个字体家族创建视觉连贯性。通过大小和粗细变化，而不是字体。
 
 ---
 
-### 5b. Mismatched Personality — Comic Sans Meets Times New Roman
+### 5b. 个性不匹配 —— Comic Sans 遇到 Times New Roman
 
-**BAD:**
+**坏：**
 ```xml
-<w:rPr><w:rFonts w:ascii="Comic Sans MS"/><w:sz w:val="36"/></w:rPr>  <!-- heading -->
-<w:rPr><w:rFonts w:ascii="Times New Roman"/><w:sz w:val="24"/></w:rPr> <!-- body -->
+<w:rPr><w:rFonts w:ascii="Comic Sans MS"/><w:sz w:val="36"/></w:rPr>  <!-- 标题 -->
+<w:rPr><w:rFonts w:ascii="Times New Roman"/><w:sz w:val="24"/></w:rPr> <!-- 正文 -->
 ```
 
-**GOOD: Fonts with compatible character**
+**好：性格兼容的字体**
 ```xml
-<w:rPr><w:rFonts w:ascii="Calibri Light"/><w:sz w:val="36"/></w:rPr>   <!-- heading -->
-<w:rPr><w:rFonts w:ascii="Calibri"/><w:sz w:val="22"/></w:rPr>          <!-- body -->
+<w:rPr><w:rFonts w:ascii="Calibri Light"/><w:sz w:val="36"/></w:rPr>   <!-- 标题 -->
+<w:rPr><w:rFonts w:ascii="Calibri"/><w:sz w:val="22"/></w:rPr>          <!-- 正文 -->
 ```
-**Why better:** Paired fonts should share a similar level of formality and geometric character. Comic Sans is playful/informal; Times New Roman is formal/traditional. They clash.
+**为什么更好：** 配对字体应该共享相似的形式水平和几何特征。Comic Sans 是俏皮/非正式的；Times New Roman 是正式/传统的。它们冲突。
 
 ---
 
-### 5c. Everything Bold — Nothing Stands Out
+### 5c. 全部粗体 —— 没有突出的内容
 
-**BAD: Bold on body, headings, captions, everything**
+**坏：正文、标题、标题，全部粗体**
 ```xml
-<w:rPr><w:b/><w:sz w:val="40"/></w:rPr>  <!-- heading: bold -->
-<w:rPr><w:b/><w:sz w:val="22"/></w:rPr>  <!-- body: also bold -->
-<w:rPr><w:b/><w:sz w:val="18"/></w:rPr>  <!-- caption: still bold -->
+<w:rPr><w:b/><w:sz w:val="40"/></w:rPr>  <!-- 标题：粗体 -->
+<w:rPr><w:b/><w:sz w:val="22"/></w:rPr>  <!-- 正文：也粗体 -->
+<w:rPr><w:b/><w:sz w:val="18"/></w:rPr>  <!-- 标题：还是粗体 -->
 ```
 
-**GOOD: Bold reserved for headings and key terms only**
+**好：粗体只保留给标题和关键术语**
 ```xml
-<w:rPr><w:b/><w:sz w:val="40"/></w:rPr>   <!-- H1: bold -->
-<w:rPr><w:sz w:val="32"/></w:rPr>          <!-- H2: size alone is enough -->
-<w:rPr><w:sz w:val="22"/></w:rPr>          <!-- body: regular weight -->
-<w:rPr><w:b/><w:sz w:val="22"/></w:rPr>    <!-- key term inline: bold -->
-<w:rPr><w:sz w:val="18"/></w:rPr>          <!-- caption: regular, small -->
+<w:rPr><w:b/><w:sz w:val="40"/></w:rPr>   <!-- H1：粗体 -->
+<w:rPr><w:sz w:val="32"/></w:rPr>          <!-- H2：仅大小就够了 -->
+<w:rPr><w:sz w:val="22"/></w:rPr>          <!-- 正文：常规粗细 -->
+<w:rPr><w:b/><w:sz w:val="22"/></w:rPr>    <!-- 行内关键术语：粗体 -->
+<w:rPr><w:sz w:val="18"/></w:rPr>          <!-- 标题：常规，小 -->
 ```
-**Why better:** When everything is emphasized, nothing is emphasized. Bold should be a signal, not a default.
+**为什么更好：** 当一切都强调时，没有什么是强调的。粗体应该是一个信号，而不是默认值。
 
 ---
 
-## 6. Color Abuse
+## 6. 颜色滥用
 
-### 6a. Rainbow Headings
+### 6a. 彩虹标题
 
-**BAD: Each heading level a different bright color**
+**坏：每个标题级别不同的鲜艳颜色**
 ```xml
-<w:rPr><w:color w:val="FF0000"/><w:sz w:val="40"/></w:rPr>  <!-- H1: red -->
-<w:rPr><w:color w:val="00AA00"/><w:sz w:val="32"/></w:rPr>  <!-- H2: green -->
-<w:rPr><w:color w:val="0000FF"/><w:sz w:val="26"/></w:rPr>  <!-- H3: blue -->
+<w:rPr><w:color w:val="FF0000"/><w:sz w:val="40"/></w:rPr>  <!-- H1：红色 -->
+<w:rPr><w:color w:val="00AA00"/><w:sz w:val="32"/></w:rPr>  <!-- H2：绿色 -->
+<w:rPr><w:color w:val="0000FF"/><w:sz w:val="26"/></w:rPr>  <!-- H3：蓝色 -->
 ```
 
-**GOOD: Single accent color for headings, black or dark gray for body**
+**好：标题用单一强调色，正文用黑色或深灰色**
 ```xml
-<!-- All headings use the same muted accent -->
-<w:rPr><w:color w:val="1F4E79"/><w:sz w:val="40"/></w:rPr>  <!-- H1: dark blue -->
-<w:rPr><w:color w:val="1F4E79"/><w:sz w:val="32"/></w:rPr>  <!-- H2: same blue -->
-<w:rPr><w:color w:val="1F4E79"/><w:sz w:val="26"/></w:rPr>  <!-- H3: same blue -->
-<!-- Body in near-black -->
+<!-- 所有标题使用相同的柔和强调色 -->
+<w:rPr><w:color w:val="1F4E79"/><w:sz w:val="40"/></w:rPr>  <!-- H1：深蓝 -->
+<w:rPr><w:color w:val="1F4E79"/><w:sz w:val="32"/></w:rPr>  <!-- H2：相同蓝色 -->
+<w:rPr><w:color w:val="1F4E79"/><w:sz w:val="26"/></w:rPr>  <!-- H3：相同蓝色 -->
+<!-- 正文近黑色 -->
 <w:rPr><w:color w:val="333333"/><w:sz w:val="22"/></w:rPr>
 ```
-**Why better:** A single accent color establishes brand consistency. Multiple bright colors compete for attention and look unprofessional.
+**为什么更好：** 单一强调色建立品牌一致性。多种鲜艳颜色争夺注意力，看起来不专业。
 
 ---
 
-### 6b. Low Contrast — Light Gray on White
+### 6b. 低对比度 —— 浅灰配白色
 
-**BAD: #CCCCCC text on white background**
+**坏：白色背景上的 #CCCCCC 文本**
 ```xml
 <w:rPr><w:color w:val="CCCCCC"/></w:rPr>
-<!-- Contrast ratio: ~1.6:1 — fails WCAG AA (minimum 4.5:1) -->
+<!-- 对比度：约 1.6:1 —— 不符合 WCAG AA（最低 4.5:1） -->
 ```
 
-**GOOD: #333333 text on white**
+**好：白色背景上的 #333333 文本**
 ```xml
 <w:rPr><w:color w:val="333333"/></w:rPr>
-<!-- Contrast ratio: ~12:1 — passes WCAG AAA -->
+<!-- 对比度：约 12:1 —— 通过 WCAG AAA -->
 ```
-**Why better:** Sufficient contrast is not just an accessibility requirement; it makes text physically easier to read for everyone, especially in printed documents.
+**为什么更好：** 足够的对比度不仅是无障碍要求；它让每个人更容易物理阅读文本，尤其是打印文档。
 
 ---
 
-### 6c. Bright Body Text
+### 6c. 鲜艳正文
 
-**BAD: Body text in a saturated color**
+**坏：饱和颜色的正文**
 ```xml
-<w:rPr><w:color w:val="0066FF"/><w:sz w:val="22"/></w:rPr>  <!-- blue body text -->
+<w:rPr><w:color w:val="0066FF"/><w:sz w:val="22"/></w:rPr>  <!-- 蓝色正文 -->
 ```
 
-**GOOD: Color reserved for headings and inline accents only**
+**好：颜色只保留给标题和行内强调**
 ```xml
-<!-- Body: neutral dark -->
+<!-- 正文：中性深色 -->
 <w:rPr><w:color w:val="333333"/><w:sz w:val="22"/></w:rPr>
-<!-- Hyperlink: color is functional here -->
+<!-- 超链接：这里颜色是功能性的 -->
 <w:rPr><w:color w:val="0563C1"/><w:u w:val="single"/></w:rPr>
 ```
-**Why better:** Colored body text causes eye fatigue over long reading. Reserve color for elements that need to attract attention (headings, links, warnings).
+**为什么更好：** 彩色正文长时间阅读会导致眼睛疲劳。将颜色保留给需要吸引注意力的元素（标题、链接、警告）。
 
 ---
 
-## 7. List Formatting Issues
+## 7. 列表格式问题
 
-### 7a. Bullet at the Margin — No Indent
+### 7a. 项目符号在边距 —— 无缩进
 
-**BAD: List items start at the left margin**
+**坏：列表项从左边缘开始**
 ```
 ┌──────────────────────────────────┐
-│Here is a paragraph of text.     │
-│• First item                      │  ← Bullet at margin, no indent
-│• Second item                     │
-│• Third item                      │
-│Next paragraph continues here.    │
+│这是一段文本。                     │
+│• 第一项                          │  ← 项目符号在边距，无缩进
+│• 第二项                          │
+│• 第三项                          │
+│下一段从这里继续。                 │
 └──────────────────────────────────┘
 ```
 ```xml
@@ -510,122 +507,122 @@ Format: Each comparison shows the **BAD** version first (the mistake), then the 
 </w:pPr>
 ```
 
-**GOOD: 0.25in left indent with hanging indent for the bullet**
+**好：0.25 英寸左缩进带悬挂缩进**
 ```
 ┌──────────────────────────────────┐
-│Here is a paragraph of text.     │
-│   • First item                   │  ← Indented, clearly a list
-│   • Second item                  │
-│   • Third item                   │
-│Next paragraph continues here.    │
+│这是一段文本。                     │
+│   • 第一项                       │  ← 缩进，明显是列表
+│   • 第二项                       │
+│   • 第三项                       │
+│下一段从这里继续。                 │
 └──────────────────────────────────┘
 ```
 ```xml
 <w:pPr>
-  <w:ind w:left="360" w:hanging="360"/>  <!-- 0.25in = 360 twips -->
+  <w:ind w:left="360" w:hanging="360"/>  <!-- 0.25 英寸 = 360 twips -->
   <w:numPr>
     <w:ilvl w:val="0"/>
     <w:numId w:val="1"/>
   </w:numPr>
 </w:pPr>
 ```
-For nested lists, increment by 360 twips per level:
+嵌套列表每级增加 360 twips：
 ```xml
-<!-- Level 1 -->
-<w:ind w:left="720" w:hanging="360"/>   <!-- 0.5in left -->
-<!-- Level 2 -->
-<w:ind w:left="1080" w:hanging="360"/>  <!-- 0.75in left -->
+<!-- 级别 1 -->
+<w:ind w:left="720" w:hanging="360"/>   <!-- 左 0.5 英寸 -->
+<!-- 级别 2 -->
+<w:ind w:left="1080" w:hanging="360"/>  <!-- 左 0.75 英寸 -->
 ```
-**Why better:** Indentation visually separates lists from body text and makes nesting levels clear.
+**为什么更好：** 缩进在视觉上将列表与正文分开，并使嵌套级别清晰。
 
 ---
 
-### 7b. List Items with Full Paragraph Spacing
+### 7b. 列表项有完整段落间距
 
-**BAD: List items have the same 8-10pt spacing as body paragraphs**
+**坏：列表项与正文段落有相同的 8-10pt 间距**
 ```
 ┌──────────────────────────────────┐
-│   • First item                   │
-│                                  │  ← 10pt gap — looks like separate
-│   • Second item                  │     paragraphs, not a list
+│   • 第一项                       │
+│                                  │  ← 10pt 间隙 —— 看起来像
+│   • 第二项                       │     单独段落，不是列表
 │                                  │
-│   • Third item                   │
+│   • 第三项                       │
 └──────────────────────────────────┘
 ```
 ```xml
-<w:spacing w:after="200"/>  <!-- 10pt after each list item -->
+<w:spacing w:after="200"/>  <!-- 每项后 10pt -->
 ```
 
-**GOOD: Tight spacing between list items (2-4pt)**
+**好：列表项之间紧凑间距（2-4pt）**
 ```
 ┌──────────────────────────────────┐
-│   • First item                   │
-│   • Second item                  │  ← 2pt gap — cohesive list
-│   • Third item                   │
+│   • 第一项                       │
+│   • 第二项                       │  ← 2pt 间隙 —— 连贯列表
+│   • 第三项                       │
 └──────────────────────────────────┘
 ```
 ```xml
-<w:spacing w:after="40" w:line="276" w:lineRule="auto"/>  <!-- 2pt after -->
-<!-- Or 4pt: -->
+<w:spacing w:after="40" w:line="276" w:lineRule="auto"/>  <!-- 后 2pt -->
+<!-- 或 4pt： -->
 <w:spacing w:after="80"/>
 ```
-**Why better:** Tight spacing groups list items as a single unit, matching how readers expect a list to behave.
+**为什么更好：** 紧凑间距将列表项分组为单个单元，符合读者对列表行为的期望。
 
 ---
 
-## 8. Header/Footer Problems
+## 8. 页眉/页脚问题
 
-### 8a. Header Text Too Large — Competes with Body
+### 8a. 页眉文本太大 —— 与正文竞争
 
-**BAD: Header in 12pt, same as body**
+**坏：页眉 12pt，与正文相同**
 ```
 ┌──────────────────────────────────┐
-│ Quarterly Report - Q3 2025       │  ← 12pt header, same as body
+│ 季度报告 - 2025年第三季度        │  ← 12pt 页眉，与正文相同
 │──────────────────────────────────│
-│ Introduction                     │
-│ This is the body text...         │  ← 12pt body — header distracts
+│ 引言                             │
+│ 这是正文...                      │  ← 12pt 正文 —— 页眉分散注意力
 └──────────────────────────────────┘
 ```
 ```xml
-<!-- Header paragraph -->
-<w:rPr><w:sz w:val="24"/></w:rPr>  <!-- 12pt, same as body -->
+<!-- 页眉段落 -->
+<w:rPr><w:sz w:val="24"/></w:rPr>  <!-- 12pt，与正文相同 -->
 ```
 
-**GOOD: Header in 9pt, gray color, subtle**
+**好：页眉 9pt，灰色，微妙**
 ```
 ┌──────────────────────────────────┐
-│ Quarterly Report - Q3 2025       │  ← 9pt, gray — present but quiet
+│ 季度报告 - 2025年第三季度        │  ← 9pt，灰色 —— 存在但安静
 │──────────────────────────────────│
-│ Introduction                     │
-│ This is the body text...         │  ← Body stands out as primary
+│ 引言                             │
+│ 这是正文...                      │  ← 正文突出为主
 └──────────────────────────────────┘
 ```
 ```xml
-<!-- Header paragraph -->
+<!-- 页眉段落 -->
 <w:rPr>
   <w:sz w:val="18"/>                <!-- 9pt -->
-  <w:color w:val="808080"/>         <!-- medium gray -->
+  <w:color w:val="808080"/>         <!-- 中灰 -->
 </w:rPr>
 <w:pPr>
   <w:pBdr>
-    <w:bottom w:val="single" w:sz="4" w:color="D9D9D9"/>  <!-- subtle separator -->
+    <w:bottom w:val="single" w:sz="4" w:color="D9D9D9"/>  <!-- 微妙分隔线 -->
   </w:pBdr>
 </w:pPr>
 ```
-**Why better:** Headers are reference information, not primary content. They should be legible but visually subordinate.
+**为什么更好：** 页眉是参考信息，不是主要内容。它们应该可读但视觉上从属。
 
 ---
 
-### 8b. No Page Numbers on a Long Document
+### 8b. 长文档无页码
 
-**BAD: 20-page document with no page numbers**
+**坏：20 页文档无页码**
 ```xml
-<!-- Footer section: empty or missing -->
+<!-- 页脚部分：空或缺失 -->
 ```
 
-**GOOD: Page numbers in footer, right-aligned or centered**
+**好：页脚中的页码，右对齐或居中**
 ```xml
-<!-- Footer paragraph with page number field -->
+<!-- 带页码域的页脚段落 -->
 <w:p>
   <w:pPr>
     <w:jc w:val="center"/>
@@ -649,15 +646,15 @@ For nested lists, increment by 360 twips per level:
   </w:r>
 </w:p>
 ```
-**Why better:** Page numbers are essential for navigation in any document over ~3 pages. Readers need to reference specific pages, and printed documents need an ordering mechanism.
+**为什么更好：** 页码对于约 3 页以上文档的导航至关重要。读者需要引用特定页面，打印文档需要排序机制。
 
 ---
 
-## 9. CJK-Specific Mistakes
+## 9. CJK 特定错误
 
-### 9a. Using Italic for Chinese Emphasis
+### 9a. 中文强调用斜体
 
-**BAD: Italic applied to Chinese text**
+**坏：斜体应用于中文文本**
 ```xml
 <w:rPr>
   <w:i/>
@@ -665,48 +662,48 @@ For nested lists, increment by 360 twips per level:
   <w:sz w:val="24"/>
 </w:rPr>
 ```
-CJK glyphs have no true italic form. The renderer applies a synthetic slant that looks broken and ugly — characters appear to lean awkwardly.
+CJK 字形没有真正的斜体形式。渲染器应用合成倾斜，看起来破碎丑陋 —— 字符看起来尴尬地倾斜。
 
-**GOOD: Use bold or emphasis dots (着重号) for Chinese emphasis**
+**好：中文强调用粗体或着重号**
 ```xml
-<!-- Option A: Bold emphasis -->
+<!-- 选项 A：粗体强调 -->
 <w:rPr>
   <w:b/>
-  <w:rFonts w:eastAsia="SimHei"/>  <!-- Switch to bold-capable font -->
+  <w:rFonts w:eastAsia="SimHei"/>  <!-- 切换到支持粗体的字体 -->
   <w:sz w:val="24"/>
 </w:rPr>
 
-<!-- Option B: Emphasis marks (dots under characters) -->
+<!-- 选项 B：着重号（字符下的点） -->
 <w:rPr>
   <w:em w:val="dot"/>
   <w:rFonts w:eastAsia="SimSun"/>
   <w:sz w:val="24"/>
 </w:rPr>
 ```
-**Why better:** Chinese typography has its own emphasis traditions. Bold and emphasis dots are native CJK conventions; italic is a Latin-script concept that does not translate.
+**为什么更好：** 中文排版有自己的强调传统。粗体和着重号是原生 CJK 惯例；斜体是拉丁文字概念，不适用。
 
 ---
 
-### 9b. Latin Font for Chinese Characters
+### 9b. 中文字符用拉丁字体
 
-**BAD: Only ASCII font set, no EastAsia font specified**
+**坏：只设置 ASCII 字体，未指定 EastAsia 字体**
 ```xml
 <w:rPr>
-  <w:rFonts w:ascii="Arial"/>  <!-- No eastAsia attribute -->
+  <w:rFonts w:ascii="Arial"/>  <!-- 无 eastAsia 属性 -->
   <w:sz w:val="24"/>
 </w:rPr>
-<!-- Word falls back to a random font. Chinese characters may render
-     with wrong metrics, inconsistent stroke widths, or missing glyphs. -->
+<!-- Word 回退到随机字体。中文字符可能用错误的度量、
+     不一致的笔画宽度或缺失的字形渲染。 -->
 ```
 
-**GOOD: Explicit EastAsia font alongside ASCII font**
+**好：ASCII 字体旁明确指定 EastAsia 字体**
 ```xml
 <w:rPr>
   <w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:eastAsia="Microsoft YaHei"/>
   <w:sz w:val="22"/>
 </w:rPr>
 ```
-For formal/academic Chinese documents:
+正式/学术中文文档：
 ```xml
 <w:rPr>
   <w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman"
@@ -714,56 +711,56 @@ For formal/academic Chinese documents:
   <w:sz w:val="24"/>  <!-- 小四 12pt -->
 </w:rPr>
 ```
-**Why better:** Setting `w:eastAsia` ensures Chinese characters render in a font designed for CJK glyphs, with correct stroke widths, spacing, and metrics.
+**为什么更好：** 设置 `w:eastAsia` 确保中文字符用为 CJK 字形设计的字体渲染，具有正确的笔画宽度、间距和度量。
 
 ---
 
-### 9c. English Line Spacing for Dense CJK Text
+### 9c. 密集 CJK 文本用英文行距
 
-**BAD: 1.15x line spacing for Chinese body text**
+**坏：中文正文用 1.15x 行距**
 ```xml
-<w:spacing w:line="276" w:lineRule="auto"/>  <!-- 1.15x — too tight for CJK -->
+<w:spacing w:line="276" w:lineRule="auto"/>  <!-- 1.15x —— CJK 太紧 -->
 ```
-CJK characters are taller and denser than Latin letters. At 1.15x, lines of Chinese text feel cramped and hard to read.
+CJK 字符比拉丁字母更高更密。1.15x 时，中文文本行感觉紧凑且难以阅读。
 
-**GOOD: 1.5x line spacing or fixed 28pt for CJK body at 12pt (小四)**
+**好：1.5x 行距或固定 28pt 用于 12pt（小四）CJK 正文**
 ```xml
-<!-- Option A: 1.5x proportional -->
+<!-- 选项 A：1.5x 比例 -->
 <w:spacing w:line="360" w:lineRule="auto"/>  <!-- 360/240 = 1.5x -->
 
-<!-- Option B: Fixed 28pt (standard for 小四/12pt CJK body) -->
+<!-- 选项 B：固定 28pt（小四/12pt CJK 正文标准） -->
 <w:spacing w:line="560" w:lineRule="exact"/>  <!-- 28pt = 560 twips -->
 ```
-For 公文 (government documents) at 三号/16pt body:
+16pt（三号）正文的公文（政府文档）：
 ```xml
-<w:spacing w:line="580" w:lineRule="exact"/>  <!-- 29pt fixed line spacing -->
+<w:spacing w:line="580" w:lineRule="exact"/>  <!-- 29pt 固定行距 -->
 ```
-**Why better:** CJK characters occupy a full em square with no ascenders/descenders providing natural gaps. Extra line spacing compensates, improving readability of dense text blocks.
+**为什么更好：** CJK 字符占据完整 em 方块，没有升部/降部提供自然间隙。额外的行距补偿，提高密集文本块的可读性。
 
 ---
 
-## 10. Overall Document Feel
+## 10. 整体文档感觉
 
-### Student Homework vs Professional Document
+### 学生作业 vs 专业文档
 
-**BAD: "Student homework" — every setting is Word's default, no intentional choices**
+**坏："学生作业" —— 所有设置都是 Word 默认，没有有意选择**
 ```xml
-<!-- Default everything: Calibri 11pt, no heading styles, 1.08 spacing -->
+<!-- 全部默认：Calibri 11pt，无标题样式，1.08 间距 -->
 <w:rPr><w:rFonts w:ascii="Calibri"/><w:sz w:val="22"/></w:rPr>
 <w:pPr><w:spacing w:after="160" w:line="259" w:lineRule="auto"/></w:pPr>
-<!-- Headings: just bold body text, no style applied -->
+<!-- 标题：只是粗体正文，无样式应用 -->
 <w:rPr><w:b/><w:sz w:val="22"/></w:rPr>
-<!-- No section breaks, no headers/footers, no page numbers -->
-<!-- Tables with default full grid borders -->
-<!-- No intentional color or spacing variations -->
+<!-- 无分节符，无页眉/页脚，无页码 -->
+<!-- 表格默认全网格边框 -->
+<!-- 无有意颜色或间距变化 -->
 ```
 
-**GOOD: Intentional design at every level**
+**好：每个级别都有有意设计**
 ```xml
-<!-- Theme fonts defined -->
+<!-- 定义主题字体 -->
 <w:rFonts w:asciiTheme="minorHAnsi" w:hAnsiTheme="minorHAnsi"/>
 
-<!-- H1: Calibri Light 20pt, dark blue, generous spacing -->
+<!-- H1：Calibri Light 20pt，深蓝，宽裕间距 -->
 <w:pPr>
   <w:pStyle w:val="Heading1"/>
   <w:spacing w:before="480" w:after="200"/>
@@ -774,7 +771,7 @@ For 公文 (government documents) at 三号/16pt body:
   <w:sz w:val="40"/>
 </w:rPr>
 
-<!-- H2: Calibri Light 16pt, same blue -->
+<!-- H2：Calibri Light 16pt，相同蓝色 -->
 <w:pPr>
   <w:pStyle w:val="Heading2"/>
   <w:spacing w:before="320" w:after="120"/>
@@ -785,7 +782,7 @@ For 公文 (government documents) at 三号/16pt body:
   <w:sz w:val="32"/>
 </w:rPr>
 
-<!-- Body: Calibri 11pt, dark gray, 1.15 spacing, 8pt after -->
+<!-- 正文：Calibri 11pt，深灰，1.15 行距，8pt 后 -->
 <w:pPr>
   <w:spacing w:after="160" w:line="276" w:lineRule="auto"/>
 </w:pPr>
@@ -795,35 +792,35 @@ For 公文 (government documents) at 三号/16pt body:
   <w:sz w:val="22"/>
 </w:rPr>
 
-<!-- Tables: three-line style, padded cells, repeated headers -->
-<!-- Headers/footers: 9pt gray with page numbers -->
-<!-- Margins: 1in all around -->
+<!-- 表格：三线样式，有内边距单元格，重复表头 -->
+<!-- 页眉/页脚：9pt 灰色带页码 -->
+<!-- 边距：四周 1 英寸 -->
 <w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440"/>
 ```
-**Why better:** Professional documents result from deliberate, consistent choices across all design dimensions. Each element reinforces the same visual language. The reader may not consciously notice good typography, but they feel the difference in credibility and readability.
+**为什么更好：** 专业文档是在所有设计维度上经过深思熟虑、一致选择的结果。每个元素都强化相同的视觉语言。读者可能有意识地注意到好的排版，但他们会在可信度和可读性上感受到差异。
 
 ---
 
-## Quick Reference: Safe Defaults
+## 快速参考：安全默认值
 
-A cheat sheet of values that produce a professional result for most Western business documents:
+为大多数西方商业文档产生专业结果的值备忘单：
 
-| Element | Value | OpenXML |
-|---------|-------|---------|
-| Body font | Calibri 11pt | `w:sz="22"` |
+| 元素 | 值 | OpenXML |
+|------|----|---------|
+| 正文字体 | Calibri 11pt | `w:sz="22"` |
 | H1 | Calibri Light 20pt | `w:sz="40"` |
 | H2 | Calibri Light 16pt | `w:sz="32"` |
-| H3 | Calibri 13pt bold | `w:sz="26"`, `w:b` |
-| Body color | #333333 | `w:color="333333"` |
-| Heading color | #1F4E79 | `w:color="1F4E79"` |
-| Line spacing | 1.15x | `w:line="276" w:lineRule="auto"` |
-| Para spacing after | 8pt | `w:after="160"` |
-| H1 spacing | 24pt before, 10pt after | `w:before="480" w:after="200"` |
-| H2 spacing | 16pt before, 6pt after | `w:before="320" w:after="120"` |
-| Margins | 1in all around | `w:pgMar` all `"1440"` |
-| Table cell padding | 0.08in / 0.12in | `w:w="115"` / `w:w="173"` |
-| Header/footer size | 9pt gray | `w:sz="18" w:color="808080"` |
-| List indent | 0.25in per level | `w:left="360" w:hanging="360"` |
-| List item spacing | 2pt after | `w:after="40"` |
+| H3 | Calibri 13pt 粗体 | `w:sz="26"`、`w:b` |
+| 正文颜色 | #333333 | `w:color="333333"` |
+| 标题颜色 | #1F4E79 | `w:color="1F4E79"` |
+| 行距 | 1.15x | `w:line="276" w:lineRule="auto"` |
+| 段后间距 | 8pt | `w:after="160"` |
+| H1 间距 | 前 24pt，后 10pt | `w:before="480" w:after="200"` |
+| H2 间距 | 前 16pt，后 6pt | `w:before="320" w:after="120"` |
+| 边距 | 四周 1 英寸 | `w:pgMar` 全部 `"1440"` |
+| 表格单元格内边距 | 0.08 英寸 / 0.12 英寸 | `w:w="115"` / `w:w="173"` |
+| 页眉/页脚大小 | 9pt 灰色 | `w:sz="18" w:color="808080"` |
+| 列表缩进 | 每级 0.25 英寸 | `w:left="360" w:hanging="360"` |
+| 列表项间距 | 后 2pt | `w:after="40"` |
 
-For CJK documents, adjust: body font to SimSun/YaHei, line spacing to 1.5x (`w:line="360"`), and set `w:eastAsia` on all `w:rFonts`.
+CJK 文档调整：正文改为 SimSun/YaHei，行距改为 1.5x（`w:line="360"`），所有 `w:rFonts` 上设置 `w:eastAsia`。

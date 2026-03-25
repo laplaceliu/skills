@@ -1,94 +1,94 @@
-# Scenario C: Applying Formatting / Templates
+# 场景 C：应用格式/模板
 
-## When to Use
+## 何时使用
 
-Use Scenario C when:
-- The user has an existing document and wants to apply a different visual style
-- The user wants to rebrand a document (new fonts, colors, heading styles)
-- The user provides a template DOCX and wants its look applied to a content document
-- The user wants consistent formatting across multiple documents
+在以下情况使用场景 C：
+- 用户有现有文档并希望应用不同的视觉样式
+- 用户想要重新品牌化文档（新字体、颜色、标题样式）
+- 用户提供模板 DOCX 并希望将其外观应用到内容文档
+- 用户希望在多个文档之间保持一致格式
 
-Do NOT use when: the user wants to edit content (→ Scenario B) or create from scratch (→ Scenario A).
-
----
-
-## Workflow
-
-```
-1. Analyze source    → CLI: analyze source.docx      (list styles, fonts, structure)
-2. Analyze template  → CLI: analyze template.docx     (list styles, fonts, structure)
-3. Map styles        → Create mapping plan (source style → template style)
-4. Apply template    → CLI: apply-template source.docx --template template.docx --output result.docx
-5. Validate (XSD)    → CLI: validate result.docx --xsd wml-subset.xsd
-6. GATE-CHECK        → CLI: validate result.docx --xsd business-rules.xsd   ← MUST PASS
-7. Diff verify       → CLI: diff source.docx result.docx --text-only   (content must be identical)
-```
+**不要**在以下情况使用：用户想要编辑内容（→ 场景 B）或从零创建（→ 场景 A）。
 
 ---
 
-## What Gets Copied from Template
+## 工作流程
 
-| Part | File | Description |
+```
+1. 分析源    → CLI: analyze source.docx      （列出样式、字体、结构）
+2. 分析模板  → CLI: analyze template.docx     （列出样式、字体、结构）
+3. 映射样式   → 创建映射计划（源样式 → 模板样式）
+4. 应用模板   → CLI: apply-template source.docx --template template.docx --output result.docx
+5. 验证 (XSD) → CLI: validate result.docx --xsd wml-subset.xsd
+6. 把关检查   → CLI: validate result.docx --xsd business-rules.xsd   ← 必须通过
+7. 差异验证   → CLI: diff source.docx result.docx --text-only   （内容必须相同）
+```
+
+---
+
+## 从模板复制什么
+
+| 部分 | 文件 | 描述 |
 |------|------|-------------|
-| Styles | `word/styles.xml` | All style definitions (paragraph, character, table, numbering) |
-| Theme | `word/theme/theme1.xml` | Color scheme, font scheme, format scheme |
-| Numbering | `word/numbering.xml` | List and numbering definitions |
-| Headers | `word/header*.xml` | Header content and formatting |
-| Footers | `word/footer*.xml` | Footer content and formatting |
-| Section props | `w:sectPr` | Margins, page size, orientation, columns |
+| 样式 | `word/styles.xml` | 所有样式定义（段落、字符、表格、编号） |
+| 主题 | `word/theme/theme1.xml` | 配色方案、字体方案、格式方案 |
+| 编号 | `word/numbering.xml` | 列表和编号定义 |
+| 页眉 | `word/header*.xml` | 页眉内容和格式 |
+| 页脚 | `word/footer*.xml` | 页脚内容和格式 |
+| 节属性 | `w:sectPr` | 边距、页面大小、方向、栏 |
 
-## What Does NOT Get Copied
+## 不复制什么
 
-| Part | Reason |
-|------|--------|
-| Document content | Paragraphs, tables, images stay from source |
-| Comments | Belong to source document's review history |
-| Tracked changes | Belong to source document's revision history |
-| Custom XML parts | Application-specific data, not visual |
-| Document properties | Title, author, dates belong to source |
-| Glossary document | Template's building blocks are not transferred |
+| 部分 | 原因 |
+|------|------|
+| 文档内容 | 段落、表格、图片保留自源文档 |
+| 批注 | 属于源文档的审阅历史 |
+| 修订标记 | 属于源文档的修订历史 |
+| 自定义 XML 部分 | 应用程序特定数据，非视觉 |
+| 文档属性 | 标题、作者、日期属于源文档 |
+| 词汇表文档 | 模板的构建基块不传输 |
 
 ---
 
-## Template Structure Analysis (REQUIRED)
+## 模板结构分析（**必需**）
 
-Before choosing Overlay or Base-Replace, you MUST analyze the template's internal structure. This is the #1 cause of failure when skipped.
+在选择叠加或基础替换之前，您**必须**分析模板的内部结构。跳过这一步是失败的第一大原因。
 
-### Step 1: Count template paragraphs and identify structural zones
+### 步骤 1：计算模板段落并识别结构区域
 
-Run `$CLI analyze --input template.docx` or manually inspect:
+运行 `$CLI analyze --input template.docx` 或手动检查：
 
 ```bash
-# Quick structure scan
+# 快速结构扫描
 scripts/docx_preview.sh template.docx
 ```
 
-Identify these zones in the template:
+在模板中识别这些区域：
 ```
-Zone A: Front matter (cover page, declaration, abstract, TOC)
-        → These are KEPT from template, never replaced
-Zone B: Example/placeholder body content ("第1章 XXX", sample paragraphs)
-        → This is REPLACED with user's actual content
-Zone C: Back matter (appendices, acknowledgments, blank pages)
-        → These are KEPT from template or removed
-Zone D: Final sectPr
-        → ALWAYS kept from template
+区域 A：前置部分（封面、声明、摘要、目录）
+        → 这些从模板保留，绝不替换
+区域 B：示例/占位正文内容（"第1章 XXX"、示例段落）
+        → 这被替换为用户的实际内容
+区域 C：后置部分（附录、致谢、空白页）
+        → 这些从模板保留或删除
+区域 D：最终 sectPr
+        → 始终从模板保留
 ```
 
-### Step 2: Find Zone B boundaries (replacement range)
+### 步骤 2：查找区域 B 边界（替换范围）
 
-Search the template's document.xml for anchor text that marks the start and end of example content:
+在模板的 document.xml 中搜索标记示例内容开始和结束的锚文本：
 
-**Start anchor patterns** (first paragraph of example body):
-- "第1章", "第一章", "Chapter 1", "1 Introduction", "绪论"
-- The first paragraph with a Heading1-equivalent style after TOC
+**开始锚点模式**（正文示例的第一个段落）：
+- "第1章"、"第一章"、"Chapter 1"、"1 Introduction"、"绪论"
+- 目录后第一个带有 Heading1 等效样式的段落
 
-**End anchor patterns** (last paragraph before back matter):
-- "参考文献", "References", "致谢", "Acknowledgments"
-- The last paragraph before appendices or final sectPr
+**结束锚点模式**（后置部分前的最后一个段落）：
+- "参考文献"、"References"、"致谢"、"Acknowledgments"
+- 附录或最终 sectPr 前的最后一个段落
 
 ```python
-# Pseudocode for finding replacement range
+# 查找替换范围的伪代码
 for i, element in enumerate(template_body_elements):
     text = get_text(element)
     style = get_style(element)
@@ -99,59 +99,59 @@ for i, element in enumerate(template_body_elements):
         break
 ```
 
-**CRITICAL**: Verify the range by printing what's inside:
+**关键**：通过打印其中的内容验证范围：
 ```
-Template elements [0..replace_start-1]: front matter (KEEP)
-Template elements [replace_start..replace_end]: example content (REPLACE)
-Template elements [replace_end+1..end]: back matter (KEEP)
+模板元素 [0..replace_start-1]：前置部分（保留）
+模板元素 [replace_start..replace_end]：示例内容（替换）
+模板元素 [replace_end+1..end]：后置部分（保留）
 ```
 
-If replace_start or replace_end cannot be found, DO NOT proceed. Ask the user to identify the replacement boundaries.
+如果找不到 replace_start 或 replace_end，**不要**继续。请用户识别替换边界。
 
-### Step 3: Decide Overlay vs Base-Replace
+### 步骤 3：决定叠加 vs 基础替换
 
-Now that you know the structure:
+现在您知道了结构：
 
-| Observation | Decision |
-|-------------|----------|
-| Template has ≤30 paragraphs, no cover/TOC | **C-1: Overlay** (pure style template) |
-| Template has >100 paragraphs with cover/TOC/example sections | **C-2: Base-Replace** |
-| Template paragraph count ≈ user document | **C-1: Overlay** (similar structure) |
-| Template paragraph count >> user document (e.g., 263 vs 134) | **C-2: Base-Replace** |
+| 观察 | 决定 |
+|------|------|
+| 模板有 ≤30 段落，无封面/目录 | **C-1：叠加**（纯样式模板） |
+| 模板有 >100 段落，有封面/目录/示例章节 | **C-2：基础替换** |
+| 模板段落数 ≈ 用户文档 | **C-1：叠加**（类似结构） |
+| 模板段落数 >> 用户文档（例如 263 vs 134） | **C-2：基础替换** |
 
-### Step 4: For Base-Replace, execute the replacement
+### 步骤 4：对于基础替换，执行替换
 
-1. Load template as base (all files)
-2. Extract user content elements using `list(body)` — NOT `findall('w:p')` (which misses tables)
-3. Build new body: `template[0:replace_start] + cleaned_user_content + template[replace_end+1:]`
-4. Apply style mapping to every paragraph
-5. Clean direct formatting (see rules below)
-6. Rebuild document.xml, keeping template's namespace declarations
-7. Merge relationships (images + hyperlinks)
-8. Write output using template as ZIP base
+1. 加载模板作为基础（所有文件）
+2. 使用 `list(body)` 提取用户内容元素 —— 不是 `findall('w:p')`（会遗漏表格）
+3. 构建新正文：`template[0:replace_start] + cleaned_user_content + template[replace_end+1:]`
+4. 将样式映射应用到每个段落
+5. 清理直接格式（见下文规则）
+6. 重建 document.xml，保留模板的命名空间声明
+7. 合并关系（图片 + 超链接）
+8. 使用模板作为 ZIP 基础写入输出
 
 ---
 
-## Style Mapping Strategy
+## 样式映射策略
 
-When template style names differ from source style names, a mapping is required. **This step is mandatory** — skipping it is the #1 cause of formatting failures in template application.
+当模板样式名称与源样式名称不同时，需要映射。**这一步是强制性的** —— 跳过它是模板应用中格式失败的第一大原因。
 
-### Step 0: Extract StyleIds from Both Documents (REQUIRED)
+### 步骤 0：从两个文档提取 StyleIds（**必需**）
 
-Before any template application, extract and compare styleIds from both documents:
+在任何模板应用之前，从两个文档提取并比较 styleIds：
 
 ```bash
-# Extract all styleIds from source
+# 从源文档提取所有 styleIds
 $CLI analyze --input source.docx --styles-only
-# Output example:
+# 输出示例：
 #   Heading1  (paragraph, basedOn: Normal)
 #   Heading2  (paragraph, basedOn: Normal)
 #   Normal    (paragraph)
 #   ListBullet (paragraph, basedOn: Normal)
 
-# Extract all styleIds from template
+# 从模板提取所有 styleIds
 $CLI analyze --input template.docx --styles-only
-# Output example:
+# 输出示例：
 #   1         (paragraph, basedOn: a, name: "heading 1")
 #   2         (paragraph, basedOn: a, name: "heading 2")
 #   3         (paragraph, basedOn: a, name: "heading 3")
@@ -159,31 +159,31 @@ $CLI analyze --input template.docx --styles-only
 #   a0        (character, name: "Default Paragraph Font")
 ```
 
-**Critical distinction**: `w:styleId` vs `w:name`:
+**关键区别**：`w:styleId` vs `w:name`：
 ```xml
-<!-- styleId="1" but name="heading 1" -->
+<!-- styleId="1" 但 name="heading 1" -->
 <w:style w:type="paragraph" w:styleId="1">
   <w:name w:val="heading 1"/>
   <w:basedOn w:val="a"/>
 </w:style>
 ```
 
-The `w:styleId` attribute is what `<w:pStyle w:val="..."/>` references. The `w:name` attribute is the human-readable display name. **They can be completely different.** Many CJK templates use numeric styleIds (`1`, `2`, `3`, `a`, `a0`) instead of English names.
+`w:styleId` 属性是 `<w:pStyle w:val="..."/>` 引用的内容。`w:name` 属性是人类可读的显示名称。**它们可能完全不同。** 许多 CJK 模板使用数字 styleIds（`1`、`2`、`3`、`a`、`a0`）而不是英文名称。
 
-### Tier 1: Exact StyleId Match
-If source uses `Heading1` and template defines `Heading1` as a styleId, map directly. No action needed.
+### 第一层：精确 StyleId 匹配
+如果源使用 `Heading1` 且模板将 `Heading1` 定义为 styleId，直接映射。无需操作。
 
-### Tier 2: Name-Based Match
-If no exact styleId match, try matching by `w:name` attribute:
-- Source `Heading1` (name="heading 1") → Template styleId `1` (name="heading 1")
-- Match is case-insensitive on the name value
+### 第二层：基于名称匹配
+如果没有精确的 styleId 匹配，尝试按 `w:name` 属性匹配：
+- 源 `Heading1`（name="heading 1"）→ 模板 styleId `1`（name="heading 1"）
+- 匹配对名称值不区分大小写
 
-Within the same type, also try matching by:
-- Built-in style ID (Word's internal ID, e.g., heading 1 = built-in ID 1)
-- Style type (paragraph → paragraph, character → character, table → table)
+在同一类型内，还尝试按以下匹配：
+- 内置样式 ID（Word 的内部 ID，例如 heading 1 = 内置 ID 1）
+- 样式类型（paragraph → paragraph，character → character，table → table）
 
-### Tier 3: Manual Mapping
-For renamed or custom styles, provide an explicit mapping:
+### 第三层：手动映射
+对于重命名或自定义样式，提供显式映射：
 
 ```json
 {
@@ -201,23 +201,23 @@ For renamed or custom styles, provide an explicit mapping:
 }
 ```
 
-### Common Non-Standard StyleId Patterns
+### 常见非标准 StyleId 模式
 
-| Template Origin | StyleId Pattern | Example |
+| 模板来源 | StyleId 模式 | 示例 |
 |----------------|-----------------|---------|
-| Chinese Word (default) | Numeric/alphabetic | `1`, `2`, `3`, `a`, `a0` |
-| English Word (default) | English names | `Heading1`, `Normal`, `Title` |
-| Google Docs export | Prefixed | `Subtitle`, `NormalWeb` |
-| WPS Office | Mixed | `1`, `Heading1`, custom names |
-| Academic templates | Custom | `ThesisHeading1`, `ThesisBody` |
+| 中文 Word（默认） | 数字/字母 | `1`、`2`、`3`、`a`、`a0` |
+| 英文 Word（默认） | 英文名称 | `Heading1`、`Normal`、`Title` |
+| Google Docs 导出 | 带前缀 | `Subtitle`、`NormalWeb` |
+| WPS Office | 混合 | `1`、`Heading1`、自定义名称 |
+| 学术模板 | 自定义 | `ThesisHeading1`、`ThesisBody` |
 
-### Building the Mapping Table
+### 构建映射表
 
-Follow this algorithm:
+遵循以下算法：
 
-1. **List source styleIds** actually used in `document.xml` (not all defined in `styles.xml`):
+1. **列出 `document.xml` 中实际使用的源 styleIds**（不是所有在 `styles.xml` 中定义的）：
    ```python
-   # Pseudocode: find all unique pStyle values in source document.xml
+   # 伪代码：在源 document.xml 中查找所有唯一的 pStyle 值
    used_styles = set()
    for p in body.iter('w:p'):
        pStyle = p.find('w:pPr/w:pStyle')
@@ -225,232 +225,233 @@ Follow this algorithm:
            used_styles.add(pStyle.get('val'))
    ```
 
-2. **For each used style**, find the best match in template:
-   - First try: exact styleId match
-   - Second try: match by `w:name` value (case-insensitive)
-   - Third try: match by style purpose (any heading → template's heading style)
-   - Fallback: map to template's default paragraph style (usually `Normal` or `a`)
+2. **为每个使用的样式**，在模板中找到最佳匹配：
+   - 首先尝试：精确的 styleId 匹配
+   - 其次尝试：按 `w:name` 值匹配（不区分大小写）
+   - 第三尝试：按样式用途匹配（任何标题 → 模板的标题样式）
+   - 回退：映射到模板的默认段落样式（通常是 `Normal` 或 `a`）
 
-3. **Validate the mapping** — every source styleId must map to an existing template styleId:
+3. **验证映射** —— 每个源 styleId 必须映射到现有的模板 styleId：
    ```
-   ✓ Heading1 → 1 (name match: "heading 1")
-   ✓ Heading2 → 2 (name match: "heading 2")
-   ✓ Normal   → a (name match: "Normal")
-   ✗ CustomCallout → ??? (no match found, will fallback to 'a')
+   ✓ Heading1 → 1（名称匹配："heading 1"）
+   ✓ Heading2 → 2（名称匹配："heading 2"）
+   ✓ Normal   → a（名称匹配："Normal"）
+   ✗ CustomCallout → ???（未找到匹配，将回退到 'a'）
    ```
 
-4. **Apply the mapping** when copying content — update every `<w:pStyle w:val="..."/>`:
+4. **复制内容时应用映射** —— 更新每个 `<w:pStyle w:val="..."/>`：
    ```xml
-   <!-- Source -->
+   <!-- 源 -->
    <w:pPr><w:pStyle w:val="Heading1"/></w:pPr>
-   <!-- After mapping -->
+   <!-- 映射后 -->
    <w:pPr><w:pStyle w:val="1"/></w:pPr>
    ```
 
-### Unmapped Styles
-Styles in the source document that have no match in the template are logged as warnings:
+### 未映射样式
+
+源文档中在模板中没有匹配的样式将记录为警告：
 ```
-WARNING: Style 'CustomCallout' has no mapping in template. Content will fall back to 'a' (Normal).
+警告：样式 'CustomCallout' 在模板中没有映射。内容将回退到 'a'（Normal）。
 ```
 
-The content is preserved; only the style reference is updated to the template's default paragraph style.
+内容被保留；只有样式引用更新为模板的默认段落样式。
 
-### C-2 BASE-REPLACE: Additional StyleId Considerations
+### C-2 基础替换：额外的 StyleId 考虑
 
-When using the template as a base document (C-2 strategy), the template's `styles.xml` is already in place. You must:
+当使用模板作为基础文档（C-2 策略）时，模板的 `styles.xml` 已经就位。您必须：
 
-1. **Never copy source `styles.xml`** — the template's styles are the authority
-2. **Map every content paragraph's pStyle** to the template's styleId before insertion
-3. **Strip direct formatting selectively** (see detailed rules below) — let the template style control appearance
-4. **Verify table styles** — if source tables use `TableGrid` but template defines it as `a3` or similar, remap `<w:tblStyle>` too
-5. **Check character styles** — `rPr` inside runs may reference character styles like `Hyperlink` or `Strong` that have different IDs in the template
+1. **绝不复制源 `styles.xml`** —— 模板的样式是权威
+2. **将每个内容段落的 pStyle 映射到模板的 styleId** 然后插入
+3. **有选择地去除直接格式**（见下文详细规则）—— 让模板样式控制外观
+4. **验证表格样式** —— 如果源表格使用 `TableGrid` 但模板将其定义为 `a3` 或类似，也要重新映射 `<w:tblStyle>`
+5. **检查字符样式** —— run 内的 `rPr` 可能引用字符样式如 `Hyperlink` 或 `Strong`，它们在模板中有不同的 ID
 
-### Direct Formatting Cleanup Rules (Detailed)
+### 直接格式清理规则（详细）
 
-When copying content from source to template, apply these rules to EACH paragraph and run:
+从源到模板复制内容时，对每个段落和 run 应用这些规则：
 
-**REMOVE from `<w:rPr>`:**
-- `<w:rFonts w:ascii="..." w:hAnsi="..."/>` — Latin font overrides (EXCEPT: keep `w:eastAsia`)
-- `<w:sz>`, `<w:szCs>` — font size (let style control)
-- `<w:color>` — text color
-- `<w:highlight>` — highlight color
-- `<w:shd>` — shading
-- `<w:b>`, `<w:i>` — bold/italic UNLESS the source style requires it (e.g., emphasis)
-- `<w:u>` — underline
-- `<w:spacing>` — character spacing
+**从 `<w:rPr>` 中删除：**
+- `<w:rFonts w:ascii="..." w:hAnsi="..."/>` —— 拉丁字体覆盖（**例外**：保留 `w:eastAsia`）
+- `<w:sz>`、`<w:szCs>` —— 字体大小（让样式控制）
+- `<w:color>` —— 文本颜色
+- `<w:highlight>` —— 高亮颜色
+- `<w:shd>` —— 底纹
+- `<w:b>`、`<w:i>` —— 粗体/斜体，除非源样式需要（例如强调）
+- `<w:u>` —— 下划线
+- `<w:spacing>` —— 字符间距
 
-**KEEP in `<w:rPr>`:**
-- `<w:rFonts w:eastAsia="宋体"/>` — CJK font declaration (MUST keep, or Chinese text renders wrong)
-- `<w:rFonts w:eastAsia="华文中宋"/>` — same reason
-- Anything inside `<w:drawing>` — image references (handle separately via rId remapping)
+**在 `<w:rPr>` 中保留：**
+- `<w:rFonts w:eastAsia="宋体"/>` —— CJK 字体声明（**必须**保留，否则中文文本渲染错误）
+- `<w:rFonts w:eastAsia="华文中宋"/>` —— 同样原因
+- `<w:drawing>` 内的任何内容 —— 图片引用（通过 rId 重新映射单独处理）
 
-**REMOVE from `<w:pPr>`:**
-- `<w:pBdr>` — paragraph borders
-- `<w:shd>` — paragraph shading
-- `<w:spacing>` — line/paragraph spacing (let style control)
-- `<w:jc>` — justification (let style control)
-- `<w:tabs>` — custom tab stops
-- `<w:rPr>` inside pPr — default run formatting for the paragraph
+**从 `<w:pPr>` 中删除：**
+- `<w:pBdr>` —— 段落边框
+- `<w:shd>` —— 段落底纹
+- `<w:spacing>` —— 行/段落间距（让样式控制）
+- `<w:jc>` —— 对齐（让样式控制）
+- `<w:tabs>` —— 自定义制表位
+- pPr 内的 `<w:rPr>` —— 段落标记的默认 run 格式
 
-**KEEP in `<w:pPr>`:**
-- `<w:pStyle>` — style reference (after mapping to template's styleId)
-- `<w:sectPr>` — section properties (if intentionally inserting section breaks)
-- `<w:numPr>` — numbering reference (after mapping numId to template's numbering)
+**在 `<w:pPr>` 中保留：**
+- `<w:pStyle>` —— 样式引用（映射到模板的 styleId 后）
+- `<w:sectPr>` —— 节属性（如果故意插入分节符）
+- `<w:numPr>` —— 编号引用（将 numId 映射到模板的编号后）
 
-**Table cells (`<w:tc>`):**
-Apply the same rPr/pPr cleanup to every paragraph inside every cell. Also:
-- Keep `<w:tcPr>` structural properties (column span, row span, width)
-- Remove `<w:tcPr><w:shd>` (cell shading — let table style control)
+**表格单元格（`<w:tc>`）：**
+对每个单元格内的每个段落应用相同的 rPr/pPr 清理。还要：
+- 保留 `<w:tcPr>` 结构属性（列跨、行跨、宽度）
+- 删除 `<w:tcPr><w:shd>`（单元格底纹 —— 让表格样式控制）
 
 ---
 
-## Relationship ID Remapping
+## 关系 ID 重新映射
 
-When copying parts (headers, footers, images) from the template into the source package, relationship IDs (`r:id`) may collide.
+将部分（页眉、页脚、图片）从模板复制到源包时，关系 ID（`r:id`）可能冲突。
 
-**Problem**:
-- Source has `rId7` → `image1.png`
-- Template has `rId7` → `header1.xml`
-- Copying template's `rId7` overwrites source's image reference
+**问题**：
+- 源有 `rId7` → `image1.png`
+- 模板有 `rId7` → `header1.xml`
+- 复制模板的 `rId7` 会覆盖源的图片引用
 
-**Solution**:
-1. Scan source's `document.xml.rels` for all existing `rId` values
-2. Find the maximum numeric ID (e.g., `rId12`)
-3. Remap all template relationship IDs starting from `rId13`
-4. Update all references in copied parts to use new IDs
+**解决方案**：
+1. 扫描源的 `document.xml.rels` 中的所有现有 `rId` 值
+2. 找到最大数字 ID（例如 `rId12`）
+3. 从 `rId13` 开始重新映射所有模板关系 ID
+4. 更新复制部分中的所有引用以使用新 ID
 
 ```xml
-<!-- Template original -->
+<!-- 模板原始 -->
 <Relationship Id="rId1" Type="...header" Target="header1.xml" />
 
-<!-- After remapping into source package -->
+<!-- 重新映射到源包后 -->
 <Relationship Id="rId13" Type="...header" Target="header1.xml" />
 
-<!-- Update sectPr reference -->
+<!-- 更新 sectPr 引用 -->
 <w:headerReference w:type="default" r:id="rId13" />
 ```
 
-### Hyperlink Relationship Merging
+### 超链接关系合并
 
-When the source document contains external hyperlinks (e.g., URLs in references or footnotes), these are stored as relationships in `word/_rels/document.xml.rels`:
+当源文档包含外部超链接（例如参考文献或脚注中的 URL）时，这些作为关系存储在 `word/_rels/document.xml.rels` 中：
 
 ```xml
 <Relationship Id="rId15" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink"
               Target="https://example.com/paper" TargetMode="External"/>
 ```
 
-The corresponding text in document.xml references this rId:
+document.xml 中的相应文本引用此 rId：
 ```xml
 <w:hyperlink r:id="rId15">
   <w:r><w:t>https://example.com/paper</w:t></w:r>
 </w:hyperlink>
 ```
 
-**Merging steps:**
-1. Scan source document.xml for all `<w:hyperlink r:id="...">` elements
-2. For each, find the corresponding relationship in source's rels file
-3. Check if template already has a relationship with the same Target URL
-   - If yes: reuse the existing rId, update the hyperlink reference
-   - If no: assign a new rId (starting from template's max rId + 1), add the relationship to template's rels, update the hyperlink reference
-4. Also check for hyperlink relationships used in footnotes (`word/_rels/footnotes.xml.rels`) and endnotes
+**合并步骤：**
+1. 扫描源 document.xml 中的所有 `<w:hyperlink r:id="...">` 元素
+2. 对于每个，在源的关系文件中找到相应的关系
+3. 检查模板是否已有相同目标 URL 的关系
+   - 如果有：重用现有 rId，更新超链接引用
+   - 如果没有：分配新 rId（从模板的最大 rId + 1 开始），将关系添加到模板的关系，更新超链接引用
+4. 还要检查脚注（`word/_rels/footnotes.xml.rels`）和尾注中使用的超链接关系
 
-**Common mistake:** Copying hyperlink paragraphs without merging rels → hyperlinks silently break (clicking does nothing in Word).
+**常见错误：** 复制超链接段落而不合并关系 → 超链接静默失效（在 Word 中点击无反应）。
 
 ---
 
-## XSD Gate-Check
+## XSD 把关检查
 
-### What It Is
+### 是什么
 
-After template application, the output document **MUST** pass `business-rules.xsd` validation. This is a **hard gate** — if it fails, the document is **NOT deliverable**.
+模板应用后，输出文档**必须**通过 `business-rules.xsd` 验证。这是**硬性关口** —— 如果失败，文档**不可交付**。
 
-### What business-rules.xsd Checks
+### business-rules.xsd 检查什么
 
-| Rule | What It Validates |
-|------|-------------------|
-| Template styles exist | All styles referenced by content paragraphs are defined in `styles.xml` |
-| Margins match | Page margins match template specification |
-| Fonts correct | `w:docDefaults` fonts match template's font scheme |
-| Heading hierarchy | Heading levels are sequential (no H1 → H3 without H2) |
-| Required styles present | `Normal`, `Heading1`-`Heading3`, `TableGrid` exist |
-| Page size | Matches template's declared page size |
+| 规则 | 验证内容 |
+|------|----------|
+| 模板样式存在 | 内容段落引用的所有样式都在 `styles.xml` 中定义 |
+| 边距匹配 | 页面边距匹配模板规范 |
+| 字体正确 | `w:docDefaults` 字体匹配模板的字体方案 |
+| 标题层次 | 标题级别是连续的（没有 H1 → H3 跳过 H2） |
+| 必需样式存在 | `Normal`、`Heading1`-`Heading3`、`TableGrid` 存在 |
+| 页面大小 | 匹配模板声明的页面大小 |
 
-### Handling Failures
+### 处理失败
 
 ```
-GATE-CHECK FAILED:
-  - Style 'CustomStyle1' referenced in paragraph 14 but not defined in styles.xml
-  - Margin w:left=1080 does not match template requirement 1440
+把关检查失败：
+  - 第 14 段引用的样式 'CustomStyle1' 未在 styles.xml 中定义
+  - 边距 w:left=1080 不符合模板要求 1440
 ```
 
-Fix each failure:
-1. **Missing style**: Add the style definition to `styles.xml`, or remap the paragraph to an existing style
-2. **Margin mismatch**: Update `w:sectPr` margins to match template
-3. **Font mismatch**: Update `w:docDefaults` to match template font scheme
-4. **Heading hierarchy gap**: Insert intermediate heading levels or adjust existing levels
+修复每个失败：
+1. **缺失样式**：将样式定义添加到 `styles.xml`，或将段落重新映射到现有样式
+2. **边距不匹配**：更新 `w:sectPr` 边距以匹配模板
+3. **字体不匹配**：更新 `w:docDefaults` 以匹配模板字体方案
+4. **标题层次空缺**：插入中间标题级别或调整现有级别
 
-Re-validate after every fix until gate-check passes.
-
----
-
-## Common Pitfalls
-
-### 1. Orphaned Numbering References
-
-**Problem**: Source document uses `w:numId="5"` in list paragraphs, but after replacing `numbering.xml` with the template's version, numbering ID 5 doesn't exist.
-
-**Symptom**: Lists appear as plain paragraphs (no bullets/numbers).
-
-**Fix**:
-- Map source numbering IDs to template numbering IDs
-- Update all `w:numId` references in document content
-- Or merge source numbering definitions into template's `numbering.xml`
-
-### 2. Missing Theme Colors
-
-**Problem**: Source document's styles reference theme colors (`w:themeColor="accent1"`) that have different values in the template's theme.
-
-**Symptom**: Colors change unexpectedly (usually acceptable — this IS the point of re-theming). But if a style uses `w:color` with both `w:val` and `w:themeColor`, the theme color wins in Word.
-
-**Fix**: Review color changes. If specific colors must be preserved, use explicit `w:val` without `w:themeColor`.
-
-### 3. Section Property Conflicts
-
-**Problem**: Source document has multiple sections (e.g., portrait + landscape pages), but the template assumes a single section.
-
-**Symptom**: All sections get the same margins/orientation, breaking landscape pages.
-
-**Fix**:
-- Only apply template section properties to the final `w:sectPr` in `w:body`
-- Preserve intermediate `w:sectPr` elements (inside `w:pPr`) from the source
-- Or apply template properties to all sections but preserve orientation overrides
-
-### 4. Embedded Font Conflicts
-
-**Problem**: Template specifies fonts not available on the target system.
-
-**Fix**: Either embed fonts in the DOCX (`word/fonts/`) or use web-safe alternatives:
-- Calibri → available on Windows/Mac/Office online
-- Arial → universal fallback
-- Times New Roman → universal serif fallback
-
-### 5. Broken Style Inheritance
-
-**Problem**: Template has `Heading1` based on `Normal`, but after applying template, `Normal` has different properties, cascading unwanted changes to headings.
-
-**Fix**: Verify the `w:basedOn` chain for all critical styles. Ensure base styles are also correctly transferred from template.
+每次修复后重新验证，直到把关检查通过。
 
 ---
 
-## Verification Checklist
+## 常见陷阱
 
-After template application, verify:
+### 1. 孤立编号引用
 
-1. **Content preserved** — text diff shows zero content changes
-2. **Gate-check passed** — `business-rules.xsd` validation succeeds
-3. **Styles applied** — headings, body text, tables use template formatting
-4. **Images intact** — all images render correctly (relationship IDs valid)
-5. **Lists working** — numbered and bulleted lists display correctly
-6. **Headers/footers** — template headers/footers appear on all pages
-7. **Page layout** — margins, page size, orientation match template
-8. **No corruption** — file opens without errors in Word
+**问题**：源文档在列表段落中使用 `w:numId="5"`，但用模板的 `numbering.xml` 替换后，编号 ID 5 不存在。
+
+**症状**：列表显示为普通段落（无项目符号/编号）。
+
+**修复**：
+- 将源编号 ID 映射到模板编号 ID
+- 更新文档内容中的所有 `w:numId` 引用
+- 或将源编号定义合并到模板的 `numbering.xml`
+
+### 2. 缺失主题颜色
+
+**问题**：源文档的样式引用主题颜色（`w:themeColor="accent1"`），这些颜色在模板主题中有不同的值。
+
+**症状**：颜色意外更改（通常可接受 —— 这正是重新主题化的目的）。但如果样式同时使用 `w:color` 和 `w:themeColor`，主题颜色在 Word 中胜出。
+
+**修复**：检查颜色更改。如果必须保留特定颜色，使用不带 `w:themeColor` 的显式 `w:val`。
+
+### 3. 节属性冲突
+
+**问题**：源文档有多个节（例如纵向 + 横向页面），但模板假设单节。
+
+**症状**：所有节获得相同的边距/方向，破坏横向页面。
+
+**修复**：
+- 只将模板节属性应用到 `w:body` 中的最终 `w:sectPr`
+- 保留源的中间 `w:sectPr` 元素（在 `w:pPr` 内）
+- 或将模板属性应用到所有节但保留方向覆盖
+
+### 4. 嵌入字体冲突
+
+**问题**：模板指定目标系统上没有的字体。
+
+**修复**：在 DOCX 中嵌入字体（`word/fonts/`）或使用网络安全替代：
+- Calibri → 在 Windows/Mac/Office Online 上可用
+- Arial → 通用回退
+- Times New Roman → 通用衬线回退
+
+### 5. 样式继承中断
+
+**问题**：模板有基于 `Normal` 的 `Heading1`，但应用模板后，`Normal` 有不同的属性，将不需要的更改级联到标题。
+
+**修复**：验证所有关键样式的 `w:basedOn` 链。确保基础样式也正确从模板传输。
+
+---
+
+## 验证检查清单
+
+模板应用后，验证：
+
+1. **内容保留** —— 文本差异显示零内容更改
+2. **把关通过** —— `business-rules.xsd` 验证成功
+3. **样式应用** —— 标题、正文、表格使用模板格式
+4. **图片完整** —— 所有图片正确渲染（关系 ID 有效）
+5. **列表工作** —— 编号和项目符号列表正确显示
+6. **页眉/页脚** —— 模板页眉/页脚出现在所有页面上
+7. **页面布局** —— 边距、页面大小、方向匹配模板
+8. **无损坏** —— 文件在 Word 中打开无错误

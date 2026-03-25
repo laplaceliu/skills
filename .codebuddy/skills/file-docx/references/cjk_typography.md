@@ -1,38 +1,38 @@
-# CJK Typography & Mixed-Script Guide
+# CJK 排版与混合文字指南
 
-Rules for Chinese, Japanese, and Korean text in DOCX documents.
+中文、日文和韩文 DOCX 文档的规则。
 
-## Table of Contents
+## 目录
 
-1. [Font Selection](#font-selection)
-2. [Font Size Names (CJK)](#font-size-names)
-3. [RunFonts Mapping](#runfonts-mapping)
-4. [Punctuation & Line Breaking](#punctuation--line-breaking)
-5. [Paragraph Indentation](#paragraph-indentation)
-6. [Line Spacing for CJK](#line-spacing)
-7. [Chinese Government Standard (GB/T 9704)](#gbt-9704)
-8. [Mixed CJK + Latin Best Practices](#mixed-script)
-9. [OpenXML Quick Reference](#openxml-quick-reference)
+1. [字体选择](#字体选择)
+2. [字体大小名称（CJK）](#字体大小名称)
+3. [RunFonts 映射](#runfonts-映射)
+4. [标点与换行](#标点与换行)
+5. [段落缩进](#段落缩进)
+6. [CJK 行距](#行距)
+7. [中国政府标准 (GB/T 9704)](#gbt-9704)
+8. [混合 CJK + 拉丁文最佳实践](#混合文字)
+9. [OpenXML 快速参考](#openxml-快速参考)
 
 ---
 
-## Font Selection
+## 字体选择
 
-### Recommended CJK Fonts
+### 推荐 CJK 字体
 
-| Language | Serif (正文) | Sans (标题) | Notes |
-|----------|-------------|-------------|-------|
-| **Simplified Chinese** | 宋体 (SimSun) | 微软雅黑 (Microsoft YaHei) | YaHei for screen, SimSun for print |
-| **Simplified Chinese** | 仿宋 (FangSong) | 黑体 (SimHei) | Government documents |
-| **Traditional Chinese** | 新細明體 (PMingLiU) | 微軟正黑體 (Microsoft JhengHei) | Taiwan standard |
-| **Japanese** | MS 明朝 (MS Mincho) | MS ゴシック (MS Gothic) | Classic pairing |
-| **Japanese** | 游明朝 (Yu Mincho) | 游ゴシック (Yu Gothic) | Modern, Windows 10+ |
-| **Korean** | 바탕 (Batang) | 맑은 고딕 (Malgun Gothic) | Standard pairing |
+| 语言 | 衬线 (正文) | 无衬线 (标题) | 备注 |
+|------|-------------|---------------|------|
+| **简体中文** | 宋体 (SimSun) | 微软雅黑 (Microsoft YaHei) | 屏幕用雅黑，打印用宋体 |
+| **简体中文** | 仿宋 (FangSong) | 黑体 (SimHei) | 政府文档 |
+| **繁体中文** | 新細明體 (PMingLiU) | 微軟正黑體 (Microsoft JhengHei) | 台湾标准 |
+| **日文** | MS 明朝 (MS Mincho) | MS ゴシック (MS Gothic) | 经典搭配 |
+| **日文** | 游明朝 (Yu Mincho) | 游ゴシック (Yu Gothic) | 现代，Windows 10+ |
+| **韩文** | 바탕 (Batang) | 맑은 고딕 (Malgun Gothic) | 标准搭配 |
 
-### Government Document Fonts (公文)
+### 政府文档字体 (公文)
 
-| Element | Font | Size |
-|---------|------|------|
+| 元素 | 字体 | 字号 |
+|------|------|------|
 | 标题 (title) | 小标宋 (FZXiaoBiaoSong-B05S) | 二号 (22pt) |
 | 一级标题 | 黑体 (SimHei) | 三号 (16pt) |
 | 二级标题 | 楷体_GB2312 (KaiTi_GB2312) | 三号 (16pt) |
@@ -42,51 +42,51 @@ Rules for Chinese, Japanese, and Korean text in DOCX documents.
 
 ---
 
-## Font Size Names
+## 字体大小名称
 
-CJK uses named sizes. Map to points and `w:sz` half-point values:
+CJK 使用命名大小。映射到磅值和 `w:sz` 半点值：
 
-| 字号 | Points | `w:sz` | Common Use |
-|------|--------|--------|------------|
-| 初号 | 42pt | 84 | Display title |
-| 小初 | 36pt | 72 | Large title |
-| 一号 | 26pt | 52 | Chapter heading |
-| 小一 | 24pt | 48 | Major heading |
-| 二号 | 22pt | 44 | Document title (公文) |
-| 小二 | 18pt | 36 | Western H1 equivalent |
-| 三号 | 16pt | 32 | CJK heading / 公文 body |
-| 小三 | 15pt | 30 | Sub-heading |
-| 四号 | 14pt | 28 | CJK subheading |
-| 小四 | 12pt | 24 | Standard body (CJK) |
-| 五号 | 10.5pt | 21 | Compact CJK body |
-| 小五 | 9pt | 18 | Footnotes |
-| 六号 | 7.5pt | 15 | Fine print |
+| 字号 | 磅值 | `w:sz` | 常见用途 |
+|------|------|--------|----------|
+| 初号 | 42pt | 84 | 展示标题 |
+| 小初 | 36pt | 72 | 大标题 |
+| 一号 | 26pt | 52 | 章标题 |
+| 小一 | 24pt | 48 | 主要标题 |
+| 二号 | 22pt | 44 | 文档标题 (公文) |
+| 小二 | 18pt | 36 | 西方 H1 等效 |
+| 三号 | 16pt | 32 | CJK 标题 / 公文正文 |
+| 小三 | 15pt | 30 | 子标题 |
+| 四号 | 14pt | 28 | CJK 子标题 |
+| 小四 | 12pt | 24 | 标准正文 (CJK) |
+| 五号 | 10.5pt | 21 | 紧凑 CJK 正文 |
+| 小五 | 9pt | 18 | 脚注 |
+| 六号 | 7.5pt | 15 | 细体 |
 
 ---
 
-## RunFonts Mapping
+## RunFonts 映射
 
-OpenXML uses four font slots to handle multilingual text:
+OpenXML 使用四个字体槽处理多语言文本：
 
 ```xml
 <w:rFonts
-  w:ascii="Calibri"        <!-- Latin characters (U+0000–U+007F) -->
-  w:hAnsi="Calibri"        <!-- Latin extended, Greek, Cyrillic -->
-  w:eastAsia="SimSun"      <!-- CJK Unified Ideographs, Kana, Hangul -->
-  w:cs="Arial"             <!-- Arabic, Hebrew, Thai, Devanagari -->
+  w:ascii="Calibri"        <!-- 拉丁字符 (U+0000–U+007F) -->
+  w:hAnsi="Calibri"        <!-- 拉丁扩展、希腊、西里尔 -->
+  w:eastAsia="SimSun"      <!-- CJK 统一表意文字、假名、韩文 -->
+  w:cs="Arial"             <!-- 阿拉伯、希伯来、泰文、天城文 -->
 />
 ```
 
-**Word's character classification logic:**
+**Word 的字符分类逻辑：**
 
-1. Character is in CJK range → uses `w:eastAsia` font
-2. Character is in complex script range → uses `w:cs` font
-3. Character is basic Latin (ASCII) → uses `w:ascii` font
-4. Everything else → uses `w:hAnsi` font
+1. 字符在 CJK 范围 → 使用 `w:eastAsia` 字体
+2. 字符在复杂脚本范围 → 使用 `w:cs` 字体
+3. 字符是基本拉丁 (ASCII) → 使用 `w:ascii` 字体
+4. 其他所有 → 使用 `w:hAnsi` 字体
 
-**Key**: `w:eastAsia` is the **only** way to set CJK fonts. Setting just `w:ascii` will NOT affect CJK characters. Mixed text within a single run auto-switches fonts at the character level — no need for separate runs.
+**关键**：`w:eastAsia` 是设置 CJK 字体的**唯一**方式。只设置 `w:ascii` 不会影响 CJK 字符。单个 run 内的混合文本在字符级别自动切换字体 —— 无需单独的 run。
 
-### Document Defaults
+### 文档默认值
 
 ```xml
 <w:docDefaults>
@@ -101,120 +101,120 @@ OpenXML uses four font slots to handle multilingual text:
 </w:docDefaults>
 ```
 
-`w:lang w:eastAsia` helps Word resolve ambiguous characters (e.g., punctuation shared between CJK and Latin).
+`w:lang w:eastAsia` 帮助 Word 解析歧义字符（例如 CJK 和拉丁文之间共享的标点）。
 
 ---
 
-## Punctuation & Line Breaking
+## 标点与换行
 
-### Full-Width vs Half-Width
+### 全角 vs 半角
 
-CJK text uses full-width punctuation:
+CJK 文本使用全角标点：
 
-| Type | CJK | Latin |
-|------|-----|-------|
-| Period | 。(U+3002) | . |
-| Comma | ，(U+FF0C) 、(U+3001) | , |
-| Colon | ：(U+FF1A) | : |
-| Semicolon | ；(U+FF1B) | ; |
-| Quotes | 「」『』 or ""'' | "" '' |
-| Parentheses | （）(U+FF08/09) | () |
+| 类型 | CJK | 拉丁 |
+|------|-----|------|
+| 句号 | 。(U+3002) | . |
+| 逗号 | ，(U+FF0C) 、(U+3001) | , |
+| 冒号 | ：(U+FF1A) | : |
+| 分号 | ；(U+FF1B) | ; |
+| 引号 | 「」『』或 ""'' | "" '' |
+| 括号 | （）(U+FF08/09) | () |
 
-In mixed text, use the punctuation style of the **surrounding language context**.
+混合文本中，使用**周围语言上下文**的标点样式。
 
-### OpenXML Controls
+### OpenXML 控制
 
 ```xml
 <w:pPr>
-  <w:adjustRightInd w:val="true" />   <!-- Adjust right indent for CJK punctuation -->
-  <w:snapToGrid w:val="true" />        <!-- Align to document grid -->
-  <w:kinsoku w:val="true" />           <!-- Enable CJK line breaking rules -->
-  <w:overflowPunct w:val="true" />     <!-- Allow punctuation to overflow margins -->
+  <w:adjustRightInd w:val="true" />   <!-- 为 CJK 标点调整右缩进 -->
+  <w:snapToGrid w:val="true" />        <!-- 对齐文档网格 -->
+  <w:kinsoku w:val="true" />           <!-- 启用 CJK 换行规则 -->
+  <w:overflowPunct w:val="true" />     <!-- 允许标点溢出边距 -->
 </w:pPr>
 ```
 
-### Kinsoku Rules (禁則処理)
+### 禁则处理 (Kinsoku Rules)
 
-Prevents certain characters from appearing at the start or end of a line:
-- **Cannot start a line**: `）」』】〉》。、，！？；：` and closing brackets
-- **Cannot end a line**: `（「『【〈《` and opening brackets
+防止某些字符出现在行首或行尾：
+- **不能行首**：`)」』】〉》。、，！？；：`和右括号
+- **不能行尾**：`（「『【〈《`和左括号
 
-Word applies these automatically when `w:kinsoku` is enabled.
+启用 `w:kinsoku` 时 Word 自动应用这些规则。
 
-### Line Breaking
+### 换行
 
-- CJK characters can break between **any two characters** (no word boundaries needed)
-- Latin words within CJK text still follow word-boundary breaking
-- `w:wordWrap w:val="false"` enables CJK-style breaking (break anywhere)
+- CJK 字符可以在**任意两个字符之间**换行（无需词边界）
+- CJK 文本中的拉丁词仍遵循词边界换行
+- `w:wordWrap w:val="false"` 启用 CJK 风格换行（任意位置断开）
 
 ---
 
-## Paragraph Indentation
+## 段落缩进
 
-### Chinese Standard: 2-Character Indent
+### 中文标准：2 字符缩进
 
-Chinese body text conventionally uses a 2-character first-line indent:
+中文正文传统上使用 2 字符首行缩进：
 
 ```xml
-<w:ind w:firstLineChars="200" />  <!-- 200 = 2 characters × 100 -->
+<w:ind w:firstLineChars="200" />  <!-- 200 = 2 字符 × 100 -->
 ```
 
-Preferred over `w:firstLine` with fixed DXA because `firstLineChars` scales with font size.
+优于固定 DXA 的 `w:firstLine`，因为 `firstLineChars` 随字体大小缩放。
 
-| Indent | Value |
-|--------|-------|
-| 1 character | `w:firstLineChars="100"` |
-| 2 characters | `w:firstLineChars="200"` |
-| 3 characters | `w:firstLineChars="300"` |
+| 缩进 | 值 |
+|------|----|
+| 1 字符 | `w:firstLineChars="100"` |
+| 2 字符 | `w:firstLineChars="200"` |
+| 3 字符 | `w:firstLineChars="300"` |
 
 ---
 
-## Line Spacing
+## 行距
 
-- CJK characters are taller than Latin characters at the same point size
-- Default `1.0` line spacing may feel cramped with CJK text
-- Recommended: `1.15–1.5` for mixed CJK+Latin, `1.0` with fixed 28pt for 公文
+- CJK 字符在相同磅值下比拉丁字符高
+- 默认 `1.0` 行距在 CJK 文本中可能感觉紧凑
+- 推荐：混合 CJK+拉丁文用 `1.15–1.5`，公文固定 28pt
 
-### Auto Spacing
+### 自动间距
 
 ```xml
 <w:pPr>
-  <w:autoSpaceDE w:val="true"/>  <!-- auto space between CJK and Latin -->
-  <w:autoSpaceDN w:val="true"/>  <!-- auto space between CJK and numbers -->
+  <w:autoSpaceDE w:val="true"/>  <!-- CJK 与拉丁文之间自动间距 -->
+  <w:autoSpaceDN w:val="true"/>  <!-- CJK 与数字之间自动间距 -->
 </w:pPr>
 ```
 
-Adds ~¼ em spacing between CJK and non-CJK characters automatically. **Recommended: always enable.**
+在 CJK 与非 CJK 字符之间自动添加约 ¼ em 间距。**推荐：始终启用。**
 
 ---
 
 ## GB/T 9704
 
-Chinese government document standard (党政机关公文格式). These are **strict requirements**, not suggestions.
+中国政府文档标准 (党政机关公文格式)。这些是**严格要求**，不是建议。
 
-### Page Setup
+### 页面设置
 
-| Parameter | Value | OpenXML |
-|-----------|-------|---------|
-| Page size | A4 (210×297mm) | Width=11906, Height=16838 |
-| Top margin | 37mm | 2098 DXA |
-| Bottom margin | 35mm | 1984 DXA |
-| Left margin | 28mm | 1588 DXA |
-| Right margin | 26mm | 1474 DXA |
-| Characters/line | 28 | |
-| Lines/page | 22 | |
-| Line spacing | Fixed 28pt | `line="560"` lineRule="exact" |
+| 参数 | 值 | OpenXML |
+|------|----|---------|
+| 页面大小 | A4 (210×297mm) | Width=11906、Height=16838 |
+| 上边距 | 37mm | 2098 DXA |
+| 下边距 | 35mm | 1984 DXA |
+| 左边距 | 28mm | 1588 DXA |
+| 右边距 | 26mm | 1474 DXA |
+| 每行字符 | 28 | |
+| 每页行数 | 22 | |
+| 行距 | 固定 28pt | `line="560"` lineRule="exact" |
 
-### Document Structure
+### 文档结构
 
 ```
 ┌─────────────────────────────────┐
-│     发文机关标志 (红头)           │  ← 小标宋 or 红色大字
-│     ══════════════════ (红线)    │  ← Red #FF0000, 2pt
+│     发文机关标志 (红头)           │  ← 小标宋或红色大字
+│     ══════════════════ (红线)    │  ← 红色 #FF0000，2pt
 ├─────────────────────────────────┤
-│  发文字号: X机发〔2025〕X号      │  ← 仿宋 三号, centered
+│  发文字号: X机发〔2025〕X号      │  ← 仿宋 三号，居中
 │                                 │
-│  标题 (Title)                   │  ← 小标宋 二号, centered
+│  标题 (Title)                   │  ← 小标宋 二号，居中
 │                                 │     可分多行，回行居中
 │  主送机关:                      │  ← 仿宋 三号
 │                                 │
@@ -227,7 +227,7 @@ Chinese government document standard (党政机关公文格式). These are **str
 │  附件: 1. xxx                   │  ← 仿宋 三号
 │                                 │
 │  发文机关署名                    │  ← 仿宋 三号
-│  成文日期                       │  ← 仿宋 三号, 小写中文数字
+│  成文日期                       │  ← 仿宋 三号，小写中文数字
 ├─────────────────────────────────┤
 │  ══════════════════ (版记线)     │
 │  抄送: xxx                      │  ← 仿宋 四号
@@ -235,54 +235,54 @@ Chinese government document standard (党政机关公文格式). These are **str
 └─────────────────────────────────┘
 ```
 
-### Numbering System
+### 编号系统
 
 ```
-一、        ← 黑体 (SimHei), no indentation
-（一）      ← 楷体 (KaiTi), indented 2 chars
-1.          ← 仿宋加粗 (FangSong Bold), indented 2 chars
-(1)         ← 仿宋 (FangSong), indented 2 chars
+一、        ← 黑体 (SimHei)，无缩进
+（一）      ← 楷体 (KaiTi)，缩进 2 字符
+1.          ← 仿宋加粗 (FangSong Bold)，缩进 2 字符
+(1)         ← 仿宋 (FangSong)，缩进 2 字符
 ```
 
-### Colors
+### 颜色
 
-| Element | Color | Requirement |
-|---------|-------|-------------|
-| All body text | Black #000000 | Mandatory |
-| 红头 (agency name) | Red #FF0000 | Mandatory |
-| 红线 (separator) | Red #FF0000 | Mandatory |
-| 公章 (official seal) | Red | Mandatory |
+| 元素 | 颜色 | 要求 |
+|------|------|------|
+| 所有正文 | 黑色 #000000 | 强制 |
+| 红头 机关名称 | 红色 #FF0000 | 强制 |
+| 红线 分隔符 | 红色 #FF0000 | 强制 |
+| 公章 印章 | 红色 | 强制 |
 
-### Page Numbers
+### 页码
 
-- Position: bottom center
-- Format: `-X-` (dash-number-dash)
-- Font: 宋体 四号 (SimSun 14pt, `sz="28"`)
-- No page number on cover page if present
+- 位置：底部居中
+- 格式：`-X-`（破折号-数字-破折号）
+- 字体：宋体 四号 (SimSun 14pt，`sz="28"`)
+- 封面页（如有）无页码
 
 ---
 
-## Mixed Script
+## 混合文字
 
-### Font Size Harmony
+### 字体大小协调
 
-CJK characters appear larger than Latin characters at the same point size. Compensation:
+CJK 字符在相同磅值下看起来比拉丁字符大。补偿：
 
-- If body is Calibri 11pt, pair with CJK at 11pt (same size — CJK looks slightly larger but acceptable)
-- If precise visual match needed, CJK can be set 0.5–1pt smaller
-- In practice, same point size is standard — don't over-optimize
+- 如果正文是 Calibri 11pt，CJK 配 11pt（相同大小 —— CJK 看起来稍大但可接受）
+- 如果需要精确视觉匹配，CJK 可设小 0.5–1pt
+- 实践中，相同磅值是标准 —— 不要过度优化
 
-### Bold and Italic
+### 粗体和斜体
 
-- **Chinese/Japanese have no true italic.** Word synthesizes a slant which looks poor
-- Use **bold** for emphasis in CJK text
-- Use 着重号 (emphasis dots) for traditional emphasis: `<w:em w:val="dot"/>` on RunProperties
+- **中文/日文没有真正的斜体。** Word 合成倾斜，看起来很糟糕
+- 在 CJK 文本中使用**粗体**强调
+- 传统强调使用着重号：`<w:em w:val="dot"/>` 在 RunProperties 上
 
 ---
 
-## OpenXML Quick Reference
+## OpenXML 快速参考
 
-### Set EastAsia Font (C#)
+### 设置东亚字体 (C#)
 
 ```csharp
 new Run(
@@ -294,7 +294,7 @@ new Run(
 );
 ```
 
-### Document Defaults (C#)
+### 文档默认值 (C#)
 
 ```csharp
 new DocDefaults(new RunPropertiesDefault(new RunPropertiesBaseStyle(
@@ -306,10 +306,10 @@ new DocDefaults(new RunPropertiesDefault(new RunPropertiesBaseStyle(
 )));
 ```
 
-### 公文 Style Definitions (C#)
+### 公文 样式定义 (C#)
 
 ```csharp
-// Title style — 小标宋 二号 centered
+// 标题样式 —— 小标宋 二号 居中
 new Style(
     new StyleName { Val = "GongWen Title" },
     new BasedOn { Val = "Normal" },
@@ -324,7 +324,7 @@ new Style(
     )
 ) { Type = StyleValues.Paragraph, StyleId = "GongWenTitle" };
 
-// Body style — 仿宋_GB2312 三号
+// 正文样式 —— 仿宋_GB2312 三号
 new Style(
     new StyleName { Val = "GongWen Body" },
     new StyleRunProperties(
@@ -337,21 +337,21 @@ new Style(
 ) { Type = StyleValues.Paragraph, StyleId = "GongWenBody" };
 ```
 
-### Emphasis Dots (着重号)
+### 着重号
 
 ```csharp
 new RunProperties(new Emphasis { Val = EmphasisMarkValues.Dot });
 ```
 
-### East Asian Text Layout
+### 东亚文本布局
 
 ```xml
-<!-- Snap to grid (align CJK chars to character grid) -->
+<!-- 对齐网格（将 CJK 字符对齐字符网格） -->
 <w:snapToGrid w:val="true"/>
 
-<!-- Two-lines-in-one (双行合一) -->
+<!-- 双行合一 -->
 <w:eastAsianLayout w:id="1" w:combine="true"/>
 
-<!-- Vertical text in a cell -->
+<!-- 单元格内竖排文本 -->
 <w:textDirection w:val="tbRl"/>
 ```

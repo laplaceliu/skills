@@ -1,295 +1,295 @@
-# Scenario B: Editing / Filling Content in Existing DOCX
+# 场景 B：在现有 DOCX 中编辑/填充内容
 
-## Core Principle
+## 核心原则
 
-**"First, do no harm."** When editing an existing document, minimize changes. Touch only what needs to change. Preserve all formatting, styles, relationships, and structure that are not directly involved in the edit.
-
----
-
-## When to Use
-
-- Replacing placeholder text (`{{name}}`, `$DATE$`, `[PLACEHOLDER]`)
-- Updating specific paragraphs or table cells
-- Filling in form fields
-- Adding or removing paragraphs in a known location
-- Inserting tracked changes for review workflows
-
-Do NOT use when: the user wants to change the look/style of the entire document (→ Scenario C) or create from scratch (→ Scenario A).
+**"首先，不要造成伤害。"** 编辑现有文档时，最小化更改。只触碰需要更改的部分。保留所有与编辑无直接关系的格式、样式、关系和结构。
 
 ---
 
-## Workflow
+## 何时使用
+
+- 替换占位符文本（`{{name}}`、`$DATE$`、`[占位符]`）
+- 更新特定段落或表格单元格
+- 填写表单字段
+- 在已知位置添加或删除段落
+- 为审阅工作流插入修订标记
+
+**不要**在以下情况使用：用户想要更改整个文档的外观/样式（→ 场景 C）或从零创建（→ 场景 A）。
+
+---
+
+## 工作流程
 
 ```
-1. Preview   → CLI: analyze <input.docx>
-2. Analyze   → Understand structure: sections, styles, headings, tables
-3. Identify  → Locate exact edit targets (paragraph index, table index, placeholder text)
-4. Edit      → Apply surgical changes via CLI or direct XML
-5. Validate  → CLI: validate <output.docx>
-6. Diff      → Compare before/after to verify only intended changes were made
+1. 预览   → CLI: analyze <input.docx>
+2. 分析   → 理解结构：节、样式、标题、表格
+3. 识别   → 定位确切的编辑目标（段落索引、表格索引、占位符文本）
+4. 编辑   → 通过 CLI 或直接 XML 应用精确更改
+5. 验证   → CLI: validate <output.docx>
+6. 差异   → 比较前后以验证只做了预期更改
 ```
 
 ---
 
-## When to Use API vs Direct XML
+## 何时使用 API vs 直接 XML
 
-### Use CLI Edit Command When:
-- Replacing placeholder text (e.g., `{{fieldName}}` → actual value)
-- Filling table data from JSON
-- Updating document properties (title, author)
-- Simple text insertions or deletions
+### 在以下情况使用 CLI 编辑命令：
+- 替换占位符文本（例如 `{{fieldName}}` → 实际值）
+- 从 JSON 填充表格数据
+- 更新文档属性（标题、作者）
+- 简单文本插入或删除
 
-### Use Direct XML Manipulation When:
-- Text spans multiple runs with different formatting (run-boundary issues)
-- Adding complex structures (nested tables, multi-image layouts)
-- Manipulating Track Changes markup
-- Modifying header/footer content
-- Adjusting section properties
+### 在以下情况使用直接 XML 操作：
+- 文本跨越具有不同格式的多个 run（run 边界问题）
+- 添加复杂结构（嵌套表格、多图片布局）
+- 操作修订标记
+- 修改页眉/页脚内容
+- 调整节属性
 
 ---
 
-## Placeholder Patterns
+## 占位符模式
 
-The CLI natively supports `{{fieldName}}` placeholders:
+CLI 原生支持 `{{fieldName}}` 占位符：
 
 ```bash
-# Replace all {{placeholders}} from a JSON map
+# 从 JSON 映射替换所有 {{占位符}}
 dotnet run ... edit input.docx --fill-placeholders data.json --output filled.docx
 ```
 
-Where `data.json`:
+其中 `data.json`：
 ```json
 {
   "companyName": "Acme Corp",
-  "date": "March 21, 2026",
-  "amount": "$15,000.00",
-  "recipientName": "Jane Smith"
+  "date": "2026年3月21日",
+  "amount": "¥15,000.00",
+  "recipientName": "简·史密斯"
 }
 ```
 
-Other placeholder formats (`$FIELD$`, `[PLACEHOLDER]`) require text replacement:
+其他占位符格式（`$FIELD$`、`[占位符]`）需要文本替换：
 ```bash
-dotnet run ... edit input.docx --replace "$DATE$" "March 21, 2026" --output updated.docx
+dotnet run ... edit input.docx --replace "$DATE$" "2026年3月21日" --output updated.docx
 ```
 
 ---
 
-## Text Replacement Strategies
+## 文本替换策略
 
-### Simple Replacement
+### 简单替换
 
-When the entire search text is within a single `w:r` (run):
+当整个搜索文本在单个 `w:r`（run）内时：
 
 ```xml
-<!-- Before -->
+<!-- 替换前 -->
 <w:r>
   <w:rPr><w:b /></w:rPr>
   <w:t>{{companyName}}</w:t>
 </w:r>
 
-<!-- After — formatting preserved -->
+<!-- 替换后 —— 格式保留 -->
 <w:r>
   <w:rPr><w:b /></w:rPr>
   <w:t>Acme Corp</w:t>
 </w:r>
 ```
 
-Direct replacement. The run's `w:rPr` is untouched.
+直接替换。run 的 `w:rPr` 保持不变。
 
-### Complex Replacement (Split Runs)
+### 复杂替换（分割 Run）
 
-When the search text is split across multiple runs (common when Word applies spell-check or formatting mid-text):
+当搜索文本跨越多个 run 时（当 Word 应用拼写检查或格式时常见）：
 
 ```xml
-<!-- "{{companyName}}" split into 3 runs -->
+<!-- "{{companyName}}" 分割成 3 个 run -->
 <w:r><w:rPr><w:b /></w:rPr><w:t>{{company</w:t></w:r>
 <w:r><w:rPr><w:b /><w:i /></w:rPr><w:t>Na</w:t></w:r>
 <w:r><w:rPr><w:b /></w:rPr><w:t>me}}</w:t></w:r>
 ```
 
-Strategy:
-1. Concatenate text across runs to find the match
-2. Place the replacement text in the **first** run (preserving its `w:rPr`)
-3. Remove the text from subsequent runs (or remove the runs entirely if empty)
+策略：
+1. 跨 run 连接文本以找到匹配
+2. 将替换文本放在**第一个** run 中（保留其 `w:rPr`）
+3. 从后续 run 中删除文本（如果为空则删除整个 run）
 
 ```xml
-<!-- After -->
+<!-- 替换后 -->
 <w:r><w:rPr><w:b /></w:rPr><w:t>Acme Corp</w:t></w:r>
 ```
 
-**Rule**: Always preserve the formatting of the first run in the match.
+**规则**：始终保留匹配中第一个 run 的格式。
 
 ---
 
-## Table Editing
+## 表格编辑
 
-### By Index
+### 按索引
 
-Tables are 0-indexed in document order:
+表格在文档顺序中是 0 索引的：
 
 ```bash
 dotnet run ... edit input.docx --table-index 0 --table-data data.json --output updated.docx
 ```
 
-### By Header Matching
+### 按表头匹配
 
-Find a table by its header row content:
+通过表头行内容查找表格：
 
 ```bash
-dotnet run ... edit input.docx --table-match "Name,Amount,Date" --table-data data.json
+dotnet run ... edit input.docx --table-match "姓名,金额,日期" --table-data data.json
 ```
 
-### Table Data JSON Format
+### 表格数据 JSON 格式
 
 ```json
 {
   "rows": [
-    ["Alice Johnson", "$5,000", "2026-03-15"],
-    ["Bob Smith", "$3,200", "2026-03-18"]
+    ["爱丽丝·约翰逊", "¥5,000", "2026-03-15"],
+    ["鲍勃·史密斯", "¥3,200", "2026-03-18"]
   ],
   "appendRows": true
 }
 ```
 
-- `appendRows: true` — add rows after existing data
-- `appendRows: false` (default) — replace all data rows (keeps header row)
+- `appendRows: true` —— 在现有数据后添加行
+- `appendRows: false`（默认）—— 替换所有数据行（保留表头行）
 
-### Direct XML Table Editing
+### 直接 XML 表格编辑
 
-To modify a specific cell, locate it by row/column index:
+要修改特定单元格，通过行/列索引定位：
 
 ```xml
-<!-- Row 2 (0-indexed), Column 1 -->
+<!-- 第 2 行（0 索引），第 1 列 -->
 <w:tr>  <!-- tr[2] -->
   <w:tc>...</w:tc>
-  <w:tc>  <!-- tc[1] — target cell -->
+  <w:tc>  <!-- tc[1] —— 目标单元格 -->
     <w:p>
-      <w:r><w:t>Old Value</w:t></w:r>
+      <w:r><w:t>旧值</w:t></w:r>
     </w:p>
   </w:tc>
 </w:tr>
 ```
 
-Replace the `w:t` content. Do NOT modify `w:tcPr` (cell properties) or `w:tblPr` (table properties).
+替换 `w:t` 内容。**不要**修改 `w:tcPr`（单元格属性）或 `w:tblPr`（表格属性）。
 
 ---
 
-## Track Changes Guidance
+## 修订标记指南
 
-### When to Add Revision Marks
-- User explicitly requests tracked changes
-- Document already has tracking enabled (`w:trackChanges` in settings)
-- Collaborative review workflow
+### 何时添加修订标记
+- 用户明确要求修订跟踪
+- 文档已启用跟踪（设置中的 `w:trackChanges`）
+- 协作审阅工作流
 
-### When NOT to Add Revision Marks
-- Form filling / placeholder replacement (these are "completing" the document, not "revising" it)
-- Direct edits where the user wants a clean result
-- Batch data filling operations
+### 何时**不**添加修订标记
+- 表单填写 / 占位符替换（这些是"完成"文档，不是"修订"它）
+- 用户想要干净结果的直接编辑
+- 批量数据填充操作
 
-### Adding Tracked Changes
+### 添加修订标记
 
-See `references/track_changes_guide.md` for full XML examples.
+完整 XML 示例参见 `references/track_changes_guide.md`。
 
-Quick reference — inserting text with tracking:
+快速参考 —— 带跟踪的文本插入：
 ```xml
 <w:ins w:id="1" w:author="MiniMaxAI" w:date="2026-03-21T10:00:00Z">
   <w:r>
-    <w:t>New text here</w:t>
+    <w:t>此处为新文本</w:t>
   </w:r>
 </w:ins>
 ```
 
-Deleting text with tracking:
+带跟踪的文本删除：
 ```xml
 <w:del w:id="2" w:author="MiniMaxAI" w:date="2026-03-21T10:00:00Z">
   <w:r>
-    <w:delText>Removed text</w:delText>  <!-- MUST use delText, not t -->
+    <w:delText>已删除文本</w:delText>  <!-- 必须使用 delText，不是 t -->
   </w:r>
 </w:del>
 ```
 
 ---
 
-## Common Pitfalls
+## 常见陷阱
 
-### 1. Breaking Run Boundaries
+### 1. 破坏 Run 边界
 
-**Problem**: Replacing text that spans runs by naively modifying individual runs destroys inline formatting.
+**问题**：通过天真地修改单个 run 来替换跨越 run 的文本会破坏内联格式。
 
-**Fix**: Concatenate run text, find match boundaries, consolidate into the first run, remove consumed runs.
+**修复**：连接 run 文本，找到匹配边界，合并到第一个 run，删除已消耗的 run。
 
-### 2. Hyperlink Content
+### 2. 超链接内容
 
-**Problem**: Replacing text inside a `w:hyperlink` element without preserving the hyperlink wrapper removes the link.
+**问题**：替换 `w:hyperlink` 元素内的文本而不保留超链接包装器会移除链接。
 
 ```xml
 <w:hyperlink r:id="rId5">
   <w:r>
     <w:rPr><w:rStyle w:val="Hyperlink" /></w:rPr>
-    <w:t>Click here</w:t>  <!-- Only replace this text -->
+    <w:t>点击此处</w:t>  <!-- 只替换此文本 -->
   </w:r>
 </w:hyperlink>
 ```
 
-**Fix**: Only modify the `w:t` inside the hyperlink's run. Never remove or replace the `w:hyperlink` element itself.
+**修复**：只修改超链接 run 内的 `w:t`。绝不删除或替换 `w:hyperlink` 元素本身。
 
-### 3. Tracked Change Context
+### 3. 修订标记上下文
 
-**Problem**: Replacing text that is inside a `w:ins` or `w:del` element without understanding the revision context creates invalid markup.
+**问题**：替换 `w:ins` 或 `w:del` 元素内的文本而不理解修订上下文会创建无效标记。
 
-**Fix**: If the target text is inside a revision mark, either:
-- Replace within the revision context (preserving the `w:ins`/`w:del` wrapper)
-- Or delete the old revision and create a new one
+**修复**：如果目标文本在修订标记内，要么：
+- 在修订上下文内替换（保留 `w:ins`/`w:del` 包装器）
+- 或删除旧修订并创建新修订
 
-### 4. Style Preservation
+### 4. 样式保留
 
-**Problem**: Adding new paragraphs without specifying a style causes them to inherit `Normal`, which may not match the surrounding context.
+**问题**：添加没有指定样式的新段落会导致它们继承 `Normal`，这可能与周围上下文不匹配。
 
-**Fix**: When inserting paragraphs, copy the `w:pStyle` from an adjacent paragraph of the same type.
+**修复**：插入段落时，从同类型的相邻段落复制 `w:pStyle`。
 
-### 5. Numbering Continuity
+### 5. 编号连续性
 
-**Problem**: Inserting a new list item breaks numbering sequence.
+**问题**：插入新列表项会破坏编号序列。
 
-**Fix**: Ensure the new paragraph has the same `w:numId` and `w:ilvl` as adjacent list items. If continuing a sequence, set `w:numPr` to match.
+**修复**：确保新段落与相邻列表项具有相同的 `w:numId` 和 `w:ilvl`。如果要继续序列，设置 `w:numPr` 以匹配。
 
-### 6. XML Special Characters
+### 6. XML 特殊字符
 
-**Problem**: User content contains `&`, `<`, `>`, `"`, `'` — these must be escaped in XML.
+**问题**：用户内容包含 `&`、`<`、`>`、`"`、`'` —— 这些必须在 XML 中转义。
 
-**Fix**: Always XML-escape user-provided text before inserting into `w:t` elements:
+**修复**：在插入 `w:t` 元素之前始终对用户提供的内容进行 XML 转义：
 - `&` → `&amp;`
 - `<` → `&lt;`
 - `>` → `&gt;`
 - `"` → `&quot;`
 - `'` → `&apos;`
 
-### 7. Whitespace Preservation
+### 7. 空白保留
 
-**Problem**: Leading/trailing spaces in `w:t` are stripped by XML parsers.
+**问题**：`w:t` 中的前导/尾随空格会被 XML 解析器剥离。
 
-**Fix**: Add `xml:space="preserve"` attribute:
+**修复**：添加 `xml:space="preserve"` 属性：
 ```xml
-<w:t xml:space="preserve"> text with leading space</w:t>
+<w:t xml:space="preserve"> 带有前导空格的文本</w:t>
 ```
 
 ---
 
-## Diff Verification
+## 差异验证
 
-After editing, always compare the before and after states:
+编辑后，始终比较前后状态：
 
 ```bash
-# Structural diff — shows only changed elements
+# 结构差异 —— 只显示更改的元素
 dotnet run ... diff original.docx modified.docx
 
-# Text-only diff — shows content changes
+# 纯文本差异 —— 显示内容更改
 dotnet run ... diff original.docx modified.docx --text-only
 ```
 
-Verify:
-- Only intended text changed
-- No styles were modified
-- No relationships were added/removed unexpectedly
-- Table structure intact (same number of rows/columns unless intentionally changed)
-- Images and other media unchanged
+验证：
+- 只有预期的文本更改
+- 没有修改样式
+- 没有意外添加/删除关系
+- 表格结构完整（除非有意更改，否则行/列数量相同）
+- 图片和其他媒体未更改

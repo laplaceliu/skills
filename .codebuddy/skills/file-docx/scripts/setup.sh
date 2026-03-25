@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# minimax-docx Environment Setup & Initialization Script
-# Supports: macOS (Homebrew), Linux (apt/dnf/pacman), WSL
-# License: MIT
+# minimax-docx 环境设置与初始化脚本
+# 支持：macOS (Homebrew)、Linux (apt/dnf/pacman)、WSL
+# 许可证：MIT
 set -euo pipefail
 
-# Force English output for dotnet CLI
+# 强制 dotnet CLI 输出英文
 export DOTNET_CLI_UI_LANGUAGE=en
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -12,23 +12,23 @@ PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 DOTNET_DIR="$SCRIPT_DIR/dotnet"
 LOG_FILE="$PROJECT_DIR/.setup.log"
 
-# --- Colors ---
+# --- 颜色 ---
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-log()   { echo -e "${GREEN}[OK]${NC}    $*"; }
-warn()  { echo -e "${YELLOW}[WARN]${NC}  $*"; }
-fail()  { echo -e "${RED}[FAIL]${NC}  $*"; }
-info()  { echo -e "${BLUE}[INFO]${NC}  $*"; }
+log()   { echo -e "${GREEN}[正常]${NC}  $*"; }
+warn()  { echo -e "${YELLOW}[警告]${NC}  $*"; }
+fail()  { echo -e "${RED}[失败]${NC}  $*"; }
+info()  { echo -e "${BLUE}[信息]${NC}  $*"; }
 step()  { echo -e "\n${BLUE}=== $* ===${NC}"; }
 
-# --- Detect OS & Package Manager ---
+# --- 检测操作系统和包管理器 ---
 detect_platform() {
-    OS="unknown"
-    PKG_MGR="unknown"
+    OS="未知"
+    PKG_MGR="未知"
     ARCH="$(uname -m)"
 
     case "$(uname -s)" in
@@ -61,11 +61,11 @@ detect_platform() {
                         PKG_MGR="apk"
                         ;;
                     *)
-                        PKG_MGR="unknown"
+                        PKG_MGR="未知"
                         ;;
                 esac
             fi
-            # Detect WSL
+            # 检测 WSL
             if grep -qi microsoft /proc/version 2>/dev/null; then
                 OS="wsl"
             fi
@@ -76,34 +76,34 @@ detect_platform() {
             ;;
     esac
 
-    echo "Platform: $OS ($ARCH), Package Manager: $PKG_MGR"
+    echo "平台：$OS ($ARCH)，包管理器：$PKG_MGR"
 }
 
-# --- .NET SDK Installation ---
+# --- .NET SDK 安装 ---
 install_dotnet() {
-    step "Checking .NET SDK"
+    step "检查 .NET SDK"
 
     if command -v dotnet &>/dev/null; then
         local ver
         ver=$(dotnet --version 2>/dev/null || echo "0")
         local major="${ver%%.*}"
         if [ "$major" -ge 8 ] 2>/dev/null; then
-            log "dotnet $ver already installed (>= 8.0 OK)"
+            log "dotnet $ver 已安装 (>= 8.0 正常)"
             return 0
         else
-            warn "dotnet $ver found but < 8.0, upgrading..."
+            warn "找到 dotnet $ver 但 < 8.0，正在升级..."
         fi
     fi
 
-    info "Installing .NET SDK..."
+    info "正在安装 .NET SDK..."
     case "$PKG_MGR" in
         brew)
             brew install --cask dotnet-sdk
             ;;
         apt)
-            # Microsoft package repo for Ubuntu/Debian
+            # 为 Ubuntu/Debian 添加 Microsoft 包仓库
             if ! dpkg -l dotnet-sdk-8.0 &>/dev/null 2>&1; then
-                info "Adding Microsoft package repository..."
+                info "添加 Microsoft 包仓库..."
                 sudo apt-get update -qq
                 sudo apt-get install -y -qq wget apt-transport-https
                 wget -q "https://dot.net/v1/dotnet-install.sh" -O /tmp/dotnet-install.sh
@@ -127,12 +127,12 @@ install_dotnet() {
             ;;
         none)
             if [ "$OS" = "windows-git-bash" ]; then
-                fail "On Windows, install .NET SDK from: https://dotnet.microsoft.com/download"
-                fail "Then restart your terminal and re-run this script."
+                fail "在 Windows 上，从此安装 .NET SDK：https://dotnet.microsoft.com/download"
+                fail "然后重启终端并重新运行此脚本。"
                 return 1
             fi
-            # Fallback: use Microsoft install script
-            info "Using Microsoft install script..."
+            # 回退：使用 Microsoft 安装脚本
+            info "使用 Microsoft 安装脚本..."
             wget -q "https://dot.net/v1/dotnet-install.sh" -O /tmp/dotnet-install.sh || \
                 curl -sSL "https://dot.net/v1/dotnet-install.sh" -o /tmp/dotnet-install.sh
             chmod +x /tmp/dotnet-install.sh
@@ -141,30 +141,30 @@ install_dotnet() {
             echo 'export PATH="$HOME/.dotnet:$PATH"' >> "$HOME/.bashrc"
             ;;
         *)
-            warn "Unknown package manager. Install .NET SDK manually: https://dotnet.microsoft.com/download"
+            warn "未知包管理器。手动安装 .NET SDK：https://dotnet.microsoft.com/download"
             return 1
             ;;
     esac
 
-    # Verify
+    # 验证
     if command -v dotnet &>/dev/null; then
-        log "dotnet $(dotnet --version) installed"
+        log "dotnet $(dotnet --version) 已安装"
     else
-        fail "dotnet installation failed. Install manually: https://dotnet.microsoft.com/download"
+        fail "dotnet 安装失败。手动安装：https://dotnet.microsoft.com/download"
         return 1
     fi
 }
 
-# --- Pandoc Installation (Optional) ---
+# --- Pandoc 安装（可选） ---
 install_pandoc() {
-    step "Checking pandoc (optional: content preview)"
+    step "检查 pandoc（可选：内容预览）"
 
     if command -v pandoc &>/dev/null; then
-        log "pandoc $(pandoc --version | head -1 | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?') already installed"
+        log "pandoc $(pandoc --version | head -1 | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?') 已安装"
         return 0
     fi
 
-    info "Installing pandoc..."
+    info "正在安装 pandoc..."
     case "$PKG_MGR" in
         brew)   brew install pandoc ;;
         apt)    sudo apt-get install -y -qq pandoc ;;
@@ -173,28 +173,28 @@ install_pandoc() {
         zypper) sudo zypper install -y pandoc ;;
         apk)    apk add --no-cache pandoc ;;
         *)
-            warn "Cannot auto-install pandoc. Install manually: https://pandoc.org/installing.html"
+            warn "无法自动安装 pandoc。手动安装：https://pandoc.org/installing.html"
             return 0
             ;;
     esac
 
     if command -v pandoc &>/dev/null; then
-        log "pandoc installed"
+        log "pandoc 已安装"
     else
-        warn "pandoc installation failed (optional, will degrade gracefully)"
+        warn "pandoc 安装失败（可选，将优雅降级）"
     fi
 }
 
-# --- LibreOffice Installation (Optional) ---
+# --- LibreOffice 安装（可选） ---
 install_soffice() {
-    step "Checking LibreOffice/soffice (optional: .doc conversion)"
+    step "检查 LibreOffice/soffice（可选：.doc 转换）"
 
     if command -v soffice &>/dev/null; then
-        log "soffice already installed"
+        log "soffice 已安装"
         return 0
     fi
 
-    # Also check common install paths
+    # 同时检查常见安装路径
     local soffice_paths=(
         "/usr/bin/soffice"
         "/usr/local/bin/soffice"
@@ -204,15 +204,15 @@ install_soffice() {
     )
     for p in "${soffice_paths[@]}"; do
         if [ -x "$p" ]; then
-            log "soffice found at $p"
+            log "在 $p 找到 soffice"
             if [ "$OS" = "macos" ] && [ "$p" = "/Applications/LibreOffice.app/Contents/MacOS/soffice" ]; then
-                info "Tip: Add to PATH: ln -s '$p' /usr/local/bin/soffice"
+                info "提示：添加到 PATH：ln -s '$p' /usr/local/bin/soffice"
             fi
             return 0
         fi
     done
 
-    info "Installing LibreOffice (this may take a while)..."
+    info "正在安装 LibreOffice（这可能需要一段时间）..."
     case "$PKG_MGR" in
         brew)   brew install --cask libreoffice ;;
         apt)    sudo apt-get install -y -qq libreoffice-core ;;
@@ -221,31 +221,31 @@ install_soffice() {
         zypper) sudo zypper install -y libreoffice ;;
         apk)    apk add --no-cache libreoffice ;;
         *)
-            warn "Cannot auto-install LibreOffice. Install manually: https://www.libreoffice.org/download/"
+            warn "无法自动安装 LibreOffice。手动安装：https://www.libreoffice.org/download/"
             return 0
             ;;
     esac
 
     if command -v soffice &>/dev/null; then
-        log "soffice installed"
+        log "soffice 已安装"
     else
-        warn "soffice not found after install (optional, .doc conversion unavailable)"
+        warn "安装后未找到 soffice（可选，.doc 转换不可用）"
     fi
 }
 
 # --- zip/unzip ---
 install_zip_tools() {
-    step "Checking zip/unzip"
+    step "检查 zip/unzip"
 
     local need_zip=false need_unzip=false
-    command -v zip &>/dev/null   && log "zip already installed"   || need_zip=true
-    command -v unzip &>/dev/null && log "unzip already installed" || need_unzip=true
+    command -v zip &>/dev/null   && log "zip 已安装"   || need_zip=true
+    command -v unzip &>/dev/null && log "unzip 已安装" || need_unzip=true
 
     if ! $need_zip && ! $need_unzip; then
         return 0
     fi
 
-    info "Installing zip/unzip..."
+    info "正在安装 zip/unzip..."
     case "$PKG_MGR" in
         brew)   brew install zip unzip 2>/dev/null || true ;;
         apt)    sudo apt-get install -y -qq zip unzip ;;
@@ -253,48 +253,48 @@ install_zip_tools() {
         pacman) sudo pacman -S --noconfirm zip unzip ;;
         zypper) sudo zypper install -y zip unzip ;;
         apk)    apk add --no-cache zip unzip ;;
-        *)      warn "Install zip/unzip manually (optional, .NET handles DOCX natively)" ;;
+        *)      warn "手动安装 zip/unzip（可选，.NET 原生处理 DOCX）" ;;
     esac
 }
 
-# --- .NET Project Build ---
+# --- .NET 项目构建 ---
 build_project() {
-    step "Building minimax-docx .NET project"
+    step "构建 minimax-docx .NET 项目"
 
     if [ ! -d "$DOTNET_DIR" ]; then
-        fail "Dotnet project directory not found: $DOTNET_DIR"
+        fail "Dotnet 项目目录未找到：$DOTNET_DIR"
         return 1
     fi
 
     cd "$DOTNET_DIR"
 
-    info "Restoring NuGet packages..."
+    info "还原 NuGet 包..."
     if ! dotnet restore --verbosity quiet 2>>"$LOG_FILE"; then
-        fail "NuGet restore failed. Check network and $LOG_FILE for details."
-        fail "Common causes:"
-        fail "  - No internet access (NuGet needs to download packages)"
-        fail "  - Corporate proxy blocking nuget.org"
-        fail "  - Disk space insufficient"
+        fail "NuGet 还原失败。检查网络和 $LOG_FILE 了解详情。"
+        fail "常见原因："
+        fail "  - 无网络访问（NuGet 需要下载包）"
+        fail "  - 企业代理阻止 nuget.org"
+        fail "  - 磁盘空间不足"
         echo ""
-        fail "Try manually: cd $DOTNET_DIR && dotnet restore --verbosity detailed"
+        fail "手动尝试：cd $DOTNET_DIR && dotnet restore --verbosity detailed"
         return 1
     fi
-    log "NuGet packages restored"
+    log "NuGet 包已还原"
 
-    info "Building project..."
+    info "正在构建项目..."
     if ! dotnet build --verbosity quiet --no-restore 2>>"$LOG_FILE"; then
-        fail "Build failed. Check $LOG_FILE for details."
-        fail "Try manually: cd $DOTNET_DIR && dotnet build --verbosity normal"
+        fail "构建失败。检查 $LOG_FILE 了解详情。"
+        fail "手动尝试：cd $DOTNET_DIR && dotnet build --verbosity normal"
         return 1
     fi
-    log "Project built successfully"
+    log "项目构建成功"
 
     cd "$PROJECT_DIR"
 }
 
-# --- Shell Script Permissions ---
+# --- Shell 脚本权限 ---
 fix_permissions() {
-    step "Setting script permissions"
+    step "设置脚本权限"
 
     local scripts=(
         "$SCRIPT_DIR/env_check.sh"
@@ -311,83 +311,83 @@ fix_permissions() {
     done
 }
 
-# --- NuGet Proxy / Certificate Issues (Corporate Environments) ---
+# --- NuGet 代理/证书问题（企业环境） ---
 check_nuget_config() {
-    step "Checking NuGet configuration"
+    step "检查 NuGet 配置"
 
     local nuget_config="$HOME/.nuget/NuGet/NuGet.Config"
     if [ -f "$nuget_config" ]; then
-        log "NuGet config exists: $nuget_config"
+        log "NuGet 配置存在：$nuget_config"
     else
-        info "No custom NuGet config found (using defaults)"
+        info "未找到自定义 NuGet 配置（使用默认值）"
     fi
 
-    # Test NuGet connectivity
+    # 测试 NuGet 连接
     if dotnet nuget list source 2>/dev/null | grep -q "nuget.org"; then
-        log "nuget.org source is configured"
+        log "nuget.org 源已配置"
     else
-        warn "nuget.org not in sources. Adding..."
+        warn "nuget.org 不在源中。正在添加..."
         dotnet nuget add source "https://api.nuget.org/v3/index.json" --name "nuget.org" 2>/dev/null || true
     fi
 }
 
-# --- Locale / Encoding Check ---
+# --- 区域设置/编码检查 ---
 check_locale() {
-    step "Checking locale and encoding"
+    step "检查区域设置和编码"
 
-    local current_lang="${LANG:-not set}"
-    local current_lc="${LC_ALL:-not set}"
+    local current_lang="${LANG:-未设置}"
+    local current_lc="${LC_ALL:-未设置}"
 
     if echo "$current_lang" | grep -qi "utf-8\|utf8"; then
-        log "Locale supports UTF-8: LANG=$current_lang"
+        log "区域设置支持 UTF-8：LANG=$current_lang"
     else
-        warn "Locale may not support UTF-8: LANG=$current_lang"
-        warn "CJK document processing requires UTF-8. Set: export LANG=en_US.UTF-8"
+        warn "区域设置可能不支持 UTF-8：LANG=$current_lang"
+        warn "CJK 文档处理需要 UTF-8。设置：export LANG=en_US.UTF-8"
         if [ "$OS" = "linux" ] || [ "$OS" = "wsl" ]; then
-            info "To fix permanently: sudo locale-gen en_US.UTF-8 && sudo update-locale LANG=en_US.UTF-8"
+            info "永久修复：sudo locale-gen en_US.UTF-8 && sudo update-locale LANG=en_US.UTF-8"
         fi
     fi
 }
 
-# --- Font Check (for CJK and professional documents) ---
+# --- 字体检查（用于 CJK 和专业文档） ---
 check_fonts() {
-    step "Checking fonts for document rendering"
+    step "检查文档渲染字体"
 
     if [ "$OS" = "macos" ]; then
-        # macOS has good CJK support built-in
-        log "macOS: built-in CJK font support (PingFang, Hiragino, Apple SD Gothic)"
-        log "macOS: built-in Western fonts (Helvetica, Times, Calibri via Office)"
+        # macOS 内置良好的 CJK 支持
+        log "macOS：内置 CJK 字体支持（苹方、Hiragino、Apple SD Gothic）"
+        log "macOS：内置西文字体（Helvetica、Times、通过 Office 的 Calibri）"
         if [ -d "/Applications/Microsoft Word.app" ] || [ -d "/Applications/Microsoft Office" ]; then
-            log "Microsoft Office fonts available (Calibri, Cambria, etc.)"
+            log "Microsoft Office 字体可用（Calibri、Cambria 等）"
         else
-            warn "Microsoft Office not installed — Calibri/Cambria fonts may be missing"
-            info "Documents will render with fallback fonts on this machine"
-            info "Recipients with Office installed will see correct fonts"
+            warn "未安装 Microsoft Office — 本机可能缺少 Calibri/Cambria 字体"
+            info "文档将使用回退字体在此机器上渲染"
+            info "安装了 Office 的收件人将看到正确的字体"
         fi
     elif [ "$OS" = "linux" ] || [ "$OS" = "wsl" ]; then
-        # Check for key font packages
+        # 检查关键字体包
         local missing_fonts=()
 
         if ! fc-list 2>/dev/null | grep -qi "liberation\|times new roman\|calibri"; then
-            missing_fonts+=("Western: liberation-fonts or msttcorefonts")
+            missing_fonts+=("西文：liberation-fonts 或 msttcorefonts")
         fi
 
         if ! fc-list 2>/dev/null | grep -qi "noto.*cjk\|wqy\|simsun\|pingfang"; then
-            missing_fonts+=("CJK: noto-fonts-cjk or wqy-microhei")
+            missing_fonts+=("CJK：noto-fonts-cjk 或 wqy-microhei")
         fi
 
         if [ ${#missing_fonts[@]} -eq 0 ]; then
-            log "Font support looks good"
+            log "字体支持看起来良好"
         else
-            warn "Missing fonts may affect document rendering:"
+            warn "缺少字体可能影响文档渲染："
             for f in "${missing_fonts[@]}"; do
                 warn "  - $f"
             done
-            info "Install fonts:"
+            info "安装字体："
             case "$PKG_MGR" in
                 apt)
                     info "  sudo apt-get install -y fonts-liberation fonts-noto-cjk"
-                    info "  # For MS core fonts: sudo apt-get install -y ttf-mscorefonts-installer"
+                    info "  # 对于 MS 核心字体：sudo apt-get install -y ttf-mscorefonts-installer"
                     ;;
                 dnf)
                     info "  sudo dnf install -y liberation-fonts google-noto-sans-cjk-fonts"
@@ -396,74 +396,74 @@ check_fonts() {
                     info "  sudo pacman -S ttf-liberation noto-fonts-cjk"
                     ;;
                 *)
-                    info "  Install Liberation Fonts and Noto CJK fonts for your distribution"
+                    info "  为您的发行版安装 Liberation Fonts 和 Noto CJK 字体"
                     ;;
             esac
         fi
     fi
 }
 
-# --- Verification Run ---
+# --- 验证运行 ---
 verify_installation() {
-    step "Verification Test"
+    step "验证测试"
 
     local test_output="/tmp/minimax-docx-setup-test-$$.docx"
 
-    info "Creating a test document..."
+    info "正在创建测试文档..."
     if cd "$DOTNET_DIR" && dotnet run --project MiniMaxAIDocx.Cli -- create \
         --type report --output "$test_output" --title "Setup Test" 2>>"$LOG_FILE"; then
-        log "Test document created: $test_output"
+        log "测试文档已创建：$test_output"
 
-        # Try preview
+        # 尝试预览
         if command -v pandoc &>/dev/null; then
             local preview
             preview=$(pandoc -f docx -t plain "$test_output" 2>/dev/null | head -5)
             if [ -n "$preview" ]; then
-                log "Preview working: \"$preview\""
+                log "预览工作正常：\"$preview\""
             fi
         fi
 
-        # Cleanup
+        # 清理
         rm -f "$test_output"
-        log "Test passed — minimax-docx is ready to use!"
+        log "测试通过 — minimax-docx 已就绪！"
     else
-        fail "Test document creation failed. Check $LOG_FILE for details."
+        fail "测试文档创建失败。检查 $LOG_FILE 了解详情。"
         return 1
     fi
 
     cd "$PROJECT_DIR"
 }
 
-# --- Summary ---
+# --- 摘要 ---
 print_summary() {
-    step "Setup Complete"
+    step "设置完成"
 
     echo ""
-    echo "  Environment: $OS ($ARCH)"
-    echo "  .NET SDK:    $(dotnet --version 2>/dev/null || echo 'NOT FOUND')"
-    echo "  pandoc:      $(pandoc --version 2>/dev/null | head -1 | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' || echo 'not installed (optional)')"
-    echo "  soffice:     $(soffice --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' || echo 'not installed (optional)')"
-    echo "  Project:     $DOTNET_DIR"
+    echo "  环境：$OS ($ARCH)"
+    echo "  .NET SDK：    $(dotnet --version 2>/dev/null || echo '未找到')"
+    echo "  pandoc：      $(pandoc --version 2>/dev/null | head -1 | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' || echo '未安装（可选）')"
+    echo "  soffice：     $(soffice --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' || echo '未安装（可选）')"
+    echo "  项目：        $DOTNET_DIR"
     echo ""
-    echo "  Usage:"
+    echo "  用法："
     echo "    dotnet run --project $DOTNET_DIR/MiniMaxAIDocx.Cli -- create --type report --output my_report.docx"
-    echo "    bash $SCRIPT_DIR/env_check.sh     # Quick environment check"
+    echo "    bash $SCRIPT_DIR/env_check.sh     # 快速环境检查"
     echo ""
-    echo "  Log file: $LOG_FILE"
+    echo "  日志文件：$LOG_FILE"
 }
 
-# --- Main ---
+# --- 主函数 ---
 main() {
     echo "============================================"
-    echo "  minimax-docx Setup & Initialization"
+    echo "  minimax-docx 设置与初始化"
     echo "  $(date '+%Y-%m-%d %H:%M:%S')"
     echo "============================================"
 
-    : > "$LOG_FILE"  # Clear log
+    : > "$LOG_FILE"  # 清空日志
 
     detect_platform
 
-    # Parse arguments
+    # 解析参数
     local SKIP_OPTIONAL=false
     local SKIP_VERIFY=false
     for arg in "$@"; do
@@ -471,10 +471,10 @@ main() {
             --minimal)      SKIP_OPTIONAL=true ;;
             --skip-verify)  SKIP_VERIFY=true ;;
             --help|-h)
-                echo "Usage: setup.sh [options]"
-                echo "  --minimal       Only install critical dependencies (skip pandoc, soffice, fonts)"
-                echo "  --skip-verify   Skip the verification test at the end"
-                echo "  --help          Show this help"
+                echo "用法：setup.sh [选项]"
+                echo "  --minimal       仅安装关键依赖项（跳过 pandoc、soffice、字体）"
+                echo "  --skip-verify   跳过最后的验证测试"
+                echo "  --help          显示此帮助"
                 exit 0
                 ;;
         esac

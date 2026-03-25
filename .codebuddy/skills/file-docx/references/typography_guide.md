@@ -1,294 +1,294 @@
-# Professional Document Design & Typography Guide
+# 专业文档设计与排版指南
 
-## Table of Contents
-1. [Font Pairing](#font-pairing)
-2. [Font Sizes by Document Type](#font-sizes-by-document-type)
-3. [Line Spacing](#line-spacing)
-4. [Paragraph Spacing](#paragraph-spacing)
-5. [Page Layout](#page-layout)
-6. [Table Design](#table-design)
-7. [Color Schemes](#color-schemes)
-8. [Visual Hierarchy](#visual-hierarchy)
-9. [Quick Reference Defaults](#quick-reference-defaults)
-
----
-
-## Font Pairing
-
-### Recommended Pairs
-
-| Headings | Body | Style | Best For |
-|----------|------|-------|----------|
-| Calibri Light | Calibri | Modern sans | Corporate reports |
-| Aptos | Aptos | Office 365 default | Modern business docs |
-| Cambria | Calibri | Serif + sans | Academic-corporate hybrid |
-| Times New Roman | Times New Roman | Traditional serif | Academic, legal |
-| Arial | Arial | Clean sans | Memos, internal docs |
-| Georgia | Garamond | Classical serif pair | Formal reports |
-
-### Rules
-
-- **Limit**: 2 font families max (3 if CJK mixed)
-- **Contrast**: Pair serif with sans-serif, OR use weight contrast within one family
-- **Consistency**: Same font for all body text, same font for all headings
+## 目录
+1. [字体搭配](#字体搭配)
+2. [按文档类型的字体大小](#按文档类型的字体大小)
+3. [行距](#行距)
+4. [段落间距](#段落间距)
+5. [页面布局](#页面布局)
+6. [表格设计](#表格设计)
+7. [配色方案](#配色方案)
+8. [视觉层次](#视觉层次)
+9. [快速参考默认值](#快速参考默认值)
 
 ---
 
-## Font Sizes by Document Type
+## 字体搭配
 
-| Document Type | Body | H1 | H2 | H3 | Footnotes |
-|--------------|------|----|----|----|----|
-| **Business report** | 11pt | 18-20pt | 14-16pt | 12-13pt bold | 9pt |
-| **Business letter** | 11-12pt | — | — | — | 9-10pt |
-| **Memo** | 11pt | 14pt bold | 12pt bold | 11pt bold | 9pt |
-| **Contract / Legal** | 12pt | 14pt bold caps | 12pt bold | 12pt bold | 10pt |
-| **Academic (APA 7)** | 12pt | 12pt bold center | 12pt bold left | 12pt bold italic | 10pt |
-| **Resume / CV** | 10-11pt | 14-16pt | 12pt bold | 11pt bold | 8-9pt |
-| **Chinese 公文** | 三号(16pt) | 二号(22pt) | 三号(16pt) | 四号(14pt) | 小四(12pt) |
+### 推荐搭配
 
-### OpenXML `w:sz` Values (half-points)
+| 标题 | 正文 | 风格 | 最适合 |
+|------|------|------|--------|
+| Calibri Light | Calibri | 现代无衬线 | 企业报告 |
+| Aptos | Aptos | Office 365 默认 | 现代商业文档 |
+| Cambria | Calibri | 衬线 + 无衬线 | 学术-企业混合 |
+| Times New Roman | Times New Roman | 传统衬线 | 学术、法律 |
+| Arial | Arial | 简洁无衬线 | 备忘录、内部文档 |
+| Georgia | Garamond | 古典衬线搭配 | 正式报告 |
 
-| Point Size | `w:sz` Val | Common Use |
-|-----------|-----------|------------|
-| 9pt | 18 | Footnotes, captions |
-| 10pt | 20 | Compact body text |
-| 10.5pt (五号) | 21 | CJK body small |
-| 11pt | 22 | Standard body (Calibri) |
-| 12pt (小四) | 24 | Standard body (TNR), CJK |
-| 14pt (四号) | 28 | CJK body, subheading |
-| 16pt (三号) | 32 | CJK heading, western H2 |
-| 18pt (小二) | 36 | Western H1 |
-| 22pt (二号) | 44 | CJK document title |
-| 26pt (一号) | 52 | Large title |
+### 规则
+
+- **限制**：最多 2 种字体家族（CJK 混合时为 3 种）
+- **对比**：衬线配无衬线，或在一个家族内使用粗细对比
+- **一致性**：所有正文使用相同字体，所有标题使用相同字体
 
 ---
 
-## Line Spacing
+## 按文档类型的字体大小
 
-| Spacing | OpenXML `w:spacing line` | When to Use |
-|---------|--------------------------|-------------|
-| Single (1.0) | `line="240"` lineRule="auto" | Tables, footnotes, captions |
-| 1.08 (MS default) | `line="259"` lineRule="auto" | Modern Office documents |
-| 1.15 | `line="276"` lineRule="auto" | Business reports — best general default |
-| 1.5 | `line="360"` lineRule="auto" | Some academic, drafts for markup |
-| Double (2.0) | `line="480"` lineRule="auto" | APA/MLA manuscripts, legal briefs |
-| Fixed 28pt | `line="560"` lineRule="exact" | Chinese 公文 (GB/T 9704) |
+| 文档类型 | 正文 | H1 | H2 | H3 | 脚注 |
+|----------|------|----|----|----|------|
+| **商业报告** | 11pt | 18-20pt | 14-16pt | 12-13pt 粗体 | 9pt |
+| **商业信函** | 11-12pt | — | — | — | 9-10pt |
+| **备忘录** | 11pt | 14pt 粗体 | 12pt 粗体 | 11pt 粗体 | 9pt |
+| **合同/法律** | 12pt | 14pt 粗体大写 | 12pt 粗体 | 12pt 粗体 | 10pt |
+| **学术 (APA 7)** | 12pt | 12pt 粗体居中 | 12pt 粗体左对齐 | 12pt 粗体斜体 | 10pt |
+| **简历/CV** | 10-11pt | 14-16pt | 12pt 粗体 | 11pt 粗体 | 8-9pt |
+| **中文 公文** | 三号(16pt) | 二号(22pt) | 三号(16pt) | 四号(14pt) | 小四(12pt) |
 
-**`lineRule` values**: `auto` = proportional (240 = 1 line), `exact` = fixed height, `atLeast` = minimum.
+### OpenXML `w:sz` 值（半点）
 
----
-
-## Paragraph Spacing
-
-| Element | Space Before (DXA) | Space After (DXA) |
-|---------|-------------------|-------------------|
-| Body paragraph | 0 | 120-160 (6-8pt) |
-| Heading 1 | 480 (24pt) | 120-240 |
-| Heading 2 | 360 (18pt) | 120 |
-| Heading 3 | 240 (12pt) | 80-120 |
-| List items | 0 | 40-80 (2-4pt) |
-| Block quote | 120-240 | 120-240 |
-| Table/Figure caption | 240 | 240 |
-
-**Principle**: Space before a heading > space after, so heading visually "belongs to" content below (2:1 or 3:1 ratio).
+| 磅值 | `w:sz` 值 | 常见用途 |
+|------|-----------|----------|
+| 9pt | 18 | 脚注、标题 |
+| 10pt | 20 | 紧凑正文 |
+| 10.5pt (五号) | 21 | CJK 正文小 |
+| 11pt | 22 | 标准正文 (Calibri) |
+| 12pt (小四) | 24 | 标准正文 (TNR)、CJK |
+| 14pt (四号) | 28 | CJK 正文、子标题 |
+| 16pt (三号) | 32 | CJK 标题、西方 H2 |
+| 18pt (小二) | 36 | 西方 H1 |
+| 22pt (二号) | 44 | CJK 文档标题 |
+| 26pt (一号) | 52 | 大标题 |
 
 ---
 
-## Page Layout
+## 行距
 
-### Margins by Document Type
+| 间距 | OpenXML `w:spacing line` | 何时使用 |
+|------|--------------------------|----------|
+| 单倍 (1.0) | `line="240"` lineRule="auto" | 表格、脚注、标题 |
+| 1.08 (MS 默认) | `line="259"` lineRule="auto" | 现代 Office 文档 |
+| 1.15 | `line="276"` lineRule="auto" | 商业报告 —— 最佳通用默认 |
+| 1.5 | `line="360"` lineRule="auto" | 某些学术、供标注的草稿 |
+| 双倍 (2.0) | `line="480"` lineRule="auto" | APA/MLA 手稿、法律摘要 |
+| 固定 28pt | `line="560"` lineRule="exact" | 中文 公文 (GB/T 9704) |
 
-| Document Type | Top | Bottom | Left | Right | DXA Values |
-|--------------|-----|--------|------|-------|------------|
-| **Standard business** | 1 in | 1 in | 1 in | 1 in | 1440 all |
-| **Academic (APA/MLA)** | 1 in | 1 in | 1 in | 1 in | 1440 all |
-| **Thesis (binding)** | 1 in | 1 in | 1.5 in | 1 in | T/B:1440 L:2160 R:1440 |
-| **Chinese 公文** | 37mm | 35mm | 28mm | 26mm | T:2098 B:1984 L:1588 R:1474 |
-| **Narrow modern** | 0.75 in | 0.75 in | 0.75 in | 0.75 in | 1080 all |
-| **Wide** | 1 in | 1 in | 2 in | 2 in | T/B:1440 L/R:2880 |
+**`lineRule` 值**：`auto` = 比例（240 = 1 行），`exact` = 固定高度，`atLeast` = 最小值。
 
-### Page Sizes
+---
 
-| Size | Width × Height | DXA Width × Height |
-|------|---------------|-------------------|
-| US Letter | 8.5 × 11 in | 12240 × 15840 |
+## 段落间距
+
+| 元素 | 前间距 (DXA) | 后间距 (DXA) |
+|------|--------------|--------------|
+| 正文段落 | 0 | 120-160 (6-8pt) |
+| 标题 1 | 480 (24pt) | 120-240 |
+| 标题 2 | 360 (18pt) | 120 |
+| 标题 3 | 240 (12pt) | 80-120 |
+| 列表项 | 0 | 40-80 (2-4pt) |
+| 块引用 | 120-240 | 120-240 |
+| 表格/图片标题 | 240 | 240 |
+
+**原则**：标题前的空间 > 标题后的空间，所以标题视觉上"属于"下面的内容（2:1 或 3:1 比例）。
+
+---
+
+## 页面布局
+
+### 按文档类型的边距
+
+| 文档类型 | 上 | 下 | 左 | 右 | DXA 值 |
+|----------|----|----|----|----|--------|
+| **标准商业** | 1 英寸 | 1 英寸 | 1 英寸 | 1 英寸 | 1440 全部 |
+| **学术 (APA/MLA)** | 1 英寸 | 1 英寸 | 1 英寸 | 1 英寸 | 1440 全部 |
+| **学位论文 (装订)** | 1 英寸 | 1 英寸 | 1.5 英寸 | 1 英寸 | 上/下:1440 左:2160 右:1440 |
+| **中文 公文** | 37mm | 35mm | 28mm | 26mm | 上:2098 下:1984 左:1588 右:1474 |
+| **窄边现代** | 0.75 英寸 | 0.75 英寸 | 0.75 英寸 | 0.75 英寸 | 1080 全部 |
+| **宽边** | 1 英寸 | 1 英寸 | 2 英寸 | 2 英寸 | 上/下:1440 左/右:2880 |
+
+### 页面大小
+
+| 大小 | 宽 × 高 | DXA 宽 × 高 |
+|------|---------|-------------|
+| US Letter | 8.5 × 11 英寸 | 12240 × 15840 |
 | A4 | 210 × 297 mm | 11906 × 16838 |
-| Legal | 8.5 × 14 in | 12240 × 20160 |
+| Legal | 8.5 × 14 英寸 | 12240 × 20160 |
 | A3 | 297 × 420 mm | 16838 × 23811 |
 
-**Rule**: A4 for international audiences, Letter for US-only.
+**规则**：国际受众使用 A4，仅美国使用 Letter。
 
-### Page Numbers
+### 页码
 
-| Convention | Placement | Common In |
-|-----------|-----------|-----------|
-| Bottom center | Footer, centered | Academic, government |
-| Bottom right | Footer, right-aligned | Business reports |
-| "Page X of Y" | Footer, right-aligned | Contracts, legal |
-| Bottom outside | Alternating L/R for odd/even | Books, bound reports |
-| Chinese 公文 | Bottom center, format "-X-" | Government documents |
-
----
-
-## Table Design
-
-### Style Patterns
-
-| Style | Description | When to Use |
-|-------|------------|-------------|
-| **Three-line (三线表)** | Top rule + header-bottom rule + bottom rule only, no vertical lines | Academic, scientific — gold standard |
-| **Banded rows** | Alternating white/light-gray, no borders | Modern corporate |
-| **Light grid** | Thin 0.5pt gray borders all cells | Business reports |
-| **Header-accent** | Dark/colored header row, no other borders | Modern templates |
-| **Full border** | All cells bordered | Financial tables, forms |
-
-### Border Weights (OpenXML `w:sz` in eighths of a point)
-
-| Visual | `Size` value | Points |
-|--------|-------------|--------|
-| Hairline | 2 | 0.25pt |
-| Thin | 4 | 0.5pt |
-| Medium | 8 | 1pt |
-| Thick | 12 | 1.5pt |
-
-### Cell Padding
-
-- **Minimum**: 0.05 in (28 DXA) — too tight for most uses
-- **Recommended**: 0.08-0.1 in (57-72 DXA) top/bottom, 0.1-0.15 in (72-108 DXA) left/right
-- **Spacious**: 0.12 in (86 DXA) top/bottom, 0.19 in (137 DXA) left/right
-
-### Header Row Best Practices
-
-- Bold text, optionally SMALL CAPS
-- Background: light gray (#F2F2F2) or dark with white text (#2F5496 + white)
-- Repeat header row on each page (`w:tblHeader` on `w:trPr`)
-- Right-align number columns, left-align text columns
+| 惯例 | 位置 | 常见于 |
+|------|------|--------|
+| 底部居中 | 页脚，居中 | 学术、政府 |
+| 底部右侧 | 页脚，右对齐 | 商业报告 |
+| "第 X 页，共 Y 页" | 页脚，右对齐 | 合同、法律 |
+| 底部外侧 | 奇/偶页交替左/右 | 书籍、装订报告 |
+| 中文 公文 | 底部居中，格式 "-X-" | 政府文档 |
 
 ---
 
-## Color Schemes
+## 表格设计
 
-### Corporate / Business
+### 样式模式
 
-| Element | Hex | Notes |
-|---------|-----|-------|
-| Primary heading | #1F3864 | Dark navy, authoritative |
-| Secondary heading | #2E75B6 | Medium blue |
-| Body text | #333333 | Near-black (softer than #000) |
-| Table header bg | #4472C4 | With white #FFFFFF text |
-| Alternate row | #F2F2F2 | Subtle gray banding |
-| Hyperlink | #0563C1 | Standard blue |
+| 风格 | 描述 | 何时使用 |
+|------|------|----------|
+| **三线表** | 只有顶线 + 表头底线 + 底线，无竖线 | 学术、科学 —— 金标准 |
+| **条纹行** | 交替白/浅灰，无边框 | 现代企业 |
+| **浅网格** | 所有单元格细 0.5pt 灰色边框 | 商业报告 |
+| **表头强调** | 深/彩色表头行，无其他边框 | 现代模板 |
+| **全边框** | 所有单元格有边框 | 财务表格、表单 |
 
-### Academic
+### 边框粗细（OpenXML `w:sz` 以八分之一磅计）
 
-All text **#000000** (black). Color only in figures/charts.
+| 视觉 | `Size` 值 | 磅值 |
+|------|-----------|------|
+| 发丝 | 2 | 0.25pt |
+| 细 | 4 | 0.5pt |
+| 中等 | 8 | 1pt |
+| 粗 | 12 | 1.5pt |
 
-### Chinese Government (公文)
+### 单元格内边距
 
-| Element | Color |
-|---------|-------|
-| All body text | Black (required) |
-| 红头 agency name | Red #FF0000 |
-| 红线 separator | Red #FF0000 |
-| 公章 seal | Red |
+- **最小**：0.05 英寸（28 DXA）—— 对大多数用途太紧
+- **推荐**：0.08-0.1 英寸（57-72 DXA）上/下，0.1-0.15 英寸（72-108 DXA）左/右
+- **宽敞**：0.12 英寸（86 DXA）上/下，0.19 英寸（137 DXA）左/右
 
-### Accessibility
+### 表头行最佳实践
 
-- Minimum contrast ratio 4.5:1 for normal text, 3:1 for large text (WCAG AA)
-- Never use color as sole means of conveying information
-- Ensure distinguishable in grayscale for printed documents
+- 粗体文本，可选小型大写
+- 背景：浅灰（#F2F2F2）或深色白字（#2F5496 + 白色）
+- 每页重复表头行（`w:tblHeader` 在 `w:trPr` 上）
+- 数字列右对齐，文本列左对齐
 
 ---
 
-## Visual Hierarchy
+## 配色方案
 
-### Heading Levels by Document Length
+### 企业/商业
 
-| Pages | Recommended Levels |
-|-------|-------------------|
-| 1-5 (memo, letter) | 1-2 levels |
-| 5-20 (report) | 2-3 levels |
-| 20-100 (long report) | 3-4 levels |
-| 100+ (thesis) | 4-5 levels max |
+| 元素 | 十六进制 | 备注 |
+|------|----------|------|
+| 主标题 | #1F3864 | 深蓝，权威 |
+| 副标题 | #2E75B6 | 中蓝 |
+| 正文 | #333333 | 近黑（比 #000 柔和） |
+| 表头背景 | #4472C4 | 配白色 #FFFFFF 文本 |
+| 交替行 | #F2F2F2 | 微妙灰色条纹 |
+| 超链接 | #0563C1 | 标准蓝色 |
 
-### Numbering Systems
+### 学术
 
-**Decimal (ISO 2145)** — technical, international:
+所有文本 **#000000**（黑色）。颜色只在图表中。
+
+### 中国政府 (公文)
+
+| 元素 | 颜色 |
+|------|------|
+| 所有正文 | 黑色（必需） |
+| 红头 机关名称 | 红色 #FF0000 |
+| 红线 分隔符 | 红色 #FF0000 |
+| 公章 印章 | 红色 |
+
+### 无障碍
+
+- 正常文本最小对比度 4.5:1，大文本 3:1（WCAG AA）
+- 绝不使用颜色作为传达信息的唯一方式
+- 确保打印文档在灰度下可区分
+
+---
+
+## 视觉层次
+
+### 按文档长度的标题级别
+
+| 页数 | 推荐级别 |
+|------|----------|
+| 1-5（备忘录、信函） | 1-2 级 |
+| 5-20（报告） | 2-3 级 |
+| 20-100（长报告） | 3-4 级 |
+| 100+（学位论文） | 最多 4-5 级 |
+
+### 编号系统
+
+**十进制 (ISO 2145)** —— 技术、国际：
 ```
 1 → 1.1 → 1.1.1 → 1.1.1.1
 ```
 
-**Traditional outline (US legal):**
+**传统大纲 (美国法律)：**
 ```
 I. → A. → 1. → a. → (1) → (a)
 ```
 
-**Chinese government (公文):**
+**中国政府 (公文)：**
 ```
 一、(黑体) → （一）(楷体) → 1.(仿宋加粗) → (1)(仿宋)
 ```
 
-### Typography Emphasis
+### 排版强调
 
-| Format | Use For | Avoid |
-|--------|---------|-------|
-| **Bold** | Key terms, headings, emphasis | Entire paragraphs |
-| *Italic* | Titles, foreign words, mild emphasis | Long passages (hard to read) |
-| Underline | Hyperlinks only (digital) | General emphasis (archaic) |
-| SMALL CAPS | Legal defined terms, acronyms | Body text |
-| ALL CAPS | Very short headings | Long text (reduces readability 15%) |
+| 格式 | 用于 | 避免 |
+|------|------|------|
+| **粗体** | 关键术语、标题、强调 | 整段 |
+| *斜体* | 标题、外来词、轻微强调 | 长段落（难读） |
+| 下划线 | 仅超链接（数字） | 一般强调（过时） |
+| 小型大写 | 法律定义术语、首字母缩略词 | 正文 |
+| 全大写 | 非常短的标题 | 长文本（降低可读性 15%） |
 
-**CJK note**: Chinese/Japanese have no true italic. Use bold for emphasis.
+**CJK 注意**：中文/日文没有真正的斜体。使用粗体强调。
 
-### List Formatting
+### 列表格式
 
-**Bullets** (unordered): `•` → `○` → `■` by level
+**项目符号**（无序）：`•` → `○` → `■` 按级别
 
-**Numbers** (ordered): `1.` → `a.` → `i.` by level
+**编号**（有序）：`1.` → `a.` → `i.` 按级别
 
-- Indent each level 0.25-0.5 in (360-720 DXA)
-- Hanging indent: number hangs, text aligns consistently
-- Spacing between items: 2-4pt (less than paragraph spacing)
+- 每级缩进 0.25-0.5 英寸（360-720 DXA）
+- 悬挂缩进：数字悬挂，文本一致对齐
+- 项之间间距：2-4pt（小于段落间距）
 
 ---
 
-## Quick Reference Defaults
+## 快速参考默认值
 
-### Business Report (Safe Default)
+### 商业报告（安全默认）
 
-| Parameter | Value | OpenXML |
-|-----------|-------|---------|
-| Body font | Calibri 11pt | sz="22", RunFonts Ascii="Calibri" |
-| H1 | 18pt Bold Dark Blue | sz="36", Bold, Color="#1F3864" |
-| H2 | 14pt Bold Dark Blue | sz="28", Bold |
-| H3 | 12pt Bold Dark Blue | sz="24", Bold |
-| Line spacing | 1.15 | line="276" lineRule="auto" |
-| Para after | 8pt | after="160" |
-| Margins | 1 in all | 1440 DXA all |
-| Page size | Letter or A4 | 12240×15840 or 11906×16838 |
-| Page numbers | Bottom right, 10pt | |
+| 参数 | 值 | OpenXML |
+|------|----|---------|
+| 正文字体 | Calibri 11pt | sz="22"、RunFonts Ascii="Calibri" |
+| H1 | 18pt 粗体深蓝 | sz="36"、Bold、Color="#1F3864" |
+| H2 | 14pt 粗体深蓝 | sz="28"、Bold |
+| H3 | 12pt 粗体深蓝 | sz="24"、Bold |
+| 行距 | 1.15 | line="276" lineRule="auto" |
+| 段后 | 8pt | after="160" |
+| 边距 | 1 英寸四周 | 1440 DXA 全部 |
+| 页面大小 | Letter 或 A4 | 12240×15840 或 11906×16838 |
+| 页码 | 底部右侧，10pt | |
 
-### Academic Paper (APA 7th)
+### 学术论文 (APA 第7版)
 
-| Parameter | Value | OpenXML |
-|-----------|-------|---------|
-| Font | Times New Roman 12pt | sz="24" |
-| Line spacing | Double | line="480" lineRule="auto" |
-| First-line indent | 0.5 in | ind firstLine="720" |
-| Margins | 1 in all | 1440 DXA all |
-| Page numbers | Top right | Header, right-aligned |
+| 参数 | 值 | OpenXML |
+|------|----|---------|
+| 字体 | Times New Roman 12pt | sz="24" |
+| 行距 | 双倍 | line="480" lineRule="auto" |
+| 首行缩进 | 0.5 英寸 | ind firstLine="720" |
+| 边距 | 1 英寸四周 | 1440 DXA 全部 |
+| 页码 | 顶部右侧 | 页眉，右对齐 |
 
-### Chinese Government (公文 GB/T 9704)
+### 中国政府 (公文 GB/T 9704)
 
-| Parameter | Value | OpenXML |
-|-----------|-------|---------|
-| Body font | 仿宋_GB2312 三号 | sz="32", EastAsia="FangSong_GB2312" |
-| Title | 小标宋 二号 centered | sz="44" |
-| L1 heading | 黑体 三号 | sz="32", EastAsia="SimHei" |
-| L2 heading | 楷体 三号 | sz="32", EastAsia="KaiTi_GB2312" |
-| Line spacing | Fixed 28pt | line="560" lineRule="exact" |
-| Margins | T:37mm B:35mm L:28mm R:26mm | T:2098 B:1984 L:1588 R:1474 |
-| Page size | A4 | 11906×16838 |
-| Page numbers | Bottom center, 宋体 四号, "-X-" | sz="28" |
-| Chars/line | 28 | |
-| Lines/page | 22 | |
+| 参数 | 值 | OpenXML |
+|------|----|---------|
+| 正文字体 | 仿宋_GB2312 三号 | sz="32"、EastAsia="FangSong_GB2312" |
+| 标题 | 小标宋 二号 居中 | sz="44" |
+| 一级标题 | 黑体 三号 | sz="32"、EastAsia="SimHei" |
+| 二级标题 | 楷体 三号 | sz="32"、EastAsia="KaiTi_GB2312" |
+| 行距 | 固定 28pt | line="560" lineRule="exact" |
+| 边距 | 上:37mm 下:35mm 左:28mm 右:26mm | 上:2098 下:1984 左:1588 右:1474 |
+| 页面大小 | A4 | 11906×16838 |
+| 页码 | 底部居中，宋体 四号，"-X-" | sz="28" |
+| 每行字符 | 28 | |
+| 每页行数 | 22 | |

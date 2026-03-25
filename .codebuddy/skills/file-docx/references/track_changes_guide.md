@@ -1,86 +1,86 @@
-# Track Changes Guide
+# 修订标记指南
 
-## Overview
+## 概述
 
-Track Changes in OpenXML uses revision markup elements to record insertions, deletions, and formatting changes. Each revision has a unique ID, author, and timestamp.
+OpenXML 中的修订跟踪使用修订标记元素来记录插入、删除和格式更改。每个修订都有唯一 ID、作者和时间戳。
 
 ---
 
-## Insertion: `<w:ins>`
+## 插入：`<w:ins>`
 
-Wraps runs that were inserted during tracking:
+包装在跟踪期间插入的 run：
 
 ```xml
-<w:ins w:id="1" w:author="John Smith" w:date="2026-03-21T10:30:00Z">
+<w:ins w:id="1" w:author="张三" w:date="2026-03-21T10:30:00Z">
   <w:r>
     <w:rPr>
       <w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" />
       <w:sz w:val="22" />
     </w:rPr>
-    <w:t>This text was inserted.</w:t>
+    <w:t>这是插入的文本。</w:t>
   </w:r>
 </w:ins>
 ```
 
-- `w:id` — unique revision ID (integer, must be unique across document)
-- `w:author` — free text string identifying the author
-- `w:date` — ISO 8601 format with timezone: `YYYY-MM-DDTHH:MM:SSZ`
-- Content inside is normal runs (`w:r`) with optional formatting
+- `w:id` —— 唯一修订 ID（整数，必须在文档中唯一）
+- `w:author` —— 标识作者的自由文本字符串
+- `w:date` —— ISO 8601 格式带时区：`YYYY-MM-DDTHH:MM:SSZ`
+- 内部内容是带可选格式的普通 run（`w:r`）
 
 ---
 
-## Deletion: `<w:del>`
+## 删除：`<w:del>`
 
-Wraps runs that were deleted during tracking:
+包装在跟踪期间删除的 run：
 
 ```xml
-<w:del w:id="2" w:author="John Smith" w:date="2026-03-21T10:31:00Z">
+<w:del w:id="2" w:author="张三" w:date="2026-03-21T10:31:00Z">
   <w:r>
     <w:rPr>
       <w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" />
       <w:sz w:val="22" />
     </w:rPr>
-    <w:delText xml:space="preserve">This text was deleted.</w:delText>
+    <w:delText xml:space="preserve">这是删除的文本。</w:delText>
   </w:r>
 </w:del>
 ```
 
-**CRITICAL**: Inside `<w:del>`, text MUST use `<w:delText>`, NOT `<w:t>`. Using `<w:t>` inside a deletion is invalid and will cause corruption or unexpected behavior. Word may silently repair it, but other consumers will fail.
+**关键**：在 `<w:del>` 内部，文本**必须**使用 `<w:delText>`，**不是** `<w:t>`。在删除中使用 `<w:t>` 是无效的，会导致损坏或意外行为。Word 可能静默修复它，但其他使用者会失败。
 
 ---
 
-## Formatting Change: `<w:rPrChange>`
+## 格式更改：`<w:rPrChange>`
 
-Records that a run's formatting was changed. Placed inside `w:rPr`, it stores the **previous** formatting:
+记录 run 的格式被更改。放在 `w:rPr` 内部，存储**之前的**格式：
 
 ```xml
 <w:r>
   <w:rPr>
-    <w:b />  <!-- Current: bold -->
-    <w:rPrChange w:id="3" w:author="Jane Doe" w:date="2026-03-21T11:00:00Z">
+    <w:b />  <!-- 当前：粗体 -->
+    <w:rPrChange w:id="3" w:author="李四" w:date="2026-03-21T11:00:00Z">
       <w:rPr>
-        <!-- Previous: not bold (empty rPr means no formatting) -->
+        <!-- 之前：非粗体（空 rPr 表示无格式） -->
       </w:rPr>
     </w:rPrChange>
   </w:rPr>
-  <w:t>This text was made bold.</w:t>
+  <w:t>此文本被设为粗体。</w:t>
 </w:r>
 ```
 
-The outer `w:rPr` holds the **new** (current) formatting. The `w:rPrChange` child holds the **old** (previous) formatting.
+外部 `w:rPr` 保存**新的**（当前）格式。`w:rPrChange` 子元素保存**旧的**（之前的）格式。
 
 ---
 
-## Paragraph Property Change: `<w:pPrChange>`
+## 段落属性更改：`<w:pPrChange>`
 
-Records paragraph-level formatting changes (alignment, spacing, style):
+记录段落级格式更改（对齐、间距、样式）：
 
 ```xml
 <w:pPr>
-  <w:jc w:val="center" />  <!-- Current: centered -->
-  <w:pPrChange w:id="4" w:author="Jane Doe" w:date="2026-03-21T11:05:00Z">
+  <w:jc w:val="center" />  <!-- 当前：居中 -->
+  <w:pPrChange w:id="4" w:author="李四" w:date="2026-03-21T11:05:00Z">
     <w:pPr>
-      <w:jc w:val="left" />  <!-- Previous: left-aligned -->
+      <w:jc w:val="left" />  <!-- 之前：左对齐 -->
     </w:pPr>
   </w:pPrChange>
 </w:pPr>
@@ -88,80 +88,80 @@ Records paragraph-level formatting changes (alignment, spacing, style):
 
 ---
 
-## Revision ID Management
+## 修订 ID 管理
 
-- Every revision element (`w:ins`, `w:del`, `w:rPrChange`, `w:pPrChange`, `w:tblPrChange`, etc.) requires a `w:id` attribute
-- IDs must be **unique integers** across the entire document
-- IDs should be **monotonically increasing** (not strictly required, but expected by Word)
-- When adding revisions, scan for the current maximum `w:id` and increment from there
+- 每个修订元素（`w:ins`、`w:del`、`w:rPrChange`、`w:pPrChange`、`w:tblPrChange` 等）都需要 `w:id` 属性
+- ID 必须是文档中的**唯一整数**
+- ID 应该**单调递增**（不严格要求，但 Word 期望）
+- 添加修订时，扫描当前最大 `w:id` 并从那里递增
 
 ```
-Existing max ID: 47
-New insertion: w:id="48"
-New deletion: w:id="49"
+现有最大 ID：47
+新插入：w:id="48"
+新删除：w:id="49"
 ```
 
 ---
 
-## Author and Date
+## 作者和日期
 
-- **Author**: Free text. Use consistent strings (e.g., `"MiniMaxAI"` for all automated edits)
-- **Date**: ISO 8601 with UTC timezone marker: `2026-03-21T10:30:00Z`
-  - Must include the `T` separator and `Z` suffix (or `+HH:MM` offset)
-  - Omitting the date is allowed but not recommended
+- **作者**：自由文本。使用一致的字符串（例如所有自动编辑用 `"MiniMaxAI"`）
+- **日期**：带 UTC 时区标记的 ISO 8601：`2026-03-21T10:30:00Z`
+  - 必须包含 `T` 分隔符和 `Z` 后缀（或 `+HH:MM` 偏移）
+  - 允许省略日期但不推荐
 
 ---
 
-## Operations
+## 操作
 
-### Propose Insertion
+### 提议插入
 
-Add `<w:ins>` wrapper around new content at the target location:
+在目标位置周围添加 `<w:ins>` 包装器：
 
 ```xml
 <w:p>
-  <w:r><w:t>Existing text. </w:t></w:r>
+  <w:r><w:t>现有文本。</w:t></w:r>
   <w:ins w:id="5" w:author="MiniMaxAI" w:date="2026-03-21T12:00:00Z">
-    <w:r><w:t>Proposed new text. </w:t></w:r>
+    <w:r><w:t>提议的新文本。</w:t></w:r>
   </w:ins>
-  <w:r><w:t>More existing text.</w:t></w:r>
+  <w:r><w:t>更多现有文本。</w:t></w:r>
 </w:p>
 ```
 
-### Propose Deletion
+### 提议删除
 
-Wrap existing content in `<w:del>` and change `<w:t>` to `<w:delText>`:
+将现有内容包装在 `<w:del>` 中并将 `<w:t>` 改为 `<w:delText>`：
 
 ```xml
 <w:p>
-  <w:r><w:t>Keep this. </w:t></w:r>
+  <w:r><w:t>保留这个。</w:t></w:r>
   <w:del w:id="6" w:author="MiniMaxAI" w:date="2026-03-21T12:01:00Z">
     <w:r>
       <w:rPr><w:b /></w:rPr>
-      <w:delText>Remove this.</w:delText>
+      <w:delText>删除这个。</w:delText>
     </w:r>
   </w:del>
-  <w:r><w:t> Keep this too.</w:t></w:r>
+  <w:r><w:t> 也保留这个。</w:t></w:r>
 </w:p>
 ```
 
-### Accept a Tracked Change
+### 接受修订标记
 
-- **Accept insertion**: Remove the `<w:ins>` wrapper, keep the inner runs as normal content
-- **Accept deletion**: Remove the entire `<w:del>` element and its content
+- **接受插入**：移除 `<w:ins>` 包装器，将内部 run 保留为正常内容
+- **接受删除**：完全移除整个 `<w:del>` 元素及其内容
 
-### Reject a Tracked Change
+### 拒绝修订标记
 
-- **Reject insertion**: Remove the entire `<w:ins>` element and its content
-- **Reject deletion**: Remove the `<w:del>` wrapper, change `<w:delText>` back to `<w:t>`
+- **拒绝插入**：完全移除整个 `<w:ins>` 元素及其内容
+- **拒绝删除**：移除 `<w:del>` 包装器，将 `<w:delText>` 改回 `<w:t>`
 
 ---
 
-## Cross-Paragraph Operations
+## 跨段落操作
 
-### Deleting a Paragraph Break (Merging Paragraphs)
+### 删除段落分隔符（合并段落）
 
-When tracked deletion spans a paragraph boundary, use `<w:pPrChange>` on the merged paragraph:
+当修订删除跨越段落边界时，在合并的段落上使用 `<w:pPrChange>`：
 
 ```xml
 <w:p>
@@ -172,17 +172,17 @@ When tracked deletion spans a paragraph boundary, use `<w:pPrChange>` on the mer
       </w:pPr>
     </w:pPrChange>
   </w:pPr>
-  <w:r><w:t>First paragraph text. </w:t></w:r>
+  <w:r><w:t>第一段文本。</w:t></w:r>
   <w:del w:id="8" w:author="MiniMaxAI" w:date="2026-03-21T12:05:00Z">
     <w:r><w:delText> </w:delText></w:r>
   </w:del>
-  <w:r><w:t>Second paragraph text (now merged).</w:t></w:r>
+  <w:r><w:t>第二段文本（现已合并）。</w:t></w:r>
 </w:p>
 ```
 
-### Inserting a New Paragraph
+### 插入新段落
 
-The entire new paragraph is wrapped in `<w:ins>`:
+整个新段落包装在 `<w:ins>` 中：
 
 ```xml
 <w:p>
@@ -192,9 +192,9 @@ The entire new paragraph is wrapped in `<w:ins>`:
     </w:rPr>
   </w:pPr>
   <w:ins w:id="10" w:author="MiniMaxAI" w:date="2026-03-21T12:10:00Z">
-    <w:r><w:t>Entirely new paragraph.</w:t></w:r>
+    <w:r><w:t>全新段落。</w:t></w:r>
   </w:ins>
 </w:p>
 ```
 
-The paragraph mark itself is marked as inserted via `w:ins` inside `w:pPr > w:rPr`.
+段落标记本身通过 `w:pPr > w:rPr` 内的 `w:ins` 标记为插入。
