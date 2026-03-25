@@ -1,192 +1,252 @@
 ---
 name: qt-packaging
 description: >
-  Qt Python 应用程序的打包与分发 — PyInstaller、Briefcase 以及平台特定的构建配置。适用于：将 PySide6 或 PyQt6 应用分发为独立可执行文件、创建安装程序、配置 macOS bundles、Windows 可执行文件或 Linux AppImages。
+  Qt C++ 应用程序的打包与分发 — CMake、Conan、vcpkg、安装程序以及平台特定的构建配置。适用于：将 Qt C++ 应用分发为独立可执行文件、创建安装程序、配置 macOS bundles、Windows 可执行文件或 Linux AppImages。
 
-  触发词："package app"、"PyInstaller"、"distribute"、"deploy"、"standalone executable"、"installer"、"bundle app"、"briefcase"、"Windows build"、"macOS build"、"AppImage"、"one-file"
+  触发词："package app"、"CMake"、"conan"、"vcpkg"、"distribute"、"deploy"、"standalone executable"、"installer"、"bundle app"、"Windows build"、"macOS build"、"AppImage"、"cmake install"
 version: 1.0.0
 ---
 
-## Qt Python 应用程序打包
+## Qt C++ 应用程序打包
 
-### PyInstaller（最常用）
+### CMake + Qt6 推荐配置
 
-**关键：虚拟环境隔离**
+```cmake
+cmake_minimum_required(VERSION 3.16)
+project(MyApp LANGUAGES CXX)
 
-Qt for Python 官方文档记录了一个已知的 PyInstaller 问题：**如果安装了系统级 PySide6，PyInstaller 会静默选择它而不是 venv 版本**。构建前请执行：
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-```bash
-# 从构建机器上移除所有系统级 PySide6 安装
-pip uninstall pyside6 pyside6_essentials pyside6_addons shiboken6 -y
+# 自动处理 Qt 元对象编译
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
 
-# 验证只剩下 venv 版本
-python -c "import PySide6; print(PySide6.__file__)"
-# 必须显示 .venv/ 内的路径，而不是 /usr/lib 或系统 site-packages
-```
+find_package(Qt6 REQUIRED COMPONENTS Widgets)
 
-**`--onefile` 限制：** 对于 Qt6，`--onefile` 打包无法自动部署 Qt 插件。单目录（`dist/MyApp/`）方式更可靠。仅在你了解其限制并手动处理 Qt 插件时才使用 `--onefile`。
+qt_standard_project_setup()
 
-**安装：**
-```bash
-uv add --dev pyinstaller
-```
-
-**基本单目录构建：**
-```bash
-pyinstaller --name MyApp \
-  --windowed \
-  --icon resources/icons/app.ico \
-  src/myapp/__main__.py
-```
-
-**Spec 文件（可重现构建）：**
-```python
-# MyApp.spec
-block_cipher = None
-
-a = Analysis(
-    ["src/myapp/__main__.py"],
-    pathex=[],
-    binaries=[],
-    datas=[
-        ("src/myapp/resources", "resources"),   # (源, 打包内的目标路径)
-    ],
-    hiddenimports=[
-        "PySide6.QtSvg",          # SVG 支持
-        "PySide6.QtSvgWidgets",   # SVG 组件
-        "PySide6.QtXml",          # 部分 Qt 模块需要
-    ],
-    hookspath=[],
-    hooksconfig={},
-    runtime_hooks=[],
-    excludes=["tkinter", "matplotlib"],
-    win_no_prefer_redirects=False,
-    win_private_assemblies=False,
-    cipher=block_cipher,
-    noarchive=False,
+add_executable(myapp
+    src/main.cpp
+    src/mainwindow.cpp
+    src/mainwindow.h
+    # ... 其他源文件
 )
 
-pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+target_link_libraries(myapp PRIVATE Qt6::Widgets)
 
-exe = EXE(
-    pyz,
-    a.scripts,
-    [],
-    exclude_binaries=True,
-    name="MyApp",
-    debug=False,
-    bootloader_ignore_signals=False,
-    strip=False,
-    upx=False,
-    console=False,           # CLI 应用设为 True
-    disable_windowed_traceback=False,
-    argv_emulation=False,    # macOS：拖放文件时设为 True
-    target_arch=None,
-    codesign_identity=None,
-    entitlements_file=None,
-    icon="resources/icons/app.ico",
-)
-
-coll = COLLECT(
-    exe,
-    a.binaries,
-    a.zipfiles,
-    a.datas,
-    strip=False,
-    upx=False,
-    upx_exclude=[],
-    name="MyApp",
+# 资源文件
+qt_add_resources(myapp "resources"
+    PREFIX "/"
+    FILES
+        resources/icons/app.png
+        resources/themes/dark.qss
 )
 ```
 
-运行：`pyinstaller MyApp.spec`
+### Conan + vcpkg 依赖管理
 
-**Qt 插件检测问题：** PySide6 通常需要显式导入插件。添加到 `hiddenimports`：
-```python
-hiddenimports = [
-    "PySide6.QtSvg", "PySide6.QtSvgWidgets",
-    "PySide6.QtPrintSupport",   # 部分平台上 QTextEdit 需要
-    "PySide6.QtDBus",           # Linux
-]
+**Conan:**
+```bash
+# conanfile.txt
+[requires]
+qt/6.5.0
+
+[generators]
+cmake_find_package
+cmake_paths
+
+# 构建
+conan install . -if build -c Tools.toolchain:cmake_layout=True
+cmake -B build -sf build -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake
+cmake --build build
 ```
 
-**QRC 编译资源：** 将编译后的 `.py` 资源文件包含在 `datas` 中，或确保它们可导入。最简洁的方式是在 `__init__.py` 中导入 `rc_resources`，让 PyInstaller 自动检测。
+**vcpkg:**
+```bash
+# 安装 Qt
+vcpkg install qtbase:x64-osx qt5:image
 
-### Briefcase（跨平台，分发首选）
+# CMake Toolchain
+cmake -B build -DCMAKE_TOOLCHAIN_FILE=[vcpkg]/scripts/buildsystems/vcpkg.cmake
+```
 
-Briefcase 生成原生平台安装程序（`.msi`、`.dmg`、`.AppImage`）：
+### Windows：单独可执行文件
+
+使用 `windeployqt` 部署 Qt 运行时和插件：
 
 ```bash
-pip install briefcase
-briefcase create     # 创建平台包
-briefcase build      # 编译
-briefcase run        # 从包运行
-briefcase package    # 创建安装程序
+# 构建发布版本
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --config Release
+
+# 部署 Qt 依赖
+windeployqt build/Release/myapp.exe --no-translations
+
+# 创建自包含安装包
+# 使用 NSIS、WiX 或 Inno Setup
 ```
 
-**Briefcase 的 pyproject.toml：**
-```toml
-[tool.briefcase]
-project_name = "MyApp"
-bundle = "com.myorg.myapp"
-version = "1.0.0"
-url = "https://myorg.com"
-license = "MIT"
-author = "My Name"
-author_email = "me@myorg.com"
+**CMake Install 规则：**
+```cmake
+install(TARGETS myapp
+    RUNTIME DESTINATION bin
+    BUNDLE DESTINATION .
+)
 
-[tool.briefcase.app.myapp]
-formal_name = "My Application"
-description = "Description here"
-icon = "resources/icons/app"   # 不带扩展名 — briefcase 使用平台适格的格式
-sources = ["src/myapp"]
-requires = ["PySide6>=6.6"]
+install(DIRECTORY resources/
+    DESTINATION share/myapp/resources
+)
 ```
-
-Briefcase 处理 Qt 插件打包比 PyInstaller 更可靠。
-
-### Windows：windeployqt + 代码签名
-
-PyInstaller 构建单目录包后，运行 `windeployqt`（来自 Qt SDK）来复制任何缺失的 Qt 插件和翻译：
-
-```bash
-# 从 Qt SDK tools 目录运行（或添加到 PATH）
-windeployqt dist/MyApp/MyApp.exe
-```
-
-这确保平台插件（`qwindows.dll`）和其他 Qt 插件 DLL 存在。PyInstaller hooks 通常会自动收集它们，但 `windeployqt` 会捕获遗漏的部分。
-
-```bash
-# 为可执行文件签名（需要代码签名证书）
-signtool sign /fd SHA256 /a /tr http://timestamp.digicert.com dist/MyApp.exe
-```
-
-未签名的 Windows 可执行文件会触发 SmartScreen 警告。对于内部分发，指导用户右键 → 属性 → 解除阻止。
 
 ### macOS：App Bundle
 
-PyInstaller 生成 `.app` bundle。对于 App Store 以外的分发：
-```bash
-# Ad-hoc 签名（无开发者 ID）
-codesign --force --deep --sign - dist/MyApp.app
+```cmake
+# macOS Bundle 配置
+set_target_properties(myapp PROPERTIES
+    MACOSX_BUNDLE TRUE
+    MACOSX_BUNDLE_GUI_IDENTIFIER "com.myorg.myapp"
+    MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0.0"
+    MACOSX_BUNDLE_LONG_VERSION_STRING "1.0.0"
+    MACOSX_RPATH TRUE
+)
 
-# 使用开发者 ID
-codesign --force --deep --sign "Developer ID Application: Name (TEAM_ID)" dist/MyApp.app
+# 部署 Qt 和插件
+qt_generate_deploy_app_script(
+    TARGET myapp
+    OUTPUT_SCRIPT deploy_script
+    NO_UNITY_BUILD
+)
+
+install(CODE "include(${deploy_script})")
+```
+
+```bash
+# 构建
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --config Release
+
+# 部署
+./build/deploy_script --appfolder MyApp.app
+
+# 签名（Ad-hoc）
+codesign --force --deep --sign - MyApp.app
+
+# 或使用开发者 ID
+codesign --force --deep --sign "Developer ID Application: Name (TEAM_ID)" MyApp.app
 
 # 公证（Gatekeeper 要求）
-xcrun notarytool submit dist/MyApp.zip --apple-id me@example.com --team-id TEAM_ID
+xcrun notarytool submit MyApp.zip --apple-id me@example.com --team-id TEAM_ID --wait
 ```
 
-### Linux：AppImage via PyInstaller
+### Linux：AppImage
 
 ```bash
-# 先构建单目录，然后打包为 AppImage
-# 使用 https://github.com/AppImage/AppImageKit
-appimagetool dist/MyApp/ MyApp-x86_64.AppImage
+# 安装 linuxdeployqt
+wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+chmod +x linuxdeploy-x86_64.AppImage
+
+# 构建
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+
+# 部署
+# 需要先创建 AppRun 脚本
+export QTDIR=/path/to/qt6
+./linuxdeploy-x86_64.AppImage --appimage-extract-and-run \
+    --executable build/myapp \
+    --plugin qt \
+    --output appimage
 ```
 
-### 构建自动化（CI）
+### CMake Install + CPack
 
+```cmake
+# 安装规则
+install(TARGETS myapp
+    RUNTIME DESTINATION bin
+    BUNDLE DESTINATION Applications
+)
+
+install(DIRECTORY resources/icons/
+    DESTINATION share/myapp/icons
+)
+
+# CPack 配置
+set(CPACK_PACKAGE_NAME "MyApp")
+set(CPACK_PACKAGE_VENDOR "My Organization")
+set(CPACK_PACKAGE_VERSION "1.0.0")
+set(CPACK_PACKAGE_CONTACT "me@myorg.com")
+
+# 生成安装程序
+set(CPACK_GENERATOR "NSIS")        # Windows
+set(CPACK_GENERATOR "TGZ")         # Linux
+set(CPACK_GENERATOR "ZIP")          # macOS
+
+include(CPack)
+```
+
+```bash
+# 构建并打包
+cmake --build build --config Release
+cmake --install build --config Release
+# 或使用 cpack
+cpack --config build/CPackConfig.cmake
+```
+
+### Qt 插件部署
+
+Qt 插件必须放在正确的子目录中：
+
+```
+myapp/
+├── bin/
+│   └── myapp
+├── plugins/
+│   ├── platforms/
+│   │   └── qwindows.dll      # Windows
+│   ├── platforms/
+│   │   └── libqcocoa.dylib    # macOS
+│   ├── imageformats/
+│   │   └── libqsvg.dll
+│   └── styles/
+├── resources/
+└── translations/
+```
+
+**CMake 自动处理：**
+```cmake
+qt_generate_deploy_app_script(
+    TARGET myapp
+    OUTPUT_SCRIPT deploy_script
+)
+
+# 在 install() 中调用
+install(CODE "include(${deploy_script})")
+```
+
+### CMake Bundling
+
+使用 `Qt6::qmake` 获取 Qt 依赖：
+```cmake
+find_package(Qt6 REQUIRED COMPONENTS Widgets)
+
+# 让 Qt 自动找到插件
+get_target_property(QtCore_import_prefix Qt6::Core import_prefix)
+set(Qt6_DIR ${QtCore_import_prefix}/../../../cmake/Qt6)
+```
+
+### 常见打包陷阱
+
+- **缺失 Qt 平台插件**：`qt.qpa.plugin: Could not find the Qt platform plugin` — 确保 `windeployqt` 或 `macdeployqt` 已运行
+- **缺失 SVG 支持**：确保 `imageformats` 插件被包含
+- **相对路径假设**：使用 `QCoreApplication::applicationDirPath()` 定位资源文件；发布时使用 QRC 打包以完全避免此问题
+- **macOS 上应用冻结**：如果应用需要处理文件关联，在 Info.plist 中设置 `NSAppleEventsUsageDescription`
+
+### CI/CD 自动化
+
+**GitHub Actions：**
 ```yaml
 # .github/workflows/build.yml
 jobs:
@@ -194,17 +254,18 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - run: pip install pyinstaller PySide6
-      - run: pyinstaller MyApp.spec
+      - name: Install Qt
+        uses: jurplel/qt-action@v3
+        with:
+          version: 6.5.0
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --config Release
+      - name: Deploy
+        run: windeployqt build/Release/myapp.exe
       - uses: actions/upload-artifact@v4
         with:
           name: windows-build
-          path: dist/MyApp/
+          path: build/Release/
 ```
-
-### 常见打包陷阱
-
-- **缺失 Qt 平台插件**：`qt.qpa.plugin: Could not find the Qt platform plugin` — 确保 `PySide6/Qt/plugins/platforms/` 被包含。PyInstaller hooks 通常会处理此项；如未处理请重建。
-- **缺失 SVG 支持**：在 `hiddenimports` 中导入 `PySide6.QtSvg`，否则加载 SVG 时应用会静默崩溃。
-- **相对路径假设**：开发中使用 `Path(__file__).parent` 定位资源文件；PyInstaller 运行时路径使用 `sys._MEIPASS`（或通过 QRC 打包以完全避免此问题）。
-- **macOS 上应用冻结**：如果应用需要处理文件关联，在 spec 中设置 `argv_emulation=True`。

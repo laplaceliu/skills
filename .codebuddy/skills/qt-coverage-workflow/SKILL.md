@@ -2,13 +2,13 @@
 name: qt-coverage-workflow
 description: >
   当用户询问"coverage"、"test coverage"、"coverage gaps"、"untested code"、"gcov"、"lcov"、"coverage report"、"improve coverage"、"missing tests"、"coverage threshold"、"coverage-driven test generation"或"what code isn't tested"时使用此技能。
-  涵盖 Python/PySide6（coverage.py）和 C++/Qt（gcov + lcov）的完整覆盖率反馈循环。
-  也适用于"pytest-cov"、"run coverage on my Qt project"或"CI coverage report"。
+  涵盖 C++/Qt（gcov + lcov）的完整覆盖率反馈循环。
+  也适用于"run coverage on my Qt project"或"CI coverage report"。
 ---
 
-# Qt 覆盖率工作流程
+# Qt C++ 覆盖率工作流程
 
-覆盖率驱动的测试生成是一个循环：**运行带插桩的测试 → 生成报告 → 识别缺口 → 生成针对性测试 → 重新运行以验证改进**。此技能涵盖 Python 和 C++ Qt 项目的完整循环。
+覆盖率驱动的测试生成是一个循环：**运行带插桩的测试 → 生成报告 → 识别缺口 → 生成针对性测试 → 重新运行以验证改进**。
 
 ## 覆盖率循环
 
@@ -28,19 +28,46 @@ description: >
 
 使用 `/qt:coverage` 来执行此循环。在 `/qt:coverage` 识别出缺口后，`test-generator` agent 会自动激活。
 
-## Python 项目（coverage.py）
-
-**完整的 Python 覆盖率演练** — 参见 [references/python-coverage-workflow.md](references/python-coverage-workflow.md)，了解安装、所有报告格式、分支覆盖率、CI 集成和 agent 交接解析模式。
-
-关键 CI 步骤模式：
-```yaml
-- name: Run coverage
-  run: pytest --cov=myapp --cov-report=xml --cov-fail-under=80 tests/
-```
-
 ## C++ 项目（gcov + lcov）
 
 **完整的 gcov/lcov 演练** — 参见 [references/gcov-lcov-workflow.md](references/gcov-lcov-workflow.md)，了解 CMake 预设、完整的 lcov 命令序列、Clang/LLVM 替代方案、缺口解析和故障排除。
+
+### CMake 覆盖率配置
+
+```cmake
+# CMakeLists.txt
+include(CheckGCCCompilerFlag)
+
+# 启用覆盖率（仅在 Debug 构建时）
+if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fprofile-arcs -ftest-coverage")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
+endif()
+```
+
+### 关键 CI 步骤模式
+
+```yaml
+# .github/workflows/coverage.yml
+- name: Configure with coverage
+  run: |
+    cmake -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+      -DCMAKE_CXX_FLAGS="-fprofile-arcs -ftest-coverage"
+
+- name: Build
+  run: cmake --build build
+
+- name: Run tests
+  working-directory: build
+  run: ctest --output-on-failure
+
+- name: Generate coverage report
+  run: |
+    lcov --capture --directory build --output-file coverage.info
+    lcov --remove coverage.info '*/tests/*' '*/moc_*' --output-file coverage.filtered.info
+    genhtml coverage.filtered.info --output-directory coverage-html
+```
 
 ## 覆盖率阈值
 
@@ -48,8 +75,9 @@ description: >
 
 ```json
 {
+  "project_type": "cpp",
   "coverage_threshold": 80,
-  "coverage_exclude": ["tests/*", "*/migrations/*"]
+  "coverage_exclude": ["tests/*", "*/moc_*", "*/qrc_*"]
 }
 ```
 
@@ -75,8 +103,8 @@ description: >
 识别缺口后，按以下方式结构化交接：
 
 ```
-在 calculator.py 中发现的缺口：第 18-22 行（除零路径）、第 45 行（溢出检查）
-在 formatter.py 中发现的缺口：第 8-10 行（空字符串处理）
+在 calculator.cpp 中发现的缺口：第 18-22 行（除零路径）、第 45 行（溢出检查）
+在 formatter.cpp 中发现的缺口：第 8-10 行（空字符串处理）
 当前覆盖率：74%。目标：80%。
 生成针对这些特定行的测试。
 ```
@@ -86,6 +114,5 @@ description: >
 ## 其他资源
 
 - **`references/gcov-lcov-workflow.md`** — 完整的 gcov/lcov 命令参考、CMake 预设模式、故障排除
-- **`references/python-coverage-workflow.md`** — coverage.py 配置、分支覆盖率、并行测试运行
-- **`templates/qt-coverage.yml`** — 可直接使用的 GitHub Actions 工作流程（Python + C++ 变体）
+- **`templates/qt-coverage.yml`** — 可直接使用的 GitHub Actions 工作流程
 - **`templates/run-coverage.sh`** — 用于本地和通用 CI 的可移植 shell 脚本

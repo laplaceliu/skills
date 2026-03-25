@@ -1,183 +1,287 @@
 ---
 name: qt-dialogs
 description: >
-  Qt 对话框模式 — QDialog、QMessageBox、QFileDialog、QInputDialog 以及自定义模态/非模态对话框。当需要创建确认提示、文件选择器、设置对话框、自定义数据输入对话框或向导式多步对话框时使用此技能。
+  Qt C++ 对话框模式 — QDialog、QMessageBox、QFileDialog、QInputDialog 以及自定义模态/非模态对话框。当需要创建确认提示、文件选择器、设置对话框、自定义数据输入对话框或向导式多步对话框时使用此技能。
 
   触发短语："dialog"、"QMessageBox"、"QFileDialog"、"QInputDialog"、"modal"、"modeless"、"settings dialog"、"confirm dialog"、"custom dialog"、"file picker"、"wizard"、"popup"
 version: 1.0.0
 ---
 
-## Qt 对话框模式
+## Qt C++ 对话框模式
 
 ### QMessageBox — 标准提示
 
-```python
-from PySide6.QtWidgets import QMessageBox
+```cpp
+#include <QMessageBox>
 
-# 确认对话框
-def confirm_delete(parent, item_name: str) -> bool:
-    result = QMessageBox.question(
+// 确认对话框
+bool confirmDelete(QWidget *parent, const QString &itemName) {
+    QMessageBox::StandardButton result = QMessageBox::question(
         parent,
         "Confirm Delete",
-        f"Delete '{item_name}'? This cannot be undone.",
-        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-        QMessageBox.StandardButton.No,   # 默认按钮
-    )
-    return result == QMessageBox.StandardButton.Yes
+        QString("Delete '%1'? This cannot be undone.").arg(itemName),
+        QMessageBox::Yes | QMessageBox::No,
+        QMessageBox::No  // 默认按钮
+    );
+    return result == QMessageBox::Yes;
+}
 
-# 错误
-QMessageBox.critical(parent, "Error", f"Failed to save: {error}")
+// 错误
+QMessageBox::critical(parent, "Error",
+    QString("Failed to save: %1").arg(error));
 
-# 警告
-QMessageBox.warning(parent, "Warning", "File already exists. Overwrite?")
+// 警告
+QMessageBox::warning(parent, "Warning",
+    "File already exists. Overwrite?");
 
-# 信息
-QMessageBox.information(parent, "Done", "Export completed successfully.")
+// 信息
+QMessageBox::information(parent, "Done",
+    "Export completed successfully.");
 
-# 自定义按钮
-msg = QMessageBox(parent)
-msg.setWindowTitle("Unsaved Changes")
-msg.setText("You have unsaved changes.")
-msg.setInformativeText("Do you want to save before closing?")
-save_btn = msg.addButton("Save", QMessageBox.ButtonRole.AcceptRole)
-discard_btn = msg.addButton("Discard", QMessageBox.ButtonRole.DestructiveRole)
-msg.addButton(QMessageBox.StandardButton.Cancel)
-msg.exec()
-if msg.clickedButton() is save_btn:
-    self._save()
-elif msg.clickedButton() is discard_btn:
-    pass  # 丢弃
-# 否则：取消 — 不做任何事
+// 自定义按钮
+QMessageBox msgBox(parent);
+msgBox.setWindowTitle("Unsaved Changes");
+msgBox.setText("You have unsaved changes.");
+msgBox.setInformativeText("Do you want to save before closing?");
+
+QPushButton *saveBtn = msgBox.addButton("Save",
+    QMessageBox::AcceptRole);
+QPushButton *discardBtn = msgBox.addButton("Discard",
+    QMessageBox::DestructiveRole);
+msgBox.addButton(QMessageBox::Cancel);
+msgBox.exec();
+
+if (msgBox.clickedButton() == saveBtn) {
+    save();
+} else if (msgBox.clickedButton() == discardBtn) {
+    // 丢弃
+}
+// 否则：取消 — 不做任何事
 ```
 
 ### QFileDialog — 文件和目录选择器
 
-```python
-from PySide6.QtWidgets import QFileDialog
-from pathlib import Path
+```cpp
+#include <QFileDialog>
+#include <QDir>
 
-# 打开单个文件
-path, _ = QFileDialog.getOpenFileName(
+// 打开单个文件
+QString path = QFileDialog::getOpenFileName(
     parent,
     "Open File",
-    str(Path.home()),
-    "CSV Files (*.csv);;Text Files (*.txt);;All Files (*)",
-)
-if path:
-    self._load(Path(path))
+    QDir::homePath(),
+    "CSV Files (*.csv);;Text Files (*.txt);;All Files (*)"
+);
+if (!path.isEmpty()) {
+    load(path);
+}
 
-# 打开多个文件
-paths, _ = QFileDialog.getOpenFileNames(parent, "Select Images", "", "Images (*.png *.jpg *.svg)")
+// 打开多个文件
+QStringList paths = QFileDialog::getOpenFileNames(
+    parent,
+    "Select Images",
+    "",
+    "Images (*.png *.jpg *.svg)"
+);
 
-# 保存文件
-path, _ = QFileDialog.getSaveFileName(
-    parent, "Save As", "export.csv", "CSV (*.csv)"
-)
-if path:
-    self._export(Path(path))
+// 保存文件
+QString savePath = QFileDialog::getSaveFileName(
+    parent,
+    "Save As",
+    "export.csv",
+    "CSV (*.csv)"
+);
+if (!savePath.isEmpty()) {
+    exportTo(savePath);
+}
 
-# 选择目录
-directory = QFileDialog.getExistingDirectory(parent, "Select Output Folder")
+// 选择目录
+QString directory = QFileDialog::getExistingDirectory(
+    parent,
+    "Select Output Folder"
+);
 ```
 
 过滤器字符串格式为 `"Description (*.ext *.ext2);;Description2 (*.ext3)"`。
 
 ### 自定义 QDialog
 
-```python
-from PySide6.QtWidgets import (
-    QDialog, QDialogButtonBox, QFormLayout, QLineEdit, QVBoxLayout
-)
-from PySide6.QtCore import Qt
+```cpp
+// addpersondialog.h
+#pragma once
+#include <QDialog>
+#include <QVBoxLayout>
+#include <QFormLayout>
+#include <QLineEdit>
+#include <QDialogButtonBox>
+#include <QMessageBox>
 
-class AddPersonDialog(QDialog):
-    def __init__(self, parent=None) -> None:
-        super().__init__(parent)
-        self.setWindowTitle("Add Person")
-        self.setModal(True)
-        self.setMinimumWidth(300)
-        self._setup_ui()
+class AddPersonDialog : public QDialog {
+    Q_OBJECT
 
-    def _setup_ui(self) -> None:
-        layout = QVBoxLayout(self)
+public:
+    explicit AddPersonDialog(QWidget *parent = nullptr);
+    QString name() const;
+    QString email() const;
 
-        form = QFormLayout()
-        self._name_edit = QLineEdit()
-        self._name_edit.setPlaceholderText("Full name")
-        self._email_edit = QLineEdit()
-        self._email_edit.setPlaceholderText("email@example.com")
-        form.addRow("Name:", self._name_edit)
-        form.addRow("Email:", self._email_edit)
-        layout.addLayout(form)
+private slots:
+    void accept() override;
 
-        # 标准确定/取消按钮
-        buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
-        )
-        buttons.accepted.connect(self._on_accept)
-        buttons.rejected.connect(self.reject)
-        layout.addWidget(buttons)
+private:
+    void setupUi();
 
-    def _on_accept(self) -> None:
-        if not self._name_edit.text().strip():
-            QMessageBox.warning(self, "Validation", "Name is required.")
-            return
-        self.accept()   # 关闭对话框并返回 QDialog.Accepted
+    QLineEdit *m_nameEdit = nullptr;
+    QLineEdit *m_emailEdit = nullptr;
+};
+```
 
-    def name(self) -> str:
-        return self._name_edit.text().strip()
+```cpp
+// addpersondialog.cpp
+#include "addpersondialog.h"
 
-    def email(self) -> str:
-        return self._email_edit.text().strip()
+AddPersonDialog::AddPersonDialog(QWidget *parent)
+    : QDialog(parent)
+{
+    setWindowTitle("Add Person");
+    setModal(true);
+    setMinimumWidth(300);
+    setupUi();
+}
 
-# 用法
-dialog = AddPersonDialog(self)
-if dialog.exec() == QDialog.DialogCode.Accepted:
-    self._model.add_person(dialog.name(), dialog.email())
+void AddPersonDialog::setupUi() {
+    QVBoxLayout *layout = new QVBoxLayout(this);
+
+    QFormLayout *form = new QFormLayout();
+
+    m_nameEdit = new QLineEdit(this);
+    m_nameEdit->setPlaceholderText("Full name");
+    m_emailEdit = new QLineEdit(this);
+    m_emailEdit->setPlaceholderText("email@example.com");
+
+    form->addRow("Name:", m_nameEdit);
+    form->addRow("Email:", m_emailEdit);
+    layout->addLayout(form);
+
+    QDialogButtonBox *buttons = new QDialogButtonBox(
+        QDialogButtonBox::Ok | QDialogButtonBox::Cancel,
+        this
+    );
+    connect(buttons, &QDialogButtonBox::accepted,
+            this, &AddPersonDialog::accept);
+    connect(buttons, &QDialogButtonBox::rejected,
+            this, &QDialog::reject);
+    layout->addWidget(buttons);
+}
+
+void AddPersonDialog::accept() {
+    if (m_nameEdit->text().trimmed().isEmpty()) {
+        QMessageBox::warning(this, "Validation", "Name is required.");
+        return;
+    }
+    QDialog::accept();
+}
+
+QString AddPersonDialog::name() const {
+    return m_nameEdit->text().trimmed();
+}
+
+QString AddPersonDialog::email() const {
+    return m_emailEdit->text().trimmed();
+}
 ```
 
 使用 `QDialogButtonBox` 获取标准按钮 — 它遵守平台按钮顺序约定（OK/取消 vs 取消/OK）。
 
 ### 模态 vs 非模态
 
-```python
-# 模态 — 阻止对父窗口的输入
-dialog.setModal(True)
-dialog.exec()      # 阻塞直到关闭
+```cpp
+// 模态 — 阻止对父窗口的输入
+dialog.setModal(true);
+dialog.exec();      // 阻塞直到关闭
 
-# 非模态 — 用户可以与父窗口交互
-dialog.setModal(False)
-dialog.show()      # 非阻塞
-dialog.raise_()    # 带到前面
-dialog.activateWindow()
+// 非模态 — 用户可以与父窗口交互
+dialog.setModal(false);
+dialog.show();      // 非阻塞
+dialog.raise();     // 带到前面
+dialog.activateWindow();
 ```
 
-对于非模态对话框，请保留引用以防止垃圾回收：
+对于非模态对话框，请使用成员变量保留引用以防止对象被销毁：
 
-```python
-self._settings_dialog = SettingsDialog(self)
-self._settings_dialog.show()
+```cpp
+// mainwindow.h
+private:
+    SettingsDialog *m_settingsDialog = nullptr;
+
+// mainwindow.cpp
+void MainWindow::onSettingsClicked() {
+    if (!m_settingsDialog) {
+        m_settingsDialog = new SettingsDialog(this);
+    }
+    m_settingsDialog->show();
+}
 ```
 
 ### 设置对话框模式
 
 设置对话框应该实时应用更改（更改时）或在明确点击确定时应用：
 
-```python
-class SettingsDialog(QDialog):
-    settings_changed = Signal(dict)
+```cpp
+// settingsdialog.h
+#pragma once
+#include <QDialog>
+#include <QComboBox>
+#include <QSpinBox>
+#include <QDialogButtonBox>
+#include <QHash>
 
-    def __init__(self, settings: dict, parent=None) -> None:
-        super().__init__(parent)
-        self._original = dict(settings)
-        self._current = dict(settings)
-        self._setup_ui(settings)
+class SettingsDialog : public QDialog {
+    Q_OBJECT
 
-    def _on_change(self) -> None:
-        self._current["theme"] = self._theme_combo.currentText()
-        self.settings_changed.emit(self._current)   # 实时预览
+public:
+    explicit SettingsDialog(const QHash<QString, QVariant> &settings,
+                           QWidget *parent = nullptr);
+    QHash<QString, QVariant> currentSettings() const;
 
-    def reject(self) -> None:
-        self.settings_changed.emit(self._original)  # 取消时恢复
-        super().reject()
+signals:
+    void settingsChanged(const QHash<QString, QVariant> &settings);
+
+private slots:
+    void onChanged();
+
+private:
+    void setupUi();
+
+    QHash<QString, QVariant> m_originalSettings;
+    QHash<QString, QVariant> m_currentSettings;
+
+    QComboBox *m_themeCombo = nullptr;
+    QSpinBox *m_fontSizeSpin = nullptr;
+};
+
+SettingsDialog::SettingsDialog(const QHash<QString, QVariant> &settings,
+                               QWidget *parent)
+    : QDialog(parent)
+    , m_originalSettings(settings)
+    , m_currentSettings(settings)
+{
+    setupUi();
+}
+
+void SettingsDialog::setupUi() {
+    // ... UI setup ...
+
+    connect(m_themeCombo, &QComboBox::currentTextChanged,
+            this, &SettingsDialog::onChanged);
+}
+
+void SettingsDialog::onChanged() {
+    m_currentSettings["theme"] = m_themeCombo->currentText();
+    emit settingsChanged(m_currentSettings);  // 实时预览
+}
+
+void SettingsDialog::reject() {
+    emit settingsChanged(m_originalSettings);  // 取消时恢复
+    QDialog::reject();
+}
 ```
