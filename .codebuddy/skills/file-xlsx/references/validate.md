@@ -1,145 +1,145 @@
-# Formula Validation & Recalculation Guide
+# 公式验证与重新计算指南
 
-Ensure every formula in an xlsx file is provably correct before delivery. A file that opens without visible errors is not a passing file — only a file that has cleared both validation tiers is a passing file.
-
----
-
-## Foundational Rules
-
-- **Never declare PASS without running `formula_check.py` first.** Visual inspection of a spreadsheet is not validation.
-- **Tier 1 (static) is mandatory in every scenario.** Tier 2 (dynamic) is mandatory when LibreOffice is available. If it is unavailable, you must state this explicitly in the report — you may not silently skip it.
-- **Never use openpyxl with `data_only=True` to check formula values.** Opening and saving a workbook in `data_only=True` mode permanently replaces all formulas with their last cached values. Formulas cannot be recovered afterward.
-- **Auto-fix only deterministic errors.** Any fix that requires understanding business logic must be flagged for human review.
+确保交付前 xlsx 文件中的每个公式都是可证明正确的。打开没有可见错误的文件不是通过的文件 — 只有通过了两个验证层级的文件才是通过的文件。
 
 ---
 
-## Two-Tier Validation Architecture
+## 基础规则
+
+- **永远不要在不先运行 `formula_check.py` 的情况下声明通过。** 电子表格的可视检查不是验证。
+- **第 1 层级（静态）在每个场景下都是强制性的。** 第 2 层级（动态）在 LibreOffice 可用时是强制性的。如果不可用，您必须在报告中明确说明这一点 — 您不得静默跳过。
+- **永远不要使用带有 `data_only=True` 的 openpyxl 来检查公式值。** 在 `data_only=True` 模式下打开并保存工作簿会永久将所有公式替换为它们最后的缓存值。之后公式无法恢复。
+- **仅自动修复确定性错误。** 任何需要理解业务逻辑的修复必须标记为人工审核。
+
+---
+
+## 两层级验证架构
 
 ```
-Tier 1 — Static Validation (XML scan, no external tools)
+第 1 层级 — 静态验证（XML 扫描，无外部工具）
   │
-  ├── Detect: all 7 Excel error types already cached in <v> elements
-  ├── Detect: cross-sheet references pointing to nonexistent sheets
-  ├── Detect: formula cells with t="e" attribute (error type marker)
-  └── Tool: formula_check.py + manual XML inspection
+  ├── 检测：已缓存在 <v> 元素中的所有 7 种 Excel 错误类型
+  ├── 检测：指向不存在工作表的跨工作表引用
+  ├── 检测：带有 t="e" 属性的公式单元格（错误类型标记）
+  └── 工具：formula_check.py + 手动 XML 检查
         │
-        ▼ (if LibreOffice is present)
-Tier 2 — Dynamic Validation (LibreOffice headless recalculation)
+        ▼ （如果存在 LibreOffice）
+第 2 层级 — 动态验证（LibreOffice 无头重新计算）
   │
-  ├── Executes all formulas via the LibreOffice Calc engine
-  ├── Populates <v> cache values with real computed results
-  ├── Exposes runtime errors invisible before recalculation
-  └── Follow-up: re-run Tier 1 on the recalculated file
+  ├── 通过 LibreOffice Calc 引擎执行所有公式
+  ├── 用实际计算结果填充 <v> 缓存值
+  ├── 暴露重新计算前不可见的运行时错误
+  └── 后续：在重新计算后的文件上重新运行第 1 层级
 ```
 
-**Why two tiers?**
+**为什么需要两个层级？**
 
-openpyxl and all Python xlsx libraries write formula strings (e.g. `=SUM(B2:B9)`) into `<f>` elements but do not evaluate them. A freshly generated file has empty `<v>` cache elements for every formula cell. This means:
+openpyxl 和所有 Python xlsx 库都将公式字符串（例如 `=SUM(B2:B9)`）写入 `<f>` 元素，但不计算它们。新生成的文件对于每个公式单元格都有空的 `<v>` 缓存元素。这意味着：
 
-- Tier 1 can only catch errors that are already encoded in the XML — either as `t="e"` cells or as structurally broken cross-sheet references.
-- Tier 2 uses LibreOffice as the actual calculation engine, runs every formula, fills `<v>` with real results, and surfaces runtime errors (`#DIV/0!`, `#N/A`, etc.) that can only appear after computation.
+- 第 1 层级只能捕获已编码在 XML 中的错误 — 作为 `t="e"` 单元格或结构损坏的跨工作表引用。
+- 第 2 层级使用 LibreOffice 作为实际计算引擎，运行每个公式，用实际结果填充 `<v>`，并显示只能在计算后出现的运行时错误（`#DIV/0!`、`#N/A` 等）。
 
-Neither tier alone is sufficient. Together they cover the full correctability surface.
+单独任何一个层级都不够。它们一起覆盖完整的可修正性表面。
 
 ---
 
-## Tier 1 — Static Validation
+## 第 1 层级 — 静态验证
 
-Static validation requires no external tools. It works directly on the ZIP/XML structure of the xlsx file.
+静态验证不需要外部工具。它直接在 xlsx 文件的 ZIP/XML 结构上工作。
 
-### Step 1: Run formula_check.py
+### 步骤 1：运行 formula_check.py
 
-**Standard (human-readable) output:**
+**标准（人类可读）输出：**
 
 ```bash
 python3 SKILL_DIR/scripts/formula_check.py /path/to/file.xlsx
 ```
 
-**JSON output (for programmatic processing):**
+**JSON 输出（用于程序化处理）：**
 
 ```bash
 python3 SKILL_DIR/scripts/formula_check.py /path/to/file.xlsx --json
 ```
 
-**Single-sheet mode (faster for targeted checks):**
+**单工作表模式（用于有针对性的检查，更快）：**
 
 ```bash
 python3 SKILL_DIR/scripts/formula_check.py /path/to/file.xlsx --sheet Summary
 ```
 
-**Summary mode (counts only, no per-cell detail):**
+**摘要模式（仅计数，无每个单元格的详细信息）：**
 
 ```bash
 python3 SKILL_DIR/scripts/formula_check.py /path/to/file.xlsx --summary
 ```
 
-Exit codes:
-- `0` — no hard errors (PASS or PASS with heuristic warnings)
-- `1` — hard errors detected, or file cannot be opened (FAIL)
+退出代码：
+- `0` — 无硬错误（通过或通过启发式警告）
+- `1` — 检测到硬错误，或文件无法打开（失败）
 
-#### What formula_check.py examines
+#### formula_check.py 检查的内容
 
-The script opens the xlsx as a ZIP archive without using any Excel library. It reads `xl/workbook.xml` to enumerate sheet names and named ranges, reads `xl/_rels/workbook.xml.rels` to map each sheet to its XML file, then iterates every `<c>` element in every worksheet.
+该脚本在不使用任何 Excel 库的情况下将 xlsx 作为 ZIP 压缩包打开。它读取 `xl/workbook.xml` 以枚举工作表名称和命名范围，读取 `xl/_rels/workbook.xml.rels` 以将每个工作表映射到其 XML 文件，然后遍历每个工作表中的每个 `<c>` 元素。
 
-It performs five checks:
+它执行五项检查：
 
-1. **Error-value detection**: If the cell has `t="e"`, its `<v>` element contains an Excel error string. The cell is recorded with its sheet name, cell reference (e.g. `C5`), the error value, and the formula text if present.
+1. **错误值检测**：如果单元格有 `t="e"`，其 `<v>` 元素包含 Excel 错误字符串。记录其工作表名称、单元格引用（例如 `C5`）、错误值以及公式文本（如果存在）。
 
-2. **Broken cross-sheet reference detection**: If the cell has an `<f>` element, the script extracts all sheet names referenced in the formula (both `SheetName!` and `'Sheet Name'!` syntax). Each name is compared against the list of sheets in `workbook.xml`. A mismatch is a broken reference.
+2. **损坏的跨工作表引用检测**：如果单元格有 `<f>` 元素，脚本会从公式中提取所有引用的工作表名称（`SheetName!` 和 `'Sheet Name'!` 语法）。每个名称都与 `workbook.xml` 中的工作表列表进行比较。不匹配就是损坏的引用。
 
-3. **Unknown named-range detection (heuristic)**: Identifiers in formulas that are not function names, not cell references, and not found in `workbook.xml`'s `<definedNames>` are flagged as `unknown_name_ref` warnings. This is a heuristic — false positives are possible; always verify manually.
+3. **未知的命名范围检测（启发式）**：公式中不是函数名、不是单元格引用、也不在 `workbook.xml` 的 `<definedNames>` 中的标识符被标记为 `unknown_name_ref` 警告。这是启发式的 — 可能存在误报；始终手动验证。
 
-4. **Shared formula integrity**: Shared formula consumer cells (those with only `<f t="shared" si="N"/>`) are skipped for formula counting and cross-ref checks because they inherit the primary cell's formula. Only the primary cell (with `ref="..."` attribute and formula text) is checked and counted.
+4. **共享公式完整性**：共享公式消费单元格（只有 `<f t="shared" si="N"/>` 的单元格）会跳过公式计数和交叉引用检查，因为它们继承主单元格的公式。只有主单元格（带有 `ref="..."` 属性和公式文本的单元格）被检查并计数。
 
-5. **Malformed error cells**: Cells with `t="e"` but no `<v>` child element are flagged as structural XML issues.
+5. **格式错误的错误单元格**：带有 `t="e"` 但没有 `<v>` 子元素的单元格被标记为结构性 XML 问题。
 
-Hard errors (exit code 1): `error_value`, `broken_sheet_ref`, `malformed_error_cell`, `file_error`
-Soft warnings (exit code 0): `unknown_name_ref` — must be verified manually but do not block delivery alone
+硬错误（退出代码 1）：`error_value`、`broken_sheet_ref`、`malformed_error_cell`、`file_error`
+软警告（退出代码 0）：`unknown_name_ref` — 必须手动验证但单独不会阻止交付
 
-#### Reading formula_check.py human-readable output
+#### 阅读 formula_check.py 人类可读输出
 
-A clean file looks like this:
-
-```
-File   : /tmp/budget_2024.xlsx
-Sheets : Summary, Q1, Q2, Q3, Q4, Assumptions
-Formulas checked      : 312 distinct formula cells
-Shared formula ranges : 4 ranges
-Errors found          : 0
-
-PASS — No formula errors detected
-```
-
-A file with errors looks like this:
+干净的文件看起来像这样：
 
 ```
-File   : /tmp/budget_2024.xlsx
-Sheets : Summary, Q1, Q2, Q3, Q4, Assumptions
-Formulas checked      : 312 distinct formula cells
-Shared formula ranges : 4 ranges
-Errors found          : 4
+文件   : /tmp/budget_2024.xlsx
+工作表 : Summary, Q1, Q2, Q3, Q4, Assumptions
+检查的公式数      : 312 个不同的公式单元格
+共享公式范围 : 4 个范围
+发现的错误          : 0
 
-── Error Details ──
-  [FAIL] [Summary!C12] contains #REF! (formula: Q1!A0/Q1!A1)
-  [FAIL] [Summary!D15] references missing sheet 'Q5'
-         Formula: Q5!D15
-         Valid sheets: ['Assumptions', 'Q1', 'Q2', 'Q3', 'Q4', 'Summary']
-  [FAIL] [Q1!F8] contains #DIV/0!
-  [WARN] [Q2!B10] uses unknown name 'GrowthAssumptions' (heuristic — verify manually)
-         Formula: SUM(GrowthAssumptions)
-         Defined names: ['RevenueRange', 'CostRange']
-
-FAIL — 3 error(s) must be fixed before delivery
-WARN — 1 heuristic warning(s) require manual review
+通过 — 未检测到公式错误
 ```
 
-Interpretation of each line:
-- `[FAIL] [Summary!C12] contains #REF! (formula: Q1!A0/Q1!A1)` — The cell has `t="e"` and `<v>#REF!</v>`. The formula references row 0, which does not exist in Excel's 1-based system. This is an off-by-one error in a generated reference.
-- `[FAIL] [Summary!D15] references missing sheet 'Q5'` — The formula contains `Q5!D15`, but no sheet named `Q5` exists in the workbook. The valid sheet list is provided for comparison.
-- `[FAIL] [Q1!F8] contains #DIV/0!` — This cell's `<v>` is already an error value (the file was previously recalculated). The formula divided by zero.
-- `[WARN] [Q2!B10] uses unknown name 'GrowthAssumptions'` — The identifier `GrowthAssumptions` appears in the formula but is not in `<definedNames>`. This may be a typo or a name that was accidentally omitted. It is a heuristic warning — verify manually. The warning alone does not block delivery.
+有错误的文件看起来像这样：
 
-#### Reading formula_check.py JSON output
+```
+文件   : /tmp/budget_2024.xlsx
+工作表 : Summary, Q1, Q2, Q3, Q4, Assumptions
+检查的公式数      : 312 个不同的公式单元格
+共享公式范围 : 4 个范围
+发现的错误          : 4
+
+── 错误详情 ──
+  [失败] [Summary!C12] 包含 #REF! (公式: Q1!A0/Q1!A1)
+  [失败] [Summary!D15] 引用缺少的工作表 'Q5'
+         公式: Q5!D15
+         有效工作表: ['Assumptions', 'Q1', 'Q2', 'Q3', 'Q4', 'Summary']
+  [失败] [Q1!F8] 包含 #DIV/0!
+  [警告] [Q2!B10] 使用未知名称 'GrowthAssumptions' (启发式 — 请手动验证)
+         公式: SUM(GrowthAssumptions)
+         定义的名称: ['RevenueRange', 'CostRange']
+
+失败 — 交付前必须修复 3 个错误
+警告 — 1 个启发式警告需要人工审核
+```
+
+每行解释：
+- `[失败] [Summary!C12] 包含 #REF! (公式: Q1!A0/Q1!A1)` — 单元格有 `t="e"` 和 `<v>#REF!</v>`。公式引用第 0 行，在 Excel 的基于 1 的系统中不存在。这是生成的引用中的差一错误。
+- `[失败] [Summary!D15] 引用缺少的工作表 'Q5'` — 公式包含 `Q5!D15`，但不存在名为 `Q5` 的工作表。为便于比较，提供了有效工作表列表。
+- `[失败] [Q1!F8] 包含 #DIV/0!` — 此单元格的 `<v>` 已经是错误值（文件之前已重新计算）。公式除以零。
+- `[警告] [Q2!B10] 使用未知名称 'GrowthAssumptions'` — 标识符 `GrowthAssumptions` 出现在公式中，但不在 `<definedNames>` 中。这可能是拼写错误或意外遗漏的名称。这是启发式警告 — 请手动验证。警告本身不会阻止交付。
+
+#### 阅读 formula_check.py JSON 输出
 
 ```json
 {
@@ -178,60 +178,60 @@ Interpretation of each line:
       "formula": "SUM(GrowthAssumptions)",
       "unknown_name": "GrowthAssumptions",
       "defined_names": ["RevenueRange", "CostRange"],
-      "note": "Heuristic check — verify manually if this is a false positive"
+      "note": "启发式检查 — 如果是误报请手动验证"
     }
   ]
 }
 ```
 
-Field reference:
+字段参考：
 
-| Field | Meaning |
+| 字段 | 含义 |
 |-------|---------|
-| `type: "error_value"` | Cell has `t="e"` — an Excel error is stored in the `<v>` element |
-| `type: "broken_sheet_ref"` | Formula references a sheet name not present in workbook.xml |
-| `type: "unknown_name_ref"` | Formula references an identifier not in `<definedNames>` (heuristic, soft warning) |
-| `type: "malformed_error_cell"` | Cell has `t="e"` but no `<v>` child — structural XML problem |
-| `type: "file_error"` | The file could not be opened (bad ZIP, not found, etc.) |
-| `sheet` | The sheet where the error was found |
-| `cell` | Cell reference in A1 notation |
-| `formula` | The full formula text from the `<f>` element (null if not present) |
-| `error` | The error string from `<v>` (for `error_value` type) |
-| `missing_sheet` | The sheet name extracted from the formula that does not exist |
-| `valid_sheets` | All sheet names actually present in workbook.xml |
-| `unknown_name` | The identifier that was not found in `<definedNames>` |
-| `defined_names` | All named ranges actually present in workbook.xml |
-| `shared_formula_ranges` | Count of shared formula definitions (top-level `<f t="shared" ref="...">` elements) |
+| `type: "error_value"` | 单元格有 `t="e"` — Excel 错误存储在 `<v>` 元素中 |
+| `type: "broken_sheet_ref"` | 公式引用 workbook.xml 中不存在的工作表名称 |
+| `type: "unknown_name_ref"` | 公式引用不在 `<definedNames>` 中的标识符（启发式，软警告） |
+| `type: "malformed_error_cell"` | 单元格有 `t="e"` 但没有 `<v>` 子元素 — 结构性 XML 问题 |
+| `type: "file_error"` | 文件无法打开（ZIP 损坏、未找到等） |
+| `sheet` | 发现错误的工作表 |
+| `cell` | A1 表示法中的单元格引用 |
+| `formula` | 来自 `<f>` 元素的完整公式文本（如果没有则为 null） |
+| `error` | 来自 `<v>` 的错误字符串（对于 `error_value` 类型） |
+| `missing_sheet` | 公式中提取的不存在的工作表名称 |
+| `valid_sheets` | workbook.xml 中实际存在的所有工作表名称 |
+| `unknown_name` | 在 `<definedNames>` 中未找到的标识符 |
+| `defined_names` | workbook.xml 中实际存在的所有命名范围 |
+| `shared_formula_ranges` | 共享公式定义的数量（顶级 `<f t="shared" ref="...">` 元素） |
 
-### Step 2: Manual XML inspection
+### 步骤 2：手动 XML 检查
 
-When formula_check.py reports errors, unpack the file to inspect the raw XML:
+当 formula_check.py 报告错误时，解压文件以检查原始 XML：
 
 ```bash
 python3 SKILL_DIR/scripts/xlsx_unpack.py /path/to/file.xlsx /tmp/xlsx_inspect/
 ```
 
-Navigate to the worksheet file for the reported sheet. The sheet-to-file mapping is in `xl/_rels/workbook.xml.rels`. For example, if `rId1` maps to `worksheets/sheet1.xml`, then sheet1.xml is the file for the sheet with `r:id="rId1"` in `xl/workbook.xml`.
+导航到报告工作表的工作表文件。工作表到文件的映射在 `xl/_rels/workbook.xml.rels` 中。例如，如果 `rId1` 映射到 `worksheets/sheet1.xml`，则 sheet1.xml 是 `xl/workbook.xml` 中具有 `r:id="rId1"` 的工作表的文件。
 
-For each reported error cell, locate the `<c r="CELLREF">` element and examine:
+对于每个报告的错误单元格，找到 `<c r="CELLREF">` 元素并检查：
 
-**For `error_value` errors:**
+**对于 `error_value` 错误：**
 ```xml
-<!-- This is what an error cell looks like in XML -->
+<!-- 这是 XML 中错误单元格的样子 -->
 <c r="C12" t="e">
   <f>Q1!C10/Q1!C11</f>
   <v>#DIV/0!</v>
 </c>
 ```
 
-Ask:
-- Is the `<f>` formula syntactically correct?
-- Does the cell reference in the formula point to a row/column that exists?
-- If it is a division, is it possible the denominator cell is empty or zero?
+询问：
+- `<f>` 公式在语法上正确吗？
+- 公式中的单元格引用是否指向存在的行/列？
+- 如果是除法，分母单元格是否可能为空或零？
 
-**For `broken_sheet_ref` errors:**
+**对于 `broken_sheet_ref` 错误：**
 
-Check `xl/workbook.xml` for the actual sheet list:
+检查 `xl/workbook.xml` 中的实际工作表列表：
 
 ```xml
 <sheets>
@@ -241,128 +241,128 @@ Check `xl/workbook.xml` for the actual sheet list:
 </sheets>
 ```
 
-Sheet names are case-sensitive. `q1` and `Q1` are different sheets. Compare the name in the formula exactly against the names here.
+工作表名称是区分大小写的。`q1` 和 `Q1` 是不同的工作表。将公式中的名称与此处的名称精确比较。
 
-### Step 3: Cross-sheet reference audit (multi-sheet workbooks)
+### 步骤 3：跨工作表引用审计（多工作表工作簿）
 
-For workbooks with 3 or more sheets, run a broader cross-reference audit after unpacking:
+对于具有 3 个或更多工作表的工作簿，在解压后运行更广泛的交叉引用审计：
 
 ```bash
-# Extract all formulas containing cross-sheet references
+# 提取所有包含跨工作表引用的公式
 grep -h "<f>" /tmp/xlsx_inspect/xl/worksheets/*.xml | grep "!"
 
-# List all actual sheet names from workbook.xml
+# 列出 workbook.xml 中的所有实际工作表名称
 grep -o 'name="[^"]*"' /tmp/xlsx_inspect/xl/workbook.xml | grep -v sheetId
 ```
 
-Every sheet name appearing in formulas (in the form `SheetName!` or `'Sheet Name'!`) must appear in the workbook sheet list. If any do not match, that is a broken reference even if formula_check.py did not catch it (which can happen with shared formulas where only the primary cell is examined).
+公式中出现的每个工作表名称（以 `SheetName!` 或 `'Sheet Name'!` 形式）都必须出现在工作表列表中。如果有任何不匹配，那就是损坏的引用，即使 formula_check.py 没有捕获到它（对于共享公式只检查主单元格时可能发生）。
 
-To check shared formulas specifically, look for `<f t="shared" ref="...">` elements:
+要专门检查共享公式，请查找 `<f t="shared" ref="...">` 元素：
 
 ```xml
-<!-- Shared formula: defined on D2, applied to D2:D100 -->
+<!-- 共享公式：在 D2 上定义，应用于 D2:D100 -->
 <c r="D2"><f t="shared" ref="D2:D100" si="0">Q1!B2*C2</f><v></v></c>
 
-<!-- Shared formula consumers: only si is present, no formula text -->
+<!-- 共享公式消费者：只存在 si，没有公式文本 -->
 <c r="D3"><f t="shared" si="0"/><v></v></c>
 ```
 
-formula_check.py reads the formula text from the primary cell (`D2` above). The referenced sheet `Q1` in that formula applies to the entire range `D2:D100`. If the sheet is broken, all 99 rows are broken even though they appear as empty `<f>` elements.
+formula_check.py 从主单元格（上面的 `D2`）读取公式文本。该公式中引用的工作表 `Q1` 适用于整个范围 `D2:D100`。如果工作表损坏，即使它们显示为空的 `<f>` 元素，所有 99 行也都是损坏的。
 
 ---
 
-## Tier 2 — Dynamic Validation (LibreOffice Headless)
+## 第 2 层级 — 动态验证（LibreOffice 无头模式）
 
-### Check LibreOffice availability
+### 检查 LibreOffice 可用性
 
 ```bash
-# Check macOS (typical install location)
+# 检查 macOS（典型安装位置）
 which soffice
 /Applications/LibreOffice.app/Contents/MacOS/soffice --version
 
-# Check Linux
+# 检查 Linux
 which libreoffice || which soffice
 libreoffice --version
 ```
 
-If neither command returns a path, LibreOffice is not installed. Record "Tier 2: SKIPPED — LibreOffice not available" in the report and proceed to delivery with Tier 1 results only.
+如果两个命令都没有返回路径，则未安装 LibreOffice。在报告中记录"第 2 层级：跳过 — LibreOffice 不可用"，并仅使用第 1 层级结果继续交付。
 
-### Install LibreOffice (if permitted in the environment)
+### 安装 LibreOffice（如果环境中允许）
 
-macOS:
+macOS：
 ```bash
 brew install --cask libreoffice
 ```
 
-Ubuntu/Debian:
+Ubuntu/Debian：
 ```bash
 sudo apt-get install -y libreoffice
 ```
 
-### Run headless recalculation
+### 运行无头重新计算
 
-Use the dedicated recalculation script. It handles binary discovery across macOS and Linux, works from a temporary copy of the input (preserving the original), and provides structured output and exit codes compatible with the validation pipeline.
+使用专用的重新计算脚本。它处理 macOS 和 Linux 上的二进制发现，从输入的临时副本工作（保留原始文件），并提供与验证管道兼容的结构化输出和退出代码。
 
 ```bash
-# Check LibreOffice availability first
+# 首先检查 LibreOffice 可用性
 python3 SKILL_DIR/scripts/libreoffice_recalc.py --check
 
-# Run recalculation (default timeout: 60s)
+# 运行重新计算（默认超时：60s）
 python3 SKILL_DIR/scripts/libreoffice_recalc.py /path/to/input.xlsx /tmp/recalculated.xlsx
 
-# For large or complex files, extend the timeout
+# 对于大型或复杂文件，延长超时
 python3 SKILL_DIR/scripts/libreoffice_recalc.py /path/to/input.xlsx /tmp/recalculated.xlsx --timeout 120
 ```
 
-Exit codes from `libreoffice_recalc.py`:
-- `0` — recalculation succeeded, output file written
-- `2` — LibreOffice not found (note as SKIPPED in report; not a hard failure)
-- `1` — LibreOffice found but failed (timeout, crash, malformed file)
+`libreoffice_recalc.py` 的退出代码：
+- `0` — 重新计算成功，输出文件已写入
+- `2` — 未找到 LibreOffice（在报告中记为跳过；不是硬失败）
+- `1` — 找到 LibreOffice 但失败（超时、崩溃、格式错误的文件）
 
-**What the script does internally:**
+**脚本内部执行的操作：**
 
-LibreOffice's `--convert-to xlsx` command opens the file using the full Calc engine with the `--infilter="Calc MS Excel 2007 XML"` filter, executes every formula, writes computed values into the `<v>` cache elements, and saves the output. This is the closest server-side equivalent of "open in Excel and press Save." The script also passes `--norestore` to prevent LibreOffice from attempting to restore previous sessions, which can cause hangs in automated environments.
+LibreOffice 的 `--convert-to xlsx` 命令使用 `--infilter="Calc MS Excel 2007 XML"` 筛选器通过完整的 Calc 引擎打开文件，执行每个公式，将计算值写入 `<v>` 缓存元素，并保存输出。这相当于服务器端的"在 Excel 中打开并按保存"。该脚本还传递 `--norestore` 以防止 LibreOffice 尝试恢复以前的会话，这可能会在自动化环境中导致挂起。
 
-**If LibreOffice is not installed:**
+**如果 LibreOffice 未安装：**
 
-macOS:
+macOS：
 ```bash
 brew install --cask libreoffice
 ```
 
-Ubuntu/Debian:
+Ubuntu/Debian：
 ```bash
 sudo apt-get install -y libreoffice
 ```
 
-**If the script times out (libreoffice_recalc.py exits with code 1 and "timed out" message):**
+**如果脚本超时（libreoffice_recalc.py 以代码 1 退出并显示"超时"消息）：**
 
-Record "Tier 2: TIMEOUT — LibreOffice did not complete within Ns" in the report. Do not retry in a loop. Investigate whether the file has circular references or extremely large data ranges.
+在报告中记录"第 2 层级：超时 — LibreOffice 在 N 秒内未完成"。不要在循环中重试。调查文件是否有循环引用或极大的数据范围。
 
-### Re-run Tier 1 after recalculation
+### 重新计算后重新运行第 1 层级
 
-After LibreOffice recalculation, the `<v>` elements contain real computed values. Errors that were invisible before (because `<v>` was empty in a freshly generated file) now appear as `t="e"` cells with actual error strings.
+LibreOffice 重新计算后，`<v>` 元素包含实际计算值。以前在不可见的错误（因为新生成文件中的 `<v>` 为空）现在显示为带有实际错误字符串的 `t="e"` 单元格。
 
 ```bash
 python3 SKILL_DIR/scripts/formula_check.py /tmp/recalculated.xlsx
 ```
 
-This second Tier 1 pass is the definitive runtime error check. Any errors it finds are real calculation failures that must be fixed.
+这第二次第 1 层级是通过的最终运行时错误检查。它发现的任何错误都是必须修复的实际计算失败。
 
 ---
 
-## All 7 Error Types — Causes and Fix Strategies
+## 所有 7 种错误类型 — 原因和修复策略
 
-### #REF! — Invalid Cell Reference
+### #REF! — 无效的单元格引用
 
-**What it means:** The formula references a cell, range, or sheet that no longer exists or never existed.
+**含义：** 公式引用的单元格、范围或工作表不再存在或从未存在。
 
-**Common causes in generated files:**
-- Off-by-one error in row/column calculation (e.g., referencing row 0 which does not exist in Excel's 1-based system)
-- Column letter computed incorrectly (e.g., column 64 maps to `BL`, not `BK`)
-- Formula references a sheet that was never created or was renamed
+**生成文件中的常见原因：**
+- 行/列计算中的差一错误（例如，引用在 Excel 基于 1 的系统中不存在的第 0 行）
+- 列字母计算不正确（例如，第 64 列映射到 `BL`，而不是 `BK`）
+- 公式引用从未创建或已重命名的工作表
 
-**XML signature:**
+**XML 特征：**
 ```xml
 <c r="D5" t="e">
   <f>Sheet2!A0</f>
@@ -370,7 +370,7 @@ This second Tier 1 pass is the definitive runtime error check. Any errors it fin
 </c>
 ```
 
-**Fix — correct the reference:**
+**修复 — 更正引用：**
 ```xml
 <c r="D5">
   <f>Sheet2!A1</f>
@@ -378,21 +378,21 @@ This second Tier 1 pass is the definitive runtime error check. Any errors it fin
 </c>
 ```
 
-Note: remove `t="e"` and clear `<v>` after correcting the formula. The error type marker belongs to the cached state, not the formula.
+注意：更正公式后移除 `t="e"` 并清除 `<v>`。错误类型标记属于缓存状态，不属于公式。
 
-**Auto-fixable?** Only if the correct target can be determined with certainty from the surrounding context. Otherwise flag for human review.
+**可自动修复？** 只有从周围上下文可以确定性确定正确目标时才可以。否则标记为人工审核。
 
 ---
 
-### #DIV/0! — Division by Zero
+### #DIV/0! — 除以零
 
-**What it means:** The formula divides by a value that is zero or an empty cell (empty cells evaluate to 0 in arithmetic context).
+**含义：** 公式除以零值或空单元格（空单元格在算术上下文中计算为 0）。
 
-**Common causes in generated files:**
-- Percentage change formula `=(B2-B1)/B1` where `B1` is empty or zero
-- Rate formula `=Value/Total` where the total row hasn't been populated yet
+**生成文件中的常见原因：**
+- 百分比变化公式 `=(B2-B1)/B1`，其中 `B1` 为空或零
+- 比率公式 `=Value/Total`，其中总计行尚未填充
 
-**XML signature:**
+**XML 特征：**
 ```xml
 <c r="C8" t="e">
   <f>B8/B7</f>
@@ -400,7 +400,7 @@ Note: remove `t="e"` and clear `<v>` after correcting the formula. The error typ
 </c>
 ```
 
-**Fix — wrap with IFERROR:**
+**修复 — 使用 IFERROR 包装：**
 ```xml
 <c r="C8">
   <f>IFERROR(B8/B7,0)</f>
@@ -408,7 +408,7 @@ Note: remove `t="e"` and clear `<v>` after correcting the formula. The error typ
 </c>
 ```
 
-Alternative — explicit zero check:
+替代方案 — 显式零检查：
 ```xml
 <c r="C8">
   <f>IF(B7=0,0,B8/B7)</f>
@@ -416,19 +416,19 @@ Alternative — explicit zero check:
 </c>
 ```
 
-**Auto-fixable?** Yes. Wrapping with `IFERROR(...,0)` is safe for most financial formulas. If the business expectation is that the result should display as blank rather than zero, use `IFERROR(...,"")` instead.
+**可自动修复？** 是。对于大多数财务公式，使用 `IFERROR(...,0)` 包装是安全的。如果业务期望结果显示为空白而非零，请改用 `IFERROR(...,"")`。
 
 ---
 
-### #VALUE! — Wrong Data Type
+### #VALUE! — 错误的数据类型
 
-**What it means:** The formula attempts an arithmetic or logical operation on a value of the wrong type (e.g., adding a text string to a number).
+**含义：** 公式尝试对错误类型的值进行算术或逻辑运算（例如，将文本字符串添加到数字）。
 
-**Common causes in generated files:**
-- A cell intended to hold a number was written as a string type (`t="s"` or `t="inlineStr"`) instead of a numeric type
-- A formula references a cell containing text (e.g., a unit label like "thousands") and treats it as a number
+**生成文件中的常见原因：**
+- 本应保存数字的单元格被写为字符串类型（`t="s"` 或 `t="inlineStr"`）而非数字类型
+- 公式引用的单元格包含文本（例如，像"thousands"这样的单位标签）并将其视为数字
 
-**XML signature:**
+**XML 特征：**
 ```xml
 <c r="F3" t="e">
   <f>E3+D3</f>
@@ -436,18 +436,18 @@ Alternative — explicit zero check:
 </c>
 ```
 
-**Fix — check source cells for incorrect type:**
+**修复 — 检查源单元格的类型是否正确：**
 
-If `D3` was incorrectly written as a string:
+如果 `D3` 被错误地写为字符串：
 ```xml
-<!-- Wrong: numeric value stored as string -->
+<!-- 错误：数字值存储为字符串 -->
 <c r="D3" t="inlineStr"><is><t>1000</t></is></c>
 
-<!-- Correct: numeric value stored as number (t attribute omitted or "n") -->
+<!-- 正确：数字值存储为数字（t 属性省略或为 "n"） -->
 <c r="D3"><v>1000</v></c>
 ```
 
-Alternatively, wrap the formula with `VALUE()` conversion:
+或者，使用 `VALUE()` 转换包装公式：
 ```xml
 <c r="F3">
   <f>VALUE(E3)+VALUE(D3)</f>
@@ -455,19 +455,19 @@ Alternatively, wrap the formula with `VALUE()` conversion:
 </c>
 ```
 
-**Auto-fixable?** Partially. If the source cell type is visibly wrong (a number stored as string), fix the type. If the cause is ambiguous (the cell is supposed to contain text), flag for human review.
+**可自动修复？** 部分。如果源单元格类型明显错误（数字存储为字符串），修复类型。如果原因不明确（单元格应该包含文本），标记为人工审核。
 
 ---
 
-### #NAME? — Unrecognized Name
+### #NAME? — 无法识别的名称
 
-**What it means:** The formula contains an identifier that Excel does not recognize — either a misspelled function name, an undefined named range, or a function that is not available in the target Excel version.
+**含义：** 公式包含 Excel 无法识别的标识符 — 拼写错误的函数名、未定义的命名范围，或目标 Excel 版本中不可用的函数。
 
-**Common causes in generated files:**
-- LLM writes a function name with a typo: `SUMIF` written as `SUMIFS` when only 3 arguments are provided, or `XLOOKUP` used in a context targeting Excel 2010
-- Named range referenced in formula does not exist in `xl/workbook.xml`
+**生成文件中的常见原因：**
+- LLM 写的函数名有拼写错误：当只提供 3 个参数时 `SUMIF` 写成 `SUMIFS`，或在针对 Excel 2010 的上下文中使用 `XLOOKUP`
+- 公式中引用的命名范围在 `xl/workbook.xml` 中不存在
 
-**XML signature:**
+**XML 特征：**
 ```xml
 <c r="B2" t="e">
   <f>SUMSQ(A2:A10)</f>
@@ -475,16 +475,16 @@ Alternatively, wrap the formula with `VALUE()` conversion:
 </c>
 ```
 
-**Fix — verify function name and named ranges:**
+**修复 — 验证函数名和命名范围：**
 
-Check named ranges in `xl/workbook.xml`:
+在 `xl/workbook.xml` 中检查命名范围：
 ```xml
 <definedNames>
   <definedName name="RevenueRange">Sheet1!$B$2:$B$13</definedName>
 </definedNames>
 ```
 
-If the formula references `RevenuRange` (typo), correct it to `RevenueRange`:
+如果公式引用 `RevenuRange`（拼写错误），请更正为 `RevenueRange`：
 ```xml
 <c r="B2">
   <f>SUM(RevenueRange)</f>
@@ -492,19 +492,19 @@ If the formula references `RevenuRange` (typo), correct it to `RevenueRange`:
 </c>
 ```
 
-**Auto-fixable?** Only if the correct name is unambiguous (e.g., a single close match exists). Otherwise flag for human review — function name fixes require understanding the intended calculation.
+**可自动修复？** 只有正确名称明确时才可以（例如，存在单个接近匹配）。否则标记为人工审核 — 函数名修复需要理解预期的计算。
 
 ---
 
-### #N/A — Value Not Available
+### #N/A — 值不可用
 
-**What it means:** A lookup function (VLOOKUP, HLOOKUP, MATCH, INDEX/MATCH, XLOOKUP) searched for a value that does not exist in the lookup table.
+**含义：** 查找函数（VLOOKUP、HLOOKUP、MATCH、INDEX/MATCH、XLOOKUP）搜索了查找表中不存在的值。
 
-**Common causes in generated files:**
-- Lookup key exists in the formula but the lookup table is empty or not yet populated
-- Key format mismatch (text "2024" vs numeric 2024)
+**生成文件中的常见原因：**
+- 查找键存在于公式中，但查找表为空或尚未填充
+- 键格式不匹配（文本 "2024" vs 数字 2024）
 
-**XML signature:**
+**XML 特征：**
 ```xml
 <c r="G5" t="e">
   <f>VLOOKUP(F5,Assumptions!$A$2:$B$20,2,0)</f>
@@ -512,7 +512,7 @@ If the formula references `RevenuRange` (typo), correct it to `RevenueRange`:
 </c>
 ```
 
-**Fix — wrap with IFERROR for missing-match tolerance:**
+**修复 — 使用 IFERROR 包装以容忍缺失匹配：**
 ```xml
 <c r="G5">
   <f>IFERROR(VLOOKUP(F5,Assumptions!$A$2:$B$20,2,0),0)</f>
@@ -520,19 +520,19 @@ If the formula references `RevenuRange` (typo), correct it to `RevenueRange`:
 </c>
 ```
 
-**Auto-fixable?** Adding `IFERROR` is safe if a zero default is acceptable. If the lookup failure indicates a data integrity problem (the key should always be present), do not auto-fix — flag for human review.
+**可自动修复？** 如果零默认值可接受，添加 `IFERROR` 是安全的。如果查找失败表示数据完整性问题（键应该始终存在），请不要自动修复 — 标记为人工审核。
 
 ---
 
-### #NULL! — Empty Intersection
+### #NULL! — 空交集
 
-**What it means:** The space operator (which computes the intersection of two ranges) was applied to two ranges that do not intersect.
+**含义：** 空间运算符（计算两个范围的交集）被应用于两个不相交的范围。
 
-**Common causes in generated files:**
-- Accidental space between two range references: `=SUM(A1:A5 C1:C5)` instead of `=SUM(A1:A5,C1:C5)`
-- Rarely seen in typical financial models; usually indicates a formula generation error
+**生成文件中的常见原因：**
+- 两个范围引用之间意外出现空格：`SUM(A1:A5 C1:C5)` 而不是 `SUM(A1:A5,C1:C5)`
+- 在典型的财务模型中很少见；通常表示公式生成错误
 
-**XML signature:**
+**XML 特征：**
 ```xml
 <c r="H10" t="e">
   <f>SUM(A1:A5 C1:C5)</f>
@@ -540,29 +540,29 @@ If the formula references `RevenuRange` (typo), correct it to `RevenueRange`:
 </c>
 ```
 
-**Fix — replace space with comma (union) or colon (range):**
+**修复 — 将空格替换为逗号（并集）或冒号（范围）：**
 ```xml
-<!-- Union of two separate ranges -->
+<!-- 两个独立范围的并集 -->
 <c r="H10">
   <f>SUM(A1:A5,C1:C5)</f>
   <v></v>
 </c>
 ```
 
-**Auto-fixable?** Yes. The space operator is almost never intentional in generated formulas. Replacing with a comma is safe.
+**可自动修复？** 是。空间运算符在生成的公式中几乎从不是故意的。替换为逗号是安全的。
 
 ---
 
-### #NUM! — Numeric Error
+### #NUM! — 数字错误
 
-**What it means:** A formula produced a number that Excel cannot represent (overflow, underflow) or a mathematical operation that has no real-number result (square root of negative, LOG of zero or negative).
+**含义：** 公式生成了 Excel 无法表示的数字（溢出、下溢）或没有实数结果的数学运算（负数的平方根，零或负数的对数）。
 
-**Common causes in generated files:**
-- IRR or NPV formula where the cash flow series has no convergent solution
-- `SQRT()` applied to a cell that can be negative
-- Very large exponentiation
+**生成文件中的常见原因：**
+- 现金流量系列没有收敛解的 IRR 或 NPV 公式
+- 应用于可能为负的单元格的 `SQRT()`
+- 非常大的幂运算
 
-**XML signature:**
+**XML 特征：**
 ```xml
 <c r="J15" t="e">
   <f>IRR(B5:B15)</f>
@@ -570,7 +570,7 @@ If the formula references `RevenuRange` (typo), correct it to `RevenueRange`:
 </c>
 ```
 
-**Fix — add a conditional guard:**
+**修复 — 添加条件保护：**
 ```xml
 <c r="J15">
   <f>IFERROR(IRR(B5:B15),"")</f>
@@ -578,7 +578,7 @@ If the formula references `RevenuRange` (typo), correct it to `RevenueRange`:
 </c>
 ```
 
-For SQRT:
+对于 SQRT：
 ```xml
 <c r="K5">
   <f>IF(A5>=0,SQRT(A5),"")</f>
@@ -586,129 +586,129 @@ For SQRT:
 </c>
 ```
 
-**Auto-fixable?** Partially. Wrapping with `IFERROR` suppresses the error display but does not fix the underlying calculation issue. Flag the cell for human review even after applying the IFERROR wrapper.
+**可自动修复？** 部分。使用 `IFERROR` 包装会抑制错误显示，但不会修复潜在的计算问题。即使在应用 IFERROR 包装后，也要将该单元格标记为人工审核。
 
 ---
 
-## Auto-Fix vs. Human Review Decision Matrix
+## 自动修复 vs. 人工审核决策矩阵
 
-| Error Type | Auto-Fix Safe? | Condition | Action |
+| 错误类型 | 可安全自动修复？ | 条件 | 操作 |
 |------------|---------------|-----------|--------|
-| `#DIV/0!` | Yes | Always | Wrap with `IFERROR(formula,0)` |
-| `#NULL!` | Yes | Always | Replace space operator with comma |
-| `#REF!` | Yes | Only if correct target is unambiguous from context | Correct reference; otherwise flag |
-| `#NAME?` | Yes | Only if typo has exactly one plausible correction | Fix name; otherwise flag |
-| `#N/A` | Conditional | If a zero/blank default is business-acceptable | Add IFERROR wrapper; document assumption |
-| `#VALUE!` | Conditional | Only if source cell type is clearly wrong | Fix type; otherwise flag |
-| `#NUM!` | No | Always | Add IFERROR to suppress display, then flag |
-| Broken sheet ref | Yes | Only if renamed sheet can be identified from workbook.xml | Correct name |
-| Business logic errors | Never | Any case | Human review only |
+| `#DIV/0!` | 是 | 始终 | 使用 `IFERROR(formula,0)` 包装 |
+| `#NULL!` | 是 | 始终 | 将空间运算符替换为逗号 |
+| `#REF!` | 是 | 仅当从上下文可以明确正确目标时 | 更正引用；否则标记 |
+| `#NAME?` | 是 | 仅当拼写错误有且只有一个合理的更正时 | 修复名称；否则标记 |
+| `#N/A` | 有条件 | 如果零/空白默认值在业务上可接受 | 添加 IFERROR 包装；记录假设 |
+| `#VALUE!` | 有条件 | 仅当源单元格类型明显错误时 | 修复类型；否则标记 |
+| `#NUM!` | 否 | 始终 | 添加 IFERROR 以抑制显示，然后标记 |
+| 损坏的工作表引用 | 是 | 仅当可以从 workbook.xml 识别重命名的工作表时 | 更正名称 |
+| 业务逻辑错误 | 否 | 任何情况 | 仅限人工审核 |
 
-**What counts as a business logic error (never auto-fix):**
-- A formula that produces a wrong number but no Excel error (e.g., `=SUM(B2:B8)` when the intent was `=SUM(B2:B9)`)
-- A formula where the IFERROR default value is meaningful (e.g., whether to use 0, blank, or a prior-period value)
-- Any formula where fixing the error requires knowing what the formula was supposed to calculate
+**什么算作业务逻辑错误（永远不要自动修复）：**
+- 产生错误数字但没有 Excel 错误的公式（例如，当意图是 `=SUM(B2:B9)` 时的 `=SUM(B2:B8)`）
+- IFERROR 默认值有意义的公式（例如，是使用 0、空白还是前期值）
+- 修复错误需要知道公式应该计算什么的任何公式
 
 ---
 
-## Delivery Standard — Validation Report
+## 交付标准 — 验证报告
 
-Every validation task must produce a structured report. This report is the deliverable, regardless of whether errors were found.
+每个验证任务必须生成结构化报告。无论是否发现错误，此报告都是可交付成果。
 
-### Required report format
+### 所需的报告格式
 
 ```markdown
-## Formula Validation Report
+## 公式验证报告
 
-**File**: /path/to/filename.xlsx
-**Date**: YYYY-MM-DD
-**Sheets checked**: Sheet1, Sheet2, Sheet3
-**Total formulas scanned**: N
+**文件**：/path/to/filename.xlsx
+**日期**：YYYY-MM-DD
+**检查的工作表**：Sheet1, Sheet2, Sheet3
+**扫描的公式总数**：N
 
 ---
 
-### Tier 1 — Static Validation
+### 第 1 层级 — 静态验证
 
-**Status**: PASS / FAIL
-**Tool**: formula_check.py (direct XML scan)
+**状态**：通过 / 失败
+**工具**：formula_check.py（直接 XML 扫描）
 
-| Sheet | Cell | Error Type | Detail | Fix Applied |
+| 工作表 | 单元格 | 错误类型 | 详情 | 应用的修复 |
 |-------|------|-----------|--------|-------------|
-| Summary | C12 | #REF! | Formula: Q1!A0 | Corrected to Q1!A1 |
-| Summary | D15 | broken_sheet_ref | References missing sheet 'Q5' | Renamed to Q4 |
+| Summary | C12 | #REF! | 公式: Q1!A0 | 更正为 Q1!A1 |
+| Summary | D15 | broken_sheet_ref | 引用缺少的工作表 'Q5' | 重命名为 Q4 |
 
-_(If no errors: "No errors detected.")_
+_（如果没有错误："未检测到错误。"）_
 
 ---
 
-### Tier 2 — Dynamic Validation
+### 第 2 层级 — 动态验证
 
-**Status**: PASS / FAIL / SKIPPED
-**Tool**: LibreOffice headless (version X.Y.Z) / Not available
+**状态**：通过 / 失败 / 跳过
+**工具**：LibreOffice 无头模式 (version X.Y.Z) / 不可用
 
-_(If SKIPPED: state the reason — LibreOffice not installed, timeout, etc.)_
+_（如果 跳过：说明原因 — LibreOffice 未安装、超时等）_
 
-| Sheet | Cell | Error Type | Detail | Fix Applied |
+| 工作表 | 单元格 | 错误类型 | 详情 | 应用的修复 |
 |-------|------|-----------|--------|-------------|
-| Q1 | F8 | #DIV/0! | Formula: C8/C7 | Wrapped with IFERROR |
+| Q1 | F8 | #DIV/0! | 公式: C8/C7 | 使用 IFERROR 包装 |
 
-_(If no errors: "No runtime errors detected after recalculation.")_
+_（如果没有错误："重新计算后未检测到运行时错误。"）_
 
 ---
 
-### Summary
+### 摘要
 
-- **Total errors found**: N
-- **Auto-fixed**: N (list types)
-- **Flagged for human review**: N (list cells and reason)
-- **Final status**: PASS (ready for delivery) / FAIL (blocked)
+- **发现的错误总数**：N
+- **自动修复**：N（列出类型）
+- **标记为人工审核**：N（列出单元格和原因）
+- **最终状态**：通过（可交付）/ 失败（已阻止）
 
-### Human Review Required
+### 需要人工审核
 
-| Cell | Error | Reason Auto-Fix Not Applied |
+| 单元格 | 错误 | 未应用自动修复的原因 |
 |------|-------|----------------------------|
-| Q2!B15 | #NUM! | IRR formula — business must confirm cash flow inputs |
+| Q2!B15 | #NUM! | IRR 公式 — 业务必须确认现金流量输入 |
 ```
 
-### Minimum required fields
+### 最低要求的字段
 
-The report is invalid (and delivery is blocked) if any of these are missing:
-- File path and date
-- Which sheets were checked
-- Total formula count
-- Tier 1 status with explicit PASS/FAIL
-- Tier 2 status with explicit PASS/FAIL/SKIPPED and reason if SKIPPED
-- For every error: sheet, cell, error type, and disposition (fixed or flagged)
-- Final delivery status
+如果缺少以下任何一项，报告无效（交付被阻止）：
+- 文件路径和日期
+- 检查了哪些工作表
+- 公式总数
+- 带有明确 通过/失败 的第 1 层级状态
+- 带有明确 通过/失败/跳过 的第 2 层级状态，如果 跳过 则说明原因
+- 对于每个错误：工作表、单元格、错误类型和处理（已修复或已标记）
+- 最终交付状态
 
 ---
 
-## Common Scenarios
+## 常见场景
 
-### Scenario 1: Validate immediately after creating a new file
+### 场景 1：创建新文件后立即验证
 
-When `create.md` workflow produces a new xlsx, run validation before any delivery response.
+当 `create.md` 工作流生成新的 xlsx 时，在任何交付响应之前运行验证。
 
 ```bash
-# Step 1: Static check on the freshly written file
+# 步骤 1：对刚写入的文件进行静态检查
 python3 SKILL_DIR/scripts/formula_check.py /path/to/output.xlsx
 
-# Step 2: Dynamic check (if LibreOffice available)
+# 步骤 2：动态检查（如果 LibreOffice 可用）
 python3 SKILL_DIR/scripts/libreoffice_recalc.py /path/to/output.xlsx /tmp/recalculated.xlsx
 python3 SKILL_DIR/scripts/formula_check.py /tmp/recalculated.xlsx
 ```
 
-Expected behavior on a freshly created file: Tier 1 will find zero `error_value` errors (because `<v>` elements are empty, not error-valued). It will find any broken cross-sheet references if sheet names were misspelled. Tier 2 will populate `<v>` and reveal runtime errors like `#DIV/0!`.
+对刚创建文件的预期行为：第 1 层级会发现零个 `error_value` 错误（因为 `<v>` 元素为空，而非错误值）。如果工作表名称拼写错误，它会发现任何损坏的跨工作表引用。第 2 层级将填充 `<v>` 并显示像 `#DIV/0!` 这样的运行时错误。
 
-If Tier 2 reveals errors, fix them in the source XML (not the recalculated copy), repack, and re-run both tiers.
+如果第 2 层级显示错误，请在源 XML 中修复它们（而不是重新计算的副本），重新打包，然后重新运行两个层级。
 
-### Scenario 2: Validate after editing an existing file
+### 场景 2：编辑现有文件后验证
 
-When `edit.md` workflow modifies an existing xlsx, validate only the affected sheets if the edit was surgical. If the edit touched shared formulas or cross-sheet references, validate all sheets.
+当 `edit.md` 工作流修改现有 xlsx 时，如果编辑是外科手术式的，则仅验证受影响的工作表。如果编辑触及了共享公式或跨工作表引用，则验证所有工作表。
 
 ```bash
-# Targeted static check — look at specific sheet
-# (formula_check.py checks all sheets; examine only the relevant section of output)
+# 有针对性的静态检查 — 查看特定工作表
+# (formula_check.py 检查所有工作表；只检查输出中的相关部分)
 python3 SKILL_DIR/scripts/formula_check.py /path/to/edited.xlsx --json \
   | python3 -c "
 import json, sys
@@ -719,54 +719,54 @@ for e in r['errors']:
 "
 ```
 
-Always run Tier 2 after edits that modify formulas, even if Tier 1 passes. Edits to data ranges can cause previously-valid formulas to produce runtime errors.
+即使第 1 层级通过，在修改公式的编辑后始终运行第 2 层级。数据范围的编辑可能导致以前有效的公式产生运行时错误。
 
-### Scenario 3: User provides a file with suspected formula errors
+### 场景 3：用户提供有疑似公式错误的文件
 
-When a user submits a file and reports wrong values or visible errors:
+当用户提交文件并报告错误值时：
 
 ```bash
-# Step 1: Static scan — find all error cells
+# 步骤 1：静态扫描 — 找到所有错误单元格
 python3 SKILL_DIR/scripts/formula_check.py /path/to/user_file.xlsx --json > /tmp/validation_results.json
 
-# Step 2: Unpack for manual inspection
+# 步骤 2：解压以进行手动检查
 python3 SKILL_DIR/scripts/xlsx_unpack.py /path/to/user_file.xlsx /tmp/xlsx_inspect/
 
-# Step 3: Dynamic recalculation
+# 步骤 3：动态重新计算
 python3 SKILL_DIR/scripts/libreoffice_recalc.py /path/to/user_file.xlsx /tmp/user_file_recalc.xlsx
 
-# Step 4: Re-validate recalculated file
+# 步骤 4：重新验证重新计算后的文件
 python3 SKILL_DIR/scripts/formula_check.py /tmp/user_file_recalc.xlsx --json > /tmp/validation_after_recalc.json
 
-# Step 5: Compare before and after
+# 步骤 5：比较之前和之后
 python3 - <<'EOF'
 import json
 before = json.load(open("/tmp/validation_results.json"))
 after  = json.load(open("/tmp/validation_after_recalc.json"))
-print(f"Before recalc: {before['error_count']} errors")
-print(f"After  recalc: {after['error_count']} errors")
+print(f"重新计算前: {before['error_count']} 个错误")
+print(f"重新计算后: {after['error_count']} 个错误")
 EOF
 ```
 
-If errors appear only after recalculation (not in the original static scan), the formulas were syntactically correct but produce wrong results at runtime. These are runtime errors that require formula-level fixes, not XML-structure fixes.
+如果错误仅在重新计算后出现（不在原始静态扫描中），则公式在语法上是正确的，但在运行时产生错误结果。这些是需要公式级修复而不是 XML 结构修复的运行时错误。
 
-If errors appear in both scans, they were already cached in `<v>` before recalculation — the file was previously opened by Excel/LibreOffice and the errors persisted.
+如果错误在两个扫描中都出现，它们在重新计算前就已经缓存在 `<v>` 中 — 文件之前已被 Excel/LibreOffice 打开，错误仍然存在。
 
 ---
 
-## Critical Pitfalls
+## 关键陷阱
 
-**Pitfall 1: openpyxl `data_only=True` destroys formulas.**
-Opening a workbook with `data_only=True` reads cached values instead of formulas. If you then save the workbook, all `<f>` elements are permanently removed and replaced with their last-cached values. Never use this mode for validation workflows.
+**陷阱 1：openpyxl `data_only=True` 会破坏公式。**
+使用 `data_only=True` 打开工作簿会读取缓存值而不是公式。如果您随后保存工作簿，所有 `<f>` 元素都会永久删除，并替换为它们最后的缓存值。永远不要在验证工作流中使用此模式。
 
-**Pitfall 2: Empty `<v>` is not the same as a passing formula.**
-A freshly generated file has empty `<v>` elements for all formula cells. formula_check.py will not report these as errors — they are not yet errors. They become errors only after recalculation if the calculated value is an error type. This is why Tier 2 is mandatory.
+**陷阱 2：空的 `<v>` 与通过的公式不同。**
+新生成的文件对于所有公式单元格都有空的 `<v>` 元素。formula_check.py 不会将这些报告为错误 — 它们还不是错误。它们只有在重新计算后才成为错误（如果计算值是错误类型）。这就是第 2 层级是强制性的原因。
 
-**Pitfall 3: Shared formula errors affect the entire range.**
-If a shared formula's primary cell has a broken reference, every cell in the shared range (`ref="D2:D100"`) inherits that broken reference. The count of logical errors can be much larger than the count of distinct error entries in formula_check.py output. When fixing a broken shared formula, fix the primary cell's `<f t="shared" ref="...">` element; the consumers (`<f t="shared" si="N"/>`) automatically inherit the corrected formula.
+**陷阱 3：共享公式错误影响整个范围。**
+如果共享公式的主单元格有损坏的引用，共享范围（`ref="D2:D100"`）中的每个单元格都会继承该损坏的引用。逻辑错误的数量可能远大于 formula_check.py 输出中不同错误条目的数量。修复损坏的共享公式时，修复主单元格的 `<f t="shared" ref="...">` 元素；消费者（`<f t="shared" si="N"/>`）会自动继承更正的公式。
 
-**Pitfall 4: Sheet names are case-sensitive.**
-`=q1!B5` and `=Q1!B5` are different references. Excel internally treats them the same, but formula_check.py's string comparison is case-sensitive. If a formula uses a lowercase sheet name that matches an uppercase sheet in the workbook, it will be flagged as a broken reference. The fix is to match the exact case in `workbook.xml`.
+**陷阱 4：工作表名称是区分大小写的。**
+`=q1!B5` 和 `=Q1!B5` 是不同的引用。Excel 在内部将它们视为相同，但 formula_check.py 的字符串比较是区分大小写的。如果公式使用了与工作簿中的大写工作表匹配的小写工作表名称，它将被标记为损坏的引用。修复方法是与 `workbook.xml` 中的确切大小写匹配。
 
-**Pitfall 5: `--convert-to xlsx` does not guarantee formula preservation.**
-LibreOffice's conversion can occasionally alter certain formula types (array formulas, dynamic array functions like `SORT`, `UNIQUE`). After Tier 2, if the recalculated file shows formula changes unrelated to error fixing, do not deliver the recalculated file directly — use the original file with targeted XML fixes instead.
+**陷阱 5：`--convert-to xlsx` 不保证公式保留。**
+LibreOffice 的转换偶尔会更改某些公式类型（数组公式、动态数组函数如 `SORT`、`UNIQUE`）。第 2 层级之后，如果重新计算的文件显示与错误修复无关的公式更改，请不要直接交付重新计算的文件 — 而是使用带有针对性 XML 修复的原始文件。

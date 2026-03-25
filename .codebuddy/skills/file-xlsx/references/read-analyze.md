@@ -1,97 +1,97 @@
-# Data Reading & Analysis Guide
+# 数据读取与分析指南
 
-> Reference for the READ path. Use `xlsx_reader.py` for structure discovery and data quality auditing,
-> then pandas for custom analysis. **Never modify the source file.**
-
----
-
-## When to Use This Path
-
-The user asks to read, analyze, view, summarize, extract, or answer questions about an Excel/CSV file's contents,
-without requiring file modification. If modification is needed, hand off to `edit.md`.
+> 读取路径的参考。使用 `xlsx_reader.py` 进行结构发现和数据质量审计，
+> 然后使用 pandas 进行自定义分析。**永远不要修改源文件。**
 
 ---
 
-## Workflow
+## 何时使用此路径
 
-### Step 1 — Structure Discovery
+用户要求读取、分析、查看、汇总、提取或回答有关 Excel/CSV 文件内容的问题，
+不需要文件修改。如果需要修改，请移交给 `edit.md`。
 
-Run `xlsx_reader.py` first. It handles format detection, encoding fallback, structure exploration, and data quality audit:
+---
+
+## 工作流程
+
+### 步骤 1 — 结构发现
+
+首先运行 `xlsx_reader.py`。它处理格式检测、编码回退、结构探索和数据质量审计：
 
 ```bash
-python3 SKILL_DIR/scripts/xlsx_reader.py input.xlsx                 # full report
-python3 SKILL_DIR/scripts/xlsx_reader.py input.xlsx --sheet Sales   # single sheet
-python3 SKILL_DIR/scripts/xlsx_reader.py input.xlsx --quality       # quality audit only
-python3 SKILL_DIR/scripts/xlsx_reader.py input.xlsx --json          # machine-readable
+python3 SKILL_DIR/scripts/xlsx_reader.py input.xlsx                 # 完整报告
+python3 SKILL_DIR/scripts/xlsx_reader.py input.xlsx --sheet Sales   # 单个工作表
+python3 SKILL_DIR/scripts/xlsx_reader.py input.xlsx --quality       # 仅质量审计
+python3 SKILL_DIR/scripts/xlsx_reader.py input.xlsx --json          # 机器可读格式
 ```
 
-Supported formats: `.xlsx`, `.xlsm`, `.csv`, `.tsv`. The script tries multiple encodings for CSV (utf-8-sig, gbk, utf-8, latin-1).
+支持的格式：`.xlsx`、`.xlsm`、`.csv`、`.tsv`。该脚本尝试 CSV 的多种编码（utf-8-sig、gbk、utf-8、latin-1）。
 
-### Step 2 — Custom Analysis with pandas
+### 步骤 2 — 使用 pandas 进行自定义分析
 
-Load data and perform the analysis the user requests:
+加载数据并执行用户请求的分析：
 
 ```python
 import pandas as pd
-df = pd.read_excel("input.xlsx", sheet_name=None)  # dict of all sheets
-# For CSV: pd.read_csv("input.csv")
+df = pd.read_excel("input.xlsx", sheet_name=None)  # 所有工作表的字典
+# 对于 CSV: pd.read_csv("input.csv")
 ```
 
-**Header handling** (when the default `header=0` doesn't work):
+**表头处理**（当默认的 `header=0` 不起作用时）：
 
-| Situation | Code |
+| 情况 | 代码 |
 |-----------|------|
-| Header on row 3 | `pd.read_excel(path, header=2)` |
-| Multi-level merged header | `pd.read_excel(path, header=[0, 1])` |
-| No header | `pd.read_excel(path, header=None)` |
+| 第 3 行的表头 | `pd.read_excel(path, header=2)` |
+| 多级合并表头 | `pd.read_excel(path, header=[0, 1])` |
+| 无表头 | `pd.read_excel(path, header=None)` |
 
-**Analysis quick reference:**
+**分析快速参考：**
 
-| Scenario | Pattern |
+| 场景 | 模式 |
 |----------|---------|
-| Descriptive stats | `df.describe()` or `df['Col'].agg(['sum', 'mean', 'min', 'max'])` |
-| Group aggregation | `df.groupby('Region')['Revenue'].agg(Total='sum', Avg='mean')` |
-| Top N | `df.groupby('Region')['Revenue'].sum().sort_values(ascending=False).head(5)` |
-| Pivot table | `df.pivot_table(values='Revenue', index='Region', columns='Quarter', aggfunc='sum', margins=True)` |
-| Time series | `df.set_index(pd.to_datetime(df['Date'])).resample('ME')['Revenue'].sum()` |
-| Cross-sheet merge | `pd.merge(sales, customers, on='CustomerID', how='left', validate='m:1')` |
-| Stack sheets | `pd.concat([df.assign(Source=name) for name, df in sheets.items()], ignore_index=True)` |
-| Large files (>50MB) | `pd.read_excel(path, usecols=['Date', 'Revenue'])` or `pd.read_csv(path, chunksize=10000)` |
+| 描述性统计 | `df.describe()` 或 `df['Col'].agg(['sum', 'mean', 'min', 'max'])` |
+| 分组聚合 | `df.groupby('Region')['Revenue'].agg(Total='sum', Avg='mean')` |
+| 前 N 名 | `df.groupby('Region')['Revenue'].sum().sort_values(ascending=False).head(5)` |
+| 透视表 | `df.pivot_table(values='Revenue', index='Region', columns='Quarter', aggfunc='sum', margins=True)` |
+| 时间序列 | `df.set_index(pd.to_datetime(df['Date'])).resample('ME')['Revenue'].sum()` |
+| 跨工作表合并 | `pd.merge(sales, customers, on='CustomerID', how='left', validate='m:1')` |
+| 堆叠工作表 | `pd.concat([df.assign(Source=name) for name, df in sheets.items()], ignore_index=True)` |
+| 大文件 (>50MB) | `pd.read_excel(path, usecols=['Date', 'Revenue'])` 或 `pd.read_csv(path, chunksize=10000)` |
 
-### Step 3 — Output
+### 步骤 3 — 输出
 
-If the user specifies an output file path, write results to it (highest priority). Format the report as:
+如果用户指定了输出文件路径，将结果写入其中（最高优先级）。将报告格式化为：
 
 ```
-## Analysis Report: {filename}
-### File Overview     — format, sheets, row counts
-### Data Quality      — nulls, duplicates, mixed types (or "no issues")
-### Key Findings      — direct answer to the user's question
-### Additional Notes  — formula NaN, encoding issues, caveats
+## 分析报告：{filename}
+### 文件概览     — 格式、工作表、行数
+### 数据质量      — 空值、重复项、混合类型（或"无问题"）
+### 关键发现      — 直接回答用户的问题
+### 附加说明      — 公式 NaN、编码问题、注意事项
 ```
 
-**Numeric display**: monetary `1,234,567.89`, percentage `12.3%`, multiples `8.5x`, counts as integers.
+**数字显示**：货币 `1,234,567.89`，百分比 `12.3%`，倍数 `8.5x`，计数为整数。
 
 ---
 
-## Common Pitfalls
+## 常见陷阱
 
-| Pitfall | Cause | Fix |
+| 陷阱 | 原因 | 解决方法 |
 |---------|-------|-----|
-| Formula cells read as NaN | `<v>` cache empty in freshly generated files | Inform user; suggest opening in Excel and re-saving; or use `libreoffice_recalc.py` |
-| CSV encoding errors | Chinese Windows exports use GBK | `xlsx_reader.py` auto-tries multiple encodings; manually specify if all fail |
-| Mixed types in column | Column has both numbers and text (e.g., "N/A") | `pd.to_numeric(df['Col'], errors='coerce')` — report unconvertible rows |
-| Year shows as 2,024 | Thousands separator format applied to year | `df['Year'].astype(int).astype(str)` |
-| Multi-level headers | Two-row header merged | `pd.read_excel(path, header=[0, 1])`, then flatten with `' - '.join()` |
-| Row number mismatch | pandas 0-indexed vs Excel 1-indexed | `excel_row = pandas_index + 2` (+1 for 1-index, +1 for header) |
+| 公式单元格读取为 NaN | 新生成的文件中 `<v>` 缓存为空 | 告知用户；建议在 Excel 中打开并重新保存；或使用 `libreoffice_recalc.py` |
+| CSV 编码错误 | 中文 Windows 导出使用 GBK | `xlsx_reader.py` 自动尝试多种编码；如果全部失败则手动指定 |
+| 列中混合类型 | 列中同时有数字和文本（例如，"N/A"） | `pd.to_numeric(df['Col'], errors='coerce')` — 报告无法转换的行 |
+| 年份显示为 2,024 | 对年份应用了千位分隔符格式 | `df['Year'].astype(int).astype(str)` |
+| 多级表头 | 两行合并的表头 | `pd.read_excel(path, header=[0, 1])`，然后使用 `' - '.join()` 展平 |
+| 行号不匹配 | pandas 从 0 开始索引 vs Excel 从 1 开始索引 | `excel_row = pandas_index + 2` (+1 表示从 1 开始，+1 表示表头) |
 
-**Critical**: Never open with `data_only=True` then `save()` — this permanently destroys all formulas.
+**关键**：永远不要使用 `data_only=True` 然后 `save()` — 这会永久销毁所有公式。
 
 ---
 
-## Prohibitions
+## 禁止事项
 
-- Never modify the source file (no `save()`, no XML edits)
-- Never report formula NaN as "data is zero" — explain it's a formula cache issue
-- Never report pandas indices as Excel row numbers
-- Never make speculative conclusions unsupported by the data
+- 永远不要修改源文件（不使用 `save()`，不进行 XML 编辑）
+- 永远不要将公式 NaN 报告为"数据为零" — 解释这是公式缓存问题
+- 永远不要将 pandas 索报告为 Excel 行号
+- 永远不要做出数据不支持的推测性结论

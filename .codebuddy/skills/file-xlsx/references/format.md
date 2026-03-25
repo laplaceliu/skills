@@ -1,206 +1,206 @@
-# Financial Formatting & Output Standards — Complete Agent Guide
+# 财务格式与输出标准 — 完整的代理指南
 
-> This document is the complete reference manual for the agent when applying professional financial formatting to xlsx files. All operations target direct XML surgery on `xl/styles.xml` without using openpyxl. Every operational step provides ready-to-use XML snippets.
-
----
-
-## 1. When to Use This Path
-
-This document (FORMAT path) applies to the following two scenarios:
-
-**Scenario A — Dedicated Formatting of an Existing File**
-The user provides an existing xlsx file and requests that financial modeling formatting standards be applied or unified. The starting point is to unpack the file, audit the existing `styles.xml`, then append missing styles and batch-update cell `s` attributes. No cell values or formulas are modified.
-
-**Scenario B — Applying Format Standards After CREATE/EDIT**
-After completing data entry or formula writing, formatting is applied as the final step. At this point, `styles.xml` may come from the minimal_xlsx template (which pre-defines 13 style slots) or from a user file. In either case, follow the principle of "append only, never modify existing xf entries."
-
-**Not applicable**: Reading or analyzing file contents only (use the READ path); modifying formulas or data (use the EDIT path).
+> 本文档是代理在将专业财务格式应用于 xlsx 文件时的完整参考手册。所有操作都针对 `xl/styles.xml` 的直接 XML 手术，不使用 openpyxl。每个操作步骤都提供了随时可用的 XML 代码片段。
 
 ---
 
-## 2. Financial Format Semantic System
+## 1. 何时使用此路径
 
-### 2.1 Font Color = Cell Role (Color = Role)
+本文档（FORMAT 路径）适用于以下两种场景：
 
-The primary convention of financial modeling: **font color encodes the cell's role, not decoration**. A reviewer can glance at colors to determine which cells are adjustable parameters and which are model-calculated results. This is an industry-wide convention (followed by investment banks, the Big Four, and corporate finance teams).
+**场景 A — 专用格式化现有文件**
+用户提供现有的 xlsx 文件，并要求应用或统一财务建模格式标准。起点是解压文件，审计现有的 `styles.xml`，然后追加缺失的样式并批量更新单元格 `s` 属性。不修改单元格值或公式。
 
-| Role | Font Color | AARRGGBB | Use Case |
+**场景 B — 在创建/编辑后应用格式标准**
+完成数据输入或公式编写后，将格式应用作为最后一步。此时，`styles.xml` 可能来自 minimal_xlsx 模板（预定义了 13 个样式槽）或用户文件。无论哪种情况，都遵循"仅追加，从不修改现有 xf 条目"的原则。
+
+**不适用**：仅读取或分析文件内容（使用 READ 路径）；修改公式或数据（使用 EDIT 路径）。
+
+---
+
+## 2. 财务格式语义系统
+
+### 2.1 字体颜色 = 单元格角色（颜色 = 角色）
+
+财务建模的主要约定：**字体颜色编码单元格的角色，而非装饰**。审阅者可以通过颜色快速确定哪些单元格是可调整参数，哪些是模型计算结果。这是行业范围内的约定（投资银行、四大会计师事务所和企业财务团队都遵循）。
+
+| 角色 | 字体颜色 | AARRGGBB | 使用场景 |
 |------|-----------|----------|----------|
-| Hard-coded input / assumption | Blue | `000000FF` | Growth rates, discount rates, tax rates, and other user-modifiable parameters |
-| Formula / calculated result | Black | `00000000` | All cells containing a `<f>` element |
-| Same-workbook cross-sheet reference | Green | `00008000` | Cells whose formula starts with `SheetName!` |
-| External file link | Red | `00FF0000` | Cells whose formula contains `[FileName.xlsx]` (flagged as fragile links) |
-| Label / text | Black (default) | theme color | Row labels, category headings |
-| Key assumption requiring review | Blue font + yellow fill | Font `000000FF` / Fill `00FFFF00` | Provisional values, parameters pending confirmation |
+| 硬编码输入 / 假设 | 蓝色 | `000000FF` | 增长率、折现率、税率和其他用户可修改参数 |
+| 公式 / 计算结果 | 黑色 | `00000000` | 所有包含 `<f>` 元素的单元格 |
+| 同一工作簿跨工作表引用 | 绿色 | `00008000` | 公式以 `SheetName!` 开头的单元格 |
+| 外部文件链接 | 红色 | `00FF0000` | 公式包含 `[FileName.xlsx]` 的单元格（标记为脆弱链接） |
+| 标签 / 文本 | 黑色（默认） | 主题颜色 | 行标签、类别标题 |
+| 需要审阅的关键假设 | 蓝色字体 + 黄色填充 | 字体 `000000FF` / 填充 `00FFFF00` | 临时值、待确认参数 |
 
-**Decision tree**:
+**决策树**：
 ```
-Does the cell contain a <f> element?
-  +-- Yes -> Does the formula start with [FileName]?
-  |           +-- Yes -> Red (external link)
-  |           +-- No  -> Does the formula contain SheetName!?
-  |                       +-- Yes -> Green (cross-sheet reference)
-  |                       +-- No  -> Black (same-sheet formula)
-  +-- No  -> Is the value a user-adjustable parameter?
-              +-- Yes -> Blue (input/assumption)
-              +-- No  -> Black default (label)
+单元格是否包含 <f> 元素？
+  +-- 是 -> 公式是否以 [FileName] 开头？
+  |           +-- 是 -> 红色（外部链接）
+  |           +-- 否 -> 公式是否包含 SheetName!？
+  |                       +-- 是 -> 绿色（跨工作表引用）
+  |                       +-- 否 -> 黑色（同一工作表公式）
+  +-- 否 -> 值是否是用户可调整参数？
+              +-- 是 -> 蓝色（输入/假设）
+              +-- 否 -> 黑色默认（标签）
 ```
 
-**Strictly prohibited**: Blue font + `<f>` element coexisting (color role contradiction — must be corrected).
+**严格禁止**：蓝色字体 + `<f>` 元素共存（颜色角色矛盾 — 必须纠正）。
 
-### 2.2 Number Format Matrix
+### 2.2 数字格式矩阵
 
-| Data Type | formatCode | numFmtId | Display Example | Applicable Scenario |
+| 数据类型 | formatCode | numFmtId | 显示示例 | 适用场景 |
 |-----------|-----------|----------|-----------------|---------------------|
-| Standard currency (whole dollars) | `$#,##0;($#,##0);"-"` | 164 | $1,234 / ($1,234) / - | P&L, balance sheet amount rows |
-| Standard currency (with cents) | `$#,##0.00;($#,##0.00);"-"` | 169 | $1,234.56 / ($1,234.56) / - | Unit prices, detailed costs |
-| Thousands (K) | `#,##0,"K"` | 171 | 1,234K | Simplified display for management reports |
-| Millions (M) | `#,##0,,"M"` | 172 | 1M | Macro-level summary rows |
-| Percentage (1 decimal) | `0.0%` | 165 | 12.5% | Growth rates, gross margins |
-| Percentage (2 decimals) | `0.00%` | 170 | 12.50% | IRR, precise interest rates |
-| Multiple / valuation multiplier | `0.0x` | 166 | 8.5x | EV/EBITDA, P/E |
-| Integer (thousands separator) | `#,##0` | 167 | 12,345 | Employee count, unit quantities |
-| Year | `0` | 1 (built-in, no declaration needed) | 2024 | Column header years, prevents 2,024 |
-| Date | `m/d/yyyy` | 14 (built-in, no declaration needed) | 3/21/2026 | Timelines |
-| General text | General | 0 (built-in, no declaration needed) | — | Label rows, cells with no format requirement |
+| 标准货币（整美元） | `$#,##0;($#,##0);"-"` | 164 | $1,234 / ($1,234) / - | 损益表、资产负债表金额行 |
+| 标准货币（含美分） | `$#,##0.00;($#,##0.00);"-"` | 169 | $1,234.56 / ($1,234.56) / - | 单价、详细成本 |
+| 千位（K） | `#,##0,"K"` | 171 | 1,234K | 管理报告简化显示 |
+| 百万位（M） | `#,##0,,"M"` | 172 | 1M | 宏观层面汇总行 |
+| 百分比（1 位小数） | `0.0%` | 165 | 12.5% | 增长率、毛利率 |
+| 百分比（2 位小数） | `0.00%` | 170 | 12.50% | IRR、精确利率 |
+| 倍数 / 估值乘数 | `0.0x` | 166 | 8.5x | EV/EBITDA、P/E |
+| 整数（千位分隔符） | `#,##0` | 167 | 12,345 | 员工人数、单位数量 |
+| 年份 | `0` | 1（内置，无需声明） | 2024 | 列标题年份，防止 2,024 |
+| 日期 | `m/d/yyyy` | 14（内置，无需声明） | 3/21/2026 | 时间线 |
+| 常规文本 | General | 0（内置，无需声明） | — | 标签行、无格式要求的单元格 |
 
-numFmtId 169–172 are custom formats that need to be appended beyond the 4 formats (164–167) pre-defined in the minimal_xlsx template. When appending, assign IDs according to the rules (see Section 3.4).
+numFmtId 169–172 是自定义格式，需要在 minimal_xlsx 模板中预定义的 4 种格式（164–167）之外追加。追加时，按照规则分配 ID（参见第 3.4 节）。
 
-**Built-in format IDs do not need to be declared in `<numFmts>`** (IDs 0–163 are built into Excel/LibreOffice; simply reference the numFmtId in `<xf>`):
+**内置格式 ID 无需在 `<numFmts>` 中声明**（ID 0–163 内置于 Excel/LibreOffice；只需在 `<xf>` 中引用 numFmtId）：
 
-| numFmtId | formatCode | Description |
+| numFmtId | formatCode | 描述 |
 |----------|-----------|-------------|
-| 0 | General | General format |
-| 1 | `0` | Integer, no thousands separator (use this ID for years) |
-| 3 | `#,##0` | Thousands-separated integer (no decimals) |
-| 9 | `0%` | Percentage integer |
-| 10 | `0.00%` | Percentage with two decimals |
-| 14 | `m/d/yyyy` | Short date |
+| 0 | General | 常规格式 |
+| 1 | `0` | 整数，无千位分隔符（年份使用此 ID） |
+| 3 | `#,##0` | 千位分隔符整数（无小数） |
+| 9 | `0%` | 百分比整数 |
+| 10 | `0.00%` | 两位小数百分比 |
+| 14 | `m/d/yyyy` | 短日期 |
 
-### 2.3 Negative Number Display Standards
+### 2.3 负数显示标准
 
-Financial reports have two mainstream conventions for negative numbers — choose one and **maintain consistency** throughout the entire workbook:
+财务报告有两种负数的主流约定 — 选择一种并在整个工作簿中**保持一致**：
 
-**Parenthetical style (investment banking standard, recommended for external deliverables)**
+**括号样式（投资银行标准，推荐用于外部交付）**
 
 ```
-Positive: $1,234    Negative: ($1,234)    Zero: -
+正数：$1,234    负数：($1,234)    零：-
 formatCode: $#,##0;($#,##0);"-"
 ```
 
-**Red minus sign style (suitable for internal operational analysis reports)**
+**红色减号样式（适用于内部运营分析报告）**
 
 ```
-Positive: $1,234    Negative: -$1,234 (red)
+正数：$1,234    负数：-$1,234（红色）
 formatCode: $#,##0;[Red]-$#,##0;"-"
 ```
 
-Rule: Once a style is determined, maintain it across the entire workbook. Do not mix two negative number display styles within the same workbook.
+规则：确定样式后，在整个工作簿中保持一致。不要在同一工作簿中混合两种负数显示样式。
 
-### 2.4 Zero Value Display Standards
+### 2.4 零值显示标准
 
-In financial models, "0" and "no data" have different semantics and should be visually distinct:
+在财务模型中，"0"和"无数据"具有不同的语义，应在视觉上区分开：
 
-| Scenario | Recommended Display | formatCode Third Segment |
+| 场景 | 推荐显示 | formatCode 第三段 |
 |----------|-------------------|--------------------------|
-| Sparse matrix (most rows have zero-value periods) | Dash `-` | `"-"` |
-| Quantity counts (zero itself is meaningful) | `0` | `0` or omit |
-| Placeholder row (explicitly empty) | Leave blank | Do not write to cell |
+| 稀疏矩阵（大多数行有零值期间） | 短横线 `-` | `"-"` |
+| 数量计数（零本身有意义） | `0` | `0` 或省略 |
+| 占位行（明确为空） | 留空 | 不写入单元格 |
 
-Four-segment format syntax: `positive format;negative format;zero value format;text format`
+四段格式语法：`正数格式;负数格式;零值格式;文本格式`
 
-Zero as dash: `$#,##0;($#,##0);"-"`
-Zero preserved as 0: `#,##0;(#,##0);0`
+零作为短横线：`$#,##0;($#,##0);"-"`
+零保留为 0：`#,##0;(#,##0);0`
 
 ---
 
-## 3. styles.xml Surgical Operations
+## 3. styles.xml 手术操作
 
-### 3.1 Auditing Existing Styles: Understanding the cellXfs Indirect Reference Chain
+### 3.1 审计现有样式：理解 cellXfs 间接引用链
 
-A cell's `s` attribute points to a position index (0-based) in `cellXfs`, and each `<xf>` entry in `cellXfs` references its respective definition libraries through `fontId`, `fillId`, `borderId`, and `numFmtId`.
+单元格的 `s` 属性指向 `cellXfs` 中的位置索引（从 0 开始），`cellXfs` 中的每个 `<xf>` 条目通过 `fontId`、`fillId`、`borderId` 和 `numFmtId` 引用其各自的定义库。
 
-Reference chain diagram:
+引用链图：
 
 ```
-Cell <c s="6">
-    | Look up cellXfs by 0-based index
+单元格 <c s="6">
+    | 通过基于 0 的索引查找 cellXfs
 cellXfs[6] -> numFmtId="164" fontId="2" fillId="0" borderId="0"
     |            |               |          |
 numFmts         fonts[2]      fills[0]   borders[0]
-id=164          color=00000000  (no fill)  (no border)
-$#,##0...       black
+id=164          color=00000000  (无填充)  (无边框)
+$#,##0...       黑色
 ```
 
-Audit steps:
+审计步骤：
 
-**Step 1**: Read `<numFmts>` and record all declared custom formats and their IDs:
+**步骤 1**：读取 `<numFmts>` 并记录所有声明的自定义格式及其 ID：
 ```xml
 <numFmts count="4">
   <numFmt numFmtId="164" formatCode="$#,##0;($#,##0);&quot;-&quot;"/>
   <numFmt numFmtId="165" formatCode="0.0%"/>
   <numFmt numFmtId="166" formatCode="0.0x"/>
-  <numFmt numFmtId="167" formatCode="#,##0"/>
+  <numFmt numFmtId="167" formatCode="#，##0"/>
 </numFmts>
 ```
-Record: current maximum custom numFmtId = 167, next available ID = 168.
+记录：当前最大自定义 numFmtId = 167，下一个可用 ID = 168。
 
-**Step 2**: Read `<fonts>` and list each `<font>` by 0-based index with its color and style:
+**步骤 2**：读取 `<fonts>` 并按基于 0 的索引列出每个 `<font>` 及其颜色和样式：
 ```
-fontId=0 -> No explicit color (theme default black)
-fontId=1 -> color rgb="000000FF" (blue, input role)
-fontId=2 -> color rgb="00000000" (black, formula role)
-fontId=3 -> color rgb="00008000" (green, cross-sheet reference role)
-fontId=4 -> <b/> + color rgb="00000000" (bold black, header)
-```
-
-**Step 3**: Read `<fills>` and confirm that fills[0] and fills[1] are spec-mandated reserved entries (never delete):
-```
-fillId=0 -> patternType="none" (spec-mandated)
-fillId=1 -> patternType="gray125" (spec-mandated)
-fillId=2 -> Yellow highlight (if present)
+fontId=0 -> 无显式颜色（主题默认黑色）
+fontId=1 -> color rgb="000000FF"（蓝色，输入角色）
+fontId=2 -> color rgb="00000000"（黑色，公式角色）
+fontId=3 -> color rgb="00008000"（绿色，跨工作表引用角色）
+fontId=4 -> <b/> + color rgb="00000000"（粗体黑色，标题）
 ```
 
-**Step 4**: Read `<cellXfs>` and list each `<xf>` entry by 0-based index with its combination:
+**步骤 3**：读取 `<fills>` 并确认 fills[0] 和 fills[1] 是规范规定的保留条目（永远不要删除）：
 ```
-index 0 -> numFmtId=0,   fontId=0, fillId=0 -> Default style
-index 1 -> numFmtId=0,   fontId=1, fillId=0 -> Blue font general (input)
-index 5 -> numFmtId=164, fontId=1, fillId=0 -> Blue font currency (currency input)
-index 6 -> numFmtId=164, fontId=2, fillId=0 -> Black font currency (currency formula)
+fillId=0 -> patternType="none"（规范规定）
+fillId=1 -> patternType="gray125"（规范规定）
+fillId=2 -> 黄色高亮（如果存在）
+```
+
+**步骤 4**：读取 `<cellXfs>` 并按基于 0 的索引列出每个 `<xf>` 条目及其组合：
+```
+索引 0 -> numFmtId=0,   fontId=0, fillId=0 -> 默认样式
+索引 1 -> numFmtId=0,   fontId=1, fillId=0 -> 蓝色字体常规（输入）
+索引 5 -> numFmtId=164, fontId=1, fillId=0 -> 蓝色字体货币（货币输入）
+索引 6 -> numFmtId=164, fontId=2, fillId=0 -> 黑色字体货币（货币公式）
 ...
 ```
 
-**Step 5**: Verify that all count attributes match the actual number of elements (count mismatches will cause Excel to refuse to open the file).
+**步骤 5**：验证所有 count 属性与实际元素数量匹配（count 不匹配会导致 Excel 拒绝打开文件）。
 
-### 3.2 Safely Appending New Styles (Golden Rule: Append Only, Never Modify Existing xf)
+### 3.2 安全追加新样式（黄金法则：仅追加，从不修改现有 xf）
 
-**Never modify existing `<xf>` entries**. Modifications will affect all cells that already reference that index, breaking existing formatting. Only append new entries at the end.
+**永远不要修改现有的 `<xf>` 条目**。修改会影响已经引用该索引的所有单元格，破坏现有格式。只能在末尾追加新条目。
 
-Complete atomic operation sequence for appending new styles (all 5 steps must be executed):
+追加新样式的完整原子操作序列（必须执行所有 5 个步骤）：
 
-**Step 1**: Determine if a new `<numFmt>` is needed
+**步骤 1**：确定是否需要新的 `<numFmt>`
 
-Built-in formats (ID 0–163) skip this step. Custom formats are appended to the end of `<numFmts>`:
+内置格式（ID 0–163）跳过此步骤。自定义格式追加到 `<numFmts>` 的末尾：
 ```xml
 <numFmts count="5">  <!-- count +1 -->
-  <!-- Keep existing entries unchanged -->
+  <!-- 保持现有条目不变 -->
   <numFmt numFmtId="164" formatCode="$#,##0;($#,##0);&quot;-&quot;"/>
   <numFmt numFmtId="165" formatCode="0.0%"/>
   <numFmt numFmtId="166" formatCode="0.0x"/>
-  <numFmt numFmtId="167" formatCode="#,##0"/>
-  <!-- Newly appended -->
+  <numFmt numFmtId="167" formatCode="#，##0"/>
+  <!-- 新追加 -->
   <numFmt numFmtId="168" formatCode="$#,##0.00;($#,##0.00);&quot;-&quot;"/>
 </numFmts>
 ```
 
-**Step 2**: Determine if a new `<font>` is needed
+**步骤 2**：确定是否需要新的 `<font>`
 
-Check whether the existing fonts already contain a matching color+style combination. If not, append to the end of `<fonts>`:
+检查现有字体是否已包含匹配的颜色+样式组合。如果没有，追加到 `<fonts>` 的末尾：
 ```xml
 <fonts count="6">  <!-- count +1 -->
-  <!-- Keep existing entries unchanged -->
+  <!-- 保持现有条目不变 -->
   ...
-  <!-- Newly appended: red font (external link role), new fontId = 5 -->
+  <!-- 新追加：红色字体（外部链接角色），新 fontId = 5 -->
   <font>
     <sz val="11"/>
     <name val="Calibri"/>
@@ -208,22 +208,22 @@ Check whether the existing fonts already contain a matching color+style combinat
   </font>
 </fonts>
 ```
-New fontId = the count value before appending (when original count=5, new fontId=5).
+新 fontId = 追加前的 count 值（当原始 count=5 时，新 fontId=5）。
 
-**Step 3**: Determine if a new `<fill>` is needed
+**步骤 3**：确定是否需要新的 `<fill>`
 
-If a new background color is needed, append to the end of `<fills>` (note: fills[0] and fills[1] must never be modified):
+如果需要新的背景颜色，追加到 `<fills>` 的末尾（注意：fills[0] 和 fills[1] 绝对不能修改）：
 ```xml
 <fills count="4">  <!-- count +1 -->
-  <fill><patternFill patternType="none"/></fill>       <!-- 0: spec-mandated -->
-  <fill><patternFill patternType="gray125"/></fill>    <!-- 1: spec-mandated -->
-  <fill>                                               <!-- 2: yellow highlight -->
+  <fill><patternFill patternType="none"/></fill>       <!-- 0: 规范规定 -->
+  <fill><patternFill patternType="gray125"/></fill>    <!-- 1: 规范规定 -->
+  <fill>                                               <!-- 2: 黄色高亮 -->
     <patternFill patternType="solid">
       <fgColor rgb="00FFFF00"/>
       <bgColor indexed="64"/>
     </patternFill>
   </fill>
-  <!-- Newly appended: light gray fill (projection period distinction), new fillId = 3 -->
+  <!-- 新追加：浅灰色填充（预测期区分），新 fillId = 3 -->
   <fill>
     <patternFill patternType="solid">
       <fgColor rgb="00D3D3D3"/>
@@ -233,315 +233,315 @@ If a new background color is needed, append to the end of `<fills>` (note: fills
 </fills>
 ```
 
-**Step 4**: Append a new `<xf>` combination at the end of `<cellXfs>`
+**步骤 4**：在 `<cellXfs>` 末尾追加新的 `<xf>` 组合
 ```xml
 <cellXfs count="14">  <!-- count +1 -->
-  <!-- Keep existing entries 0-12 unchanged -->
+  <!-- 保持现有条目 0-12 不变 -->
   ...
-  <!-- Newly appended index=13: currency with cents formula (black font + numFmtId=168) -->
+  <!-- 新追加索引=13：带美分的货币公式（黑色字体 + numFmtId=168） -->
   <xf numFmtId="168" fontId="2" fillId="0" borderId="0" xfId="0"
       applyFont="1" applyNumberFormat="1"/>
 </cellXfs>
 ```
-New style index = the count value before appending (when original count=13, new index=13).
+新样式索引 = 追加前的 count 值（当原始 count=13 时，新索引=13）。
 
-**Step 5**: Record the new style index; subsequently set the `s` attribute of corresponding cells in the sheet XML to this value.
+**步骤 5**：记录新样式索引；随后在 sheet XML 中将相应单元格的 `s` 属性设置为此值。
 
-### 3.3 AARRGGBB Color Format Explanation
+### 3.3 AARRGGBB 颜色格式说明
 
-OOXML's `rgb` attribute uses **8-digit hexadecimal AARRGGBB** format (not HTML's 6-digit RRGGBB):
+OOXML 的 `rgb` 属性使用**8 位十六进制 AARRGGBB** 格式（不是 HTML 的 6 位 RRGGBB）：
 
 ```
 AA  RR  GG  BB
 |   |   |   |
-Alpha Red Green Blue
+透明度 红 绿 蓝
 ```
 
-- Alpha channel: `00` = fully opaque (normal use value); `FF` = fully transparent (invisible, never use this)
-- Financial color standards always use `00` as the Alpha prefix
+- 透明度通道：`00` = 完全不透明（正常使用值）；`FF` = 完全透明（不可见，永远不要使用）
+- 财务颜色标准始终使用 `00` 作为透明度前缀
 
-| Color | AARRGGBB | Corresponding Role |
+| 颜色 | AARRGGBB | 对应角色 |
 |-------|----------|-------------------|
-| Blue (input) | `000000FF` | Hard-coded assumptions |
-| Black (formula) | `00000000` | Calculated results |
-| Green (cross-sheet reference) | `00008000` | Same-workbook cross-sheet |
-| Red (external link) | `00FF0000` | References to other files |
-| Yellow (review-required fill) | `00FFFF00` | Key assumption highlight |
-| Light gray (projection period fill) | `00D3D3D3` | Distinguishing historical vs. forecast periods |
-| White | `00FFFFFF` | Pure white fill |
+| 蓝色（输入） | `000000FF` | 硬编码假设 |
+| 黑色（公式） | `00000000` | 计算结果 |
+| 绿色（跨工作表引用） | `00008000` | 同一工作簿跨工作表 |
+| 红色（外部链接） | `00FF0000` | 对其他文件的引用 |
+| 黄色（需要审阅的填充） | `00FFFF00` | 关键假设高亮 |
+| 浅灰色（预测期填充） | `00D3D3D3` | 区分历史与预测期 |
+| 白色 | `00FFFFFF` | 纯白色填充 |
 
-**Common mistake**: Mistakenly writing HTML format `#0000FF` as `FF0000FF` (Alpha=FF makes the color fully transparent and invisible). Correct format: `000000FF`.
+**常见错误**：错误地将 HTML 格式 `#0000FF` 写成 `FF0000FF`（Alpha=FF 使颜色完全透明且不可见）。正确格式：`000000FF`。
 
-### 3.4 numFmtId Assignment Rules
+### 3.4 numFmtId 分配规则
 
 ```
-ID 0-163    -> Excel/LibreOffice built-in formats, no declaration needed in <numFmts>, reference directly in <xf>
-ID 164+     -> Custom formats, must be explicitly declared as <numFmt> elements in <numFmts>
+ID 0-163    -> Excel/LibreOffice 内置格式，无需在 <numFmts> 中声明，直接在 <xf> 中引用
+ID 164+     -> 自定义格式，必须在 <numFmts> 中显式声明为 <numFmt> 元素
 ```
 
-Rules for assigning new IDs:
-1. Read all `numFmtId` attribute values in the current `<numFmts>`
-2. Take the maximum value + 1 as the next custom format ID
-3. Do not reuse existing IDs; do not skip numbers
+分配新 ID 的规则：
+1. 读取当前 `<numFmts>` 中的所有 `numFmtId` 属性值
+2. 取最大值 + 1 作为下一个自定义格式 ID
+3. 不要重用现有 ID；不要跳过数字
 
-The minimal_xlsx template pre-defines IDs: 164, 165, 166, 167. The next available ID is 168.
+minimal_xlsx 模板预定义 ID：164、165、166、167。下一个可用 ID 是 168。
 
 ---
 
-## 4. Pre-defined Style Index Complete Reference Table (13 Slots)
+## 4. 预定义样式索引完整参考表（13 个槽位）
 
-The following are the 13 style slots (cellXfs index 0–12) pre-defined in the minimal_xlsx template's `styles.xml`, which can be directly referenced in the cell `s` attribute in sheet XML:
+以下是 minimal_xlsx 模板的 `styles.xml` 中预定义的 13 个样式槽位（cellXfs 索引 0–12），可在 sheet XML 中单元格的 `s` 属性中直接引用：
 
-| Index | Semantic Role | Font Color | Fill | numFmtId | Format Display | Typical Use |
+| 索引 | 语义角色 | 字体颜色 | 填充 | numFmtId | 格式显示 | 典型用途 |
 |-------|--------------|------------|------|----------|---------------|-------------|
-| **0** | Default style | Theme black | None | 0 | General | Cells requiring no special formatting |
-| **1** | Input / assumption (general) | Blue `000000FF` | None | 0 | General | Text-type assumptions, flags |
-| **2** | Formula / calculated result (general) | Black `00000000` | None | 0 | General | Text concatenation formulas, non-numeric calculations |
-| **3** | Cross-sheet reference (general) | Green `00008000` | None | 0 | General | Values pulled from cross-sheet (general format) |
-| **4** | Header (bold) | Bold black | None | 0 | General | Row/column headings |
-| **5** | Currency input | Blue `000000FF` | None | 164 | $1,234 / ($1,234) / - | Amount inputs in the assumptions area |
-| **6** | Currency formula | Black `00000000` | None | 164 | $1,234 / ($1,234) / - | Amount calculations in the model area (revenue, EBITDA) |
-| **7** | Percentage input | Blue `000000FF` | None | 165 | 12.5% | Rate inputs in the assumptions area (growth rate, gross margin assumptions) |
-| **8** | Percentage formula | Black `00000000` | None | 165 | 12.5% | Rate calculations in the model area (actual gross margin) |
-| **9** | Integer (comma) input | Blue `000000FF` | None | 167 | 12,345 | Quantity inputs in the assumptions area (employee count) |
-| **10** | Integer (comma) formula | Black `00000000` | None | 167 | 12,345 | Quantity calculations in the model area |
-| **11** | Year input | Blue `000000FF` | None | 1 | 2024 | Column header years (no thousands separator) |
-| **12** | Key assumption highlight | Blue `000000FF` | Yellow `00FFFF00` | 0 | General | Key parameters pending review or confirmation |
+| **0** | 默认样式 | 主题黑色 | 无 | 0 | General | 不需要特殊格式的单元格 |
+| **1** | 输入 / 假设（常规） | 蓝色 `000000FF` | 无 | 0 | General | 文本类型假设、标志 |
+| **2** | 公式 / 计算结果（常规） | 黑色 `00000000` | 无 | 0 | General | 文本连接公式、非数字计算 |
+| **3** | 跨工作表引用（常规） | 绿色 `00008000` | 无 | 0 | General | 从跨工作表提取的值（常规格式） |
+| **4** | 标题（粗体） | 粗体黑色 | 无 | 0 | General | 行/列标题 |
+| **5** | 货币输入 | 蓝色 `000000FF` | 无 | 164 | $1,234 / ($1,234) / - | 假设区域的金额输入 |
+| **6** | 货币公式 | 黑色 `00000000` | 无 | 164 | $1,234 / ($1,234) / - | 模型区域的金额计算（收入、EBITDA） |
+| **7** | 百分比输入 | 蓝色 `000000FF` | 无 | 165 | 12.5% | 假设区域的比率输入（增长率、毛利率假设） |
+| **8** | 百分比公式 | 黑色 `00000000` | 无 | 165 | 12.5% | 模型区域的比率计算（实际毛利率） |
+| **9** | 整数（逗号）输入 | 蓝色 `000000FF` | 无 | 167 | 12,345 | 假设区域的数量输入（员工人数） |
+| **10** | 整数（逗号）公式 | 黑色 `00000000` | 无 | 167 | 12,345 | 模型区域的数量计算 |
+| **11** | 年份输入 | 蓝色 `000000FF` | 无 | 1 | 2024 | 列标题年份（无千位分隔符） |
+| **12** | 关键假设高亮 | 蓝色 `000000FF` | 黄色 `00FFFF00` | 0 | General | 待审阅或确认的关键参数 |
 
-**Selection guide**:
-- Determine "input" vs. "formula" -> Choose odd-numbered (input/blue) or even-numbered (formula/black) paired slots
-- Determine data type -> Choose the corresponding currency (5/6) / percentage (7/8) / integer (9/10) / year (11) slot
-- Cross-sheet reference needing number format -> Append a new green + number format combination (see Section 5.4)
-- Parameter pending review -> index 12
+**选择指南**：
+- 确定"输入" vs "公式" -> 选择奇数（输入/蓝色）或偶数（公式/黑色）成对槽位
+- 确定数据类型 -> 选择相应的货币 (5/6) / 百分比 (7/8) / 整数 (9/10) / 年份 (11) 槽位
+- 需要数字格式的跨工作表引用 -> 追加新的绿色 + 数字格式组合（参见第 5.4 节）
+- 待审阅参数 -> 索引 12
 
 ---
 
-## 5. Assumption Separation Principle: XML-Level Implementation
+## 5. 假设分离原则：XML 级实现
 
-### 5.1 Structural Design
+### 5.1 结构设计
 
-Assumption separation principle: **Input assumptions are centralized in a dedicated area (sheet or block); the model calculation area contains only formulas, no hard-coded values**.
+假设分离原则：**输入假设集中在专用区域（工作表或块）；模型计算区域仅包含公式，无硬编码值**。
 
-Recommended structure:
+推荐结构：
 ```
-Workbook sheet layout
-  sheet 1 "Assumptions"  -> All blue-font cells (style 1/5/7/9/11/12)
-  sheet 2 "Model"        -> All black or green-font cells (style 2/3/4/6/8/10)
-```
-
-Same-sheet zoning approach for simple models:
-```
-Rows 1-5:   [Assumptions block - blue font]
-Row 6:      [Empty row separator]
-Rows 7+:    [Model block - black/green font formulas referencing assumptions area]
+工作簿工作表布局
+  工作表 1 "Assumptions"  -> 所有蓝色字体单元格（样式 1/5/7/9/11/12）
+  工作表 2 "Model"        -> 所有黑色或绿色字体单元格（样式 2/3/4/6/8/10）
 ```
 
-### 5.2 Assumptions Area XML Example
+简单模型的同一工作表分区方法：
+```
+第 1-5 行：   [假设块 - 蓝色字体]
+第 6 行：      [空行分隔符]
+第 7 行+：    [模型块 - 引用假设区域的黑色/绿色字体公式]
+```
+
+### 5.2 假设区域 XML 示例
 
 ```xml
-<!-- Assumptions sheet (sheet1.xml) example -->
+<!-- 假设工作表 (sheet1.xml) 示例 -->
 
-<!-- Row 1: Block title -->
+<!-- 第 1 行：块标题 -->
 <row r="1">
-  <c r="A1" s="4" t="inlineStr"><is><t>Model Assumptions</t></is></c>
+  <c r="A1" s="4" t="inlineStr"><is><t>模型假设</t></is></c>
 </row>
 
-<!-- Row 2: Growth rate assumption - blue font percentage input, s="7" -->
+<!-- 第 2 行：增长率假设 - 蓝色字体百分比输入，s="7" -->
 <row r="2">
-  <c r="A2" t="inlineStr"><is><t>Revenue Growth Rate</t></is></c>
+  <c r="A2" t="inlineStr"><is><t>收入增长率</t></is></c>
   <c r="B2" s="7"><v>0.08</v></c>
 </row>
 
-<!-- Row 3: Gross margin assumption - blue font percentage input, s="7" -->
+<!-- 第 3 行：毛利率假设 - 蓝色字体百分比输入，s="7" -->
 <row r="3">
-  <c r="A3" t="inlineStr"><is><t>Gross Margin</t></is></c>
+  <c r="A3" t="inlineStr"><is><t>毛利率</t></is></c>
   <c r="B3" s="7"><v>0.65</v></c>
 </row>
 
-<!-- Row 4: Base revenue - blue font currency input, s="5" -->
+<!-- 第 4 行：基础收入 - 蓝色字体货币输入，s="5" -->
 <row r="4">
-  <c r="A4" t="inlineStr"><is><t>Base Revenue (Year 0)</t></is></c>
+  <c r="A4" t="inlineStr"><is><t>基础收入（第 0 年）</t></is></c>
   <c r="B4" s="5"><v>1000000</v></c>
 </row>
 
-<!-- Row 5: Key assumption (pending review) - blue font yellow fill, s="12" -->
+<!-- 第 5 行：关键假设（待审阅）- 蓝色字体黄色填充，s="12" -->
 <row r="5">
-  <c r="A5" t="inlineStr"><is><t>Terminal Growth Rate</t></is></c>
+  <c r="A5" t="inlineStr"><is><t>终值增长率</t></is></c>
   <c r="B5" s="12"><v>0.03</v></c>
 </row>
 ```
 
-### 5.3 Model Area XML Example (Referencing Assumptions Area)
+### 5.3 模型区域 XML 示例（引用假设区域）
 
 ```xml
-<!-- Model sheet (sheet2.xml) example -->
+<!-- 模型工作表 (sheet2.xml) 示例 -->
 
-<!-- Row 1: Column headers (years) - bold header, s="4"; year cells, s="11" -->
+<!-- 第 1 行：列标题（年份）- 粗体标题，s="4"；年份单元格，s="11" -->
 <row r="1">
-  <c r="A1" s="4" t="inlineStr"><is><t>Metric</t></is></c>
+  <c r="A1" s="4" t="inlineStr"><is><t>指标</t></is></c>
   <c r="B1" s="11"><v>2024</v></c>
   <c r="C1" s="11"><v>2025</v></c>
   <c r="D1" s="11"><v>2026</v></c>
 </row>
 
-<!-- Row 2: Revenue row -->
+<!-- 第 2 行：收入行 -->
 <row r="2">
-  <c r="A2" t="inlineStr"><is><t>Revenue</t></is></c>
-  <!-- B2: Base year revenue, cross-sheet reference from Assumptions, green, s="3" (general format) -->
-  <!-- If currency format is needed, append new style s="13" (see Section 5.4) -->
+  <c r="A2" t="inlineStr"><is><t>收入</t></is></c>
+  <!-- B2：基础年收入，从假设跨工作表引用，绿色，s="3"（常规格式） -->
+  <!-- 如果需要货币格式，追加新样式 s="13"（参见第 5.4 节） -->
   <c r="B2" s="3"><f>Assumptions!B4</f><v></v></c>
-  <!-- C2, D2: Next year revenue = prior year * (1 + growth rate), black font currency formula, s="6" -->
+  <!-- C2、D2：下一年收入 = 上一年 * (1 + 增长率)，黑色字体货币公式，s="6" -->
   <c r="C2" s="6"><f>B2*(1+Assumptions!B2)</f><v></v></c>
   <c r="D2" s="6"><f>C2*(1+Assumptions!B2)</f><v></v></c>
 </row>
 
-<!-- Row 3: Gross profit row - black font currency formula, s="6" -->
+<!-- 第 3 行：毛利行 - 黑色字体货币公式，s="6" -->
 <row r="3">
-  <c r="A3" t="inlineStr"><is><t>Gross Profit</t></is></c>
+  <c r="A3" t="inlineStr"><is><t>毛利</t></is></c>
   <c r="B3" s="6"><f>B2*Assumptions!B3</f><v></v></c>
   <c r="C3" s="6"><f>C2*Assumptions!B3</f><v></v></c>
   <c r="D3" s="6"><f>D2*Assumptions!B3</f><v></v></c>
 </row>
 
-<!-- Row 4: Gross margin row - black font percentage formula, s="8" -->
+<!-- 第 4 行：毛利率行 - 黑色字体百分比公式，s="8" -->
 <row r="4">
-  <c r="A4" t="inlineStr"><is><t>Gross Margin %</t></is></c>
+  <c r="A4" t="inlineStr"><is><t>毛利率 %</t></is></c>
   <c r="B4" s="8"><f>B3/B2</f><v></v></c>
   <c r="C4" s="8"><f>C3/C2</f><v></v></c>
   <c r="D4" s="8"><f>D3/D2</f><v></v></c>
 </row>
 ```
 
-### 5.4 Appending "Green + Number Format" Combinations
+### 5.4 追加"绿色 + 数字格式"组合
 
-Pre-defined index 3 is green font + general format. If a cross-sheet reference involves a currency amount, a green style with a number format must be appended:
+预定义索引 3 是绿色字体 + 常规格式。如果跨工作表引用涉及货币金额，必须追加带有数字格式的绿色样式：
 
 ```xml
-<!-- Append at the end of <cellXfs> in styles.xml (assuming current count=13, new index=13) -->
-<!-- index 13: cross-sheet reference + currency format (green font + $#,##0) -->
+<!-- 在 styles.xml 的 <cellXfs> 末尾追加（假设当前 count=13，新索引=13） -->
+<!-- 索引 13：跨工作表引用 + 货币格式（绿色字体 + $#,##0） -->
 <xf numFmtId="164" fontId="3" fillId="0" borderId="0" xfId="0"
     applyFont="1" applyNumberFormat="1"/>
-<!-- Update count to 14 -->
+<!-- 更新 count 为 14 -->
 ```
 
-After appending, cross-sheet reference currency cells use `s="13"`.
+追加后，跨工作表引用货币单元格使用 `s="13"`。
 
 ---
 
-## 6. Complete Operational Workflow
+## 6. 完整操作流程
 
-### 6.1 Workflow Overview
+### 6.1 工作流程概览
 
 ```
-[Existing xlsx or file after CREATE/EDIT]
+[现有 xlsx 或创建/编辑后的文件]
         |
-  Step 1: Unpack (extract to temporary directory)
+  步骤 1：解压（提取到临时目录）
         |
-  Step 2: Audit styles.xml (review existing styles, build index mapping table)
+  步骤 2：审计 styles.xml（审阅现有样式，构建索引映射表）
         |
-  Step 3: Audit sheet XML (identify cells needing formatting and their semantic roles)
+  步骤 3：审计工作表 XML（识别需要格式化的单元格及其语义角色）
         |
-  Step 4: Append missing styles (numFmt -> font -> fill -> xf, update counts)
+  步骤 4：追加缺失样式（numFmt -> 字体 -> 填充 -> xf，更新计数）
         |
-  Step 5: Batch-update the s attribute of each cell in the sheet XML
+  步骤 5：批量更新工作表 XML 中每个单元格的 s 属性
         |
-  Step 6: XML validity + style reference integrity verification
+  步骤 6：XML 有效性 + 样式引用完整性验证
         |
-  Step 7: Pack (recompress as xlsx)
+  步骤 7：打包（重新压缩为 xlsx）
 ```
 
-### 6.2 Step 1 — Unpack
+### 6.2 步骤 1 — 解压
 
 ```bash
 python3 SKILL_DIR/scripts/xlsx_unpack.py input.xlsx /tmp/xlsx_fmt/
 ```
 
-If the script is unavailable, unpack manually:
+如果脚本不可用，手动解压：
 ```bash
 mkdir -p /tmp/xlsx_fmt && cp input.xlsx /tmp/xlsx_fmt/input.xlsx
 cd /tmp/xlsx_fmt && unzip input.xlsx -d unpacked/
 ```
 
-### 6.3 Step 2 — Audit styles.xml
+### 6.3 步骤 2 — 审计 styles.xml
 
-Execute according to the method in Section 3.1. Quick check for minimal_xlsx template initial state:
-- `<cellXfs count="13">` and `<numFmts count="4">` -> Template initial state, all 13 pre-defined slots can be used directly
-- Otherwise -> A complete review of the existing index mapping is required
+按照第 3.1 节中的方法执行。快速检查 minimal_xlsx 模板初始状态：
+- `<cellXfs count="13">` 和 `<numFmts count="4">` -> 模板初始状态，所有 13 个预定义槽位可直接使用
+- 否则 -> 需要对现有索引映射进行完整审阅
 
-### 6.4 Step 3 — Audit Sheet XML, Build Formatting Plan
+### 6.4 步骤 3 — 审计工作表 XML，构建格式化计划
 
-Read `xl/worksheets/sheet*.xml` and evaluate each cell:
-1. Does it contain a `<f>` element (formula)? -> Requires black/green/red style
-2. Is it a hard-coded numeric parameter? -> Requires blue style
-3. Is the data type currency/percentage/integer/year? -> Select the corresponding number format slot
-4. Is it a header? -> Bold style (index 4)
+读取 `xl/worksheets/sheet*.xml` 并评估每个单元格：
+1. 是否包含 `<f>` 元素（公式）？ -> 需要黑色/绿色/红色样式
+2. 是否是硬编码数字参数？ -> 需要蓝色样式
+3. 数据类型是货币/百分比/整数/年份？ -> 选择相应的数字格式槽位
+4. 是否是标题？ -> 粗体样式（索引 4）
 
-Build a formatting mapping table: `{cell coordinate: target style index}`
+构建格式化映射表：`{单元格坐标: 目标样式索引}`
 
-### 6.5 Step 4 — Append Styles
+### 6.5 步骤 4 — 追加样式
 
-Execute according to the atomic operation sequence in Section 3.2. Update the corresponding count attribute immediately after appending each component.
+按照第 3.2 节中的原子操作序列执行。在追加每个组件后立即更新相应的 count 属性。
 
-### 6.6 Step 5 — Batch-Update Cell s Attributes
+### 6.6 步骤 5 — 批量更新单元格 s 属性
 
 ```xml
-<!-- Before formatting: no style -->
+<!-- 格式化前：无样式 -->
 <c r="B5"><v>0.08</v></c>
 
-<!-- After formatting: growth rate assumption, blue font percentage, s="7" -->
+<!-- 格式化后：增长率假设，蓝色字体百分比，s="7" -->
 <c r="B5" s="7"><v>0.08</v></c>
 ```
 
 ```xml
-<!-- Before formatting: formula without style -->
+<!-- 格式化前：无样式公式 -->
 <c r="C10"><f>B10*(1+Assumptions!B2)</f><v></v></c>
 
-<!-- After formatting: currency formula, black font, s="6" -->
+<!-- 格式化后：货币公式，黑色字体，s="6" -->
 <c r="C10" s="6"><f>B10*(1+Assumptions!B2)</f><v></v></c>
 ```
 
-For consecutive rows of the same type, row-level default styles can be used to reduce repetition:
+对于连续相同类型的行，可以使用行级默认样式来减少重复：
 ```xml
-<!-- Entire row uses style=6, only override for exception cells -->
+<!-- 整行使用 style=6，仅为例外单元格覆盖 -->
 <row r="5" s="6" customFormat="1">
-  <c r="A5" s="0" t="inlineStr"><is><t>Operating Income</t></is></c>  <!-- Text overridden to default -->
-  <c r="B5"><f>B3-B4</f><v></v></c>   <!-- Inherits row-level s=6 -->
+  <c r="A5" s="0" t="inlineStr"><is><t>营业收入</t></is></c>  <!-- 文本覆盖为默认 -->
+  <c r="B5"><f>B3-B4</f><v></v></c>   <!-- 继承行级 s=6 -->
   <c r="C5"><f>C3-C4</f><v></v></c>
 </row>
 ```
 
-### 6.7 Step 6 — Verification
+### 6.7 步骤 6 — 验证
 
 ```bash
-# XML validity verification is handled automatically by xlsx_pack.py, no need to manually run xmllint
-# The pack script validates styles.xml and sheet XML legality before packaging; it aborts and reports on errors
+# XML 有效性验证由 xlsx_pack.py 自动处理，无需手动运行 xmllint
+# 打包脚本在打包前验证 styles.xml 和工作表 XML 的合法性；出错时中止并报告
 
-# Style audit (optional, audit the entire unpacked directory after formatting is complete)
+# 样式审计（可选，在格式化完成后审计整个解压目录）
 python3 SKILL_DIR/scripts/style_audit.py /tmp/xlsx_fmt/unpacked/
 
-# Formula error static scan (must specify a single .xlsx file, does not accept directories)
-# Pack first, then scan:
+# 公式错误静态扫描（必须指定单个 .xlsx 文件，不接受目录）
+# 先打包，然后扫描：
 python3 SKILL_DIR/scripts/xlsx_pack.py /tmp/xlsx_fmt/unpacked/ /tmp/output.xlsx
 python3 SKILL_DIR/scripts/formula_check.py /tmp/output.xlsx
 ```
 
-Manual style reference integrity check:
+手动样式引用完整性检查：
 ```bash
-# Find the maximum s attribute value in the sheet XML
+# 在工作表 XML 中查找最大的 s 属性值
 grep -o 's="[0-9]*"' /tmp/xlsx_fmt/unpacked/xl/worksheets/sheet1.xml \
   | grep -o '[0-9]*' | sort -n | tail -1
 
-# Compare with the cellXfs count attribute (max s value must be < count)
+# 与 cellXfs count 属性比较（最大 s 值必须 < count）
 grep 'cellXfs count' /tmp/xlsx_fmt/unpacked/xl/styles.xml
 ```
 
-### 6.8 Step 7 — Pack
+### 6.8 步骤 7 — 打包
 
 ```bash
 python3 SKILL_DIR/scripts/xlsx_pack.py /tmp/xlsx_fmt/unpacked/ output.xlsx
 ```
 
-If the script is unavailable, pack manually:
+如果脚本不可用，手动打包：
 ```bash
 cd /tmp/xlsx_fmt/unpacked/
 zip -r ../output.xlsx . -x "*.DS_Store"
@@ -549,220 +549,220 @@ zip -r ../output.xlsx . -x "*.DS_Store"
 
 ---
 
-## 7. Formatting Completeness Checklist
+## 7. 格式化完整性检查清单
 
-Verify each item before delivery:
+交付前验证每个项目：
 
-### Color Role Consistency
-- [ ] All numeric cells containing `<f>` elements: fontId corresponds to black (formula) or green (cross-sheet reference)
-- [ ] All hard-coded numeric values that are user-adjustable parameters: fontId corresponds to blue (input)
-- [ ] Cross-sheet references (formula contains `SheetName!`): fontId corresponds to green
-- [ ] External file references (formula contains `[FileName.xlsx]`): fontId corresponds to red
-- [ ] No cell simultaneously contains a `<f>` element and uses blue font (color role contradiction)
+### 颜色角色一致性
+- [ ] 所有包含 `<f>` 元素的数字单元格：fontId 对应黑色（公式）或绿色（跨工作表引用）
+- [ ] 所有硬编码数字值且用户可调整参数：fontId 对应蓝色（输入）
+- [ ] 跨工作表引用（公式包含 `SheetName!`）：fontId 对应绿色
+- [ ] 外部文件引用（公式包含 `[FileName.xlsx]`）：fontId 对应红色
+- [ ] 没有单元格同时包含 `<f>` 元素和使用蓝色字体（颜色角色矛盾）
 
-### Number Format Correctness
-- [ ] Year columns: numFmtId="1" (`0` format), displays as 2024 not 2,024
-- [ ] Currency rows: numFmtId="164" or variant, negative numbers display as ($1,234) not -$1,234
-- [ ] Percentage rows: values stored as decimals (0.08 = 8%), format numFmtId="165", displays as 8.0%
-- [ ] Zero values: displayed as `-` in sparse matrices rather than `0` (formatCode third segment contains `"-"`)
-- [ ] Multiple rows (EV/EBITDA, etc.): numFmtId="166" (`0.0x` format)
-- [ ] Negative number display style is consistent throughout the entire workbook (parenthetical or red minus sign)
+### 数字格式正确性
+- [ ] 年份列：numFmtId="1"（`0` 格式），显示为 2024 而非 2,024
+- [ ] 货币行：numFmtId="164" 或变体，负数显示为 ($1,234) 而非 -$1,234
+- [ ] 百分比行：值存储为小数（0.08 = 8%），格式 numFmtId="165"，显示为 8.0%
+- [ ] 零值：在稀疏矩阵中显示为 `-` 而非 `0`（formatCode 第三段包含 `"-"`）
+- [ ] 倍数行（EV/EBITDA 等）：numFmtId="166"（`0.0x` 格式）
+- [ ] 负数显示样式在整个工作簿中保持一致（括号或红色减号）
 
-### styles.xml Structural Integrity
-- [ ] `<numFmts count>` = actual number of `<numFmt>` elements
-- [ ] `<fonts count>` = actual number of `<font>` elements
-- [ ] `<fills count>` = actual number of `<fill>` elements (including spec-mandated fills[0] and fills[1])
-- [ ] `<cellXfs count>` = actual number of `<xf>` elements
-- [ ] fills[0] is `patternType="none"`, fills[1] is `patternType="gray125"` (spec-mandated)
-- [ ] All `<xf>` referenced fontId / fillId / borderId are within the valid range of their respective collections
-- [ ] All cell `s` attribute values < `cellXfs count` (no out-of-bounds references)
+### styles.xml 结构完整性
+- [ ] `<numFmts count>` = 实际 `<numFmt>` 元素数量
+- [ ] `<fonts count>` = 实际 `<font>` 元素数量
+- [ ] `<fills count>` = 实际 `<fill>` 元素数量（包括规范规定的 fills[0] 和 fills[1]）
+- [ ] `<cellXfs count>` = 实际 `<xf>` 元素数量
+- [ ] fills[0] 是 `patternType="none"`，fills[1] 是 `patternType="gray125"`（规范规定）
+- [ ] 所有 `<xf>` 引用的 fontId / fillId / borderId 在其各自集合的有效范围内
+- [ ] 所有单元格 `s` 属性值 < `cellXfs count`（无越界引用）
 
-### Assumption Separation Verification
-- [ ] No black-font numeric cells in the assumptions area/sheet (black numeric = formula, should not be in assumptions)
-- [ ] No blue-font non-year numeric cells in the model area/sheet (blue numeric = hard-coded, should be in assumptions)
-- [ ] Input parameters in the model area reference the assumptions area via formulas, not by directly copying values
+### 假设分离验证
+- [ ] 假设区域/工作表中没有黑色字体数字单元格（黑色数字 = 公式，不应在假设中）
+- [ ] 模型区域/工作表中没有蓝色字体非年份数字单元格（蓝色数字 = 硬编码，应在假设中）
+- [ ] 模型区域中的输入参数通过公式引用假设区域，而不是直接复制值
 
-### Formula and Format Linkage
-- [ ] All cells with `<f>` elements have an explicit `s` attribute (must not use default style=0, whose font color is not explicitly black)
-- [ ] SUM summary rows: style uses black font + corresponding number format (e.g., s="6" for currency summaries)
-- [ ] Percentage formulas: values stored as decimals, format is `0.0%`; do not multiply values by 100 before applying percentage format
+### 公式和格式关联
+- [ ] 所有带 `<f>` 元素的单元格都有显式的 `s` 属性（不得使用默认 style=0，其字体颜色不是显式黑色）
+- [ ] SUM 汇总行：样式使用黑色字体 + 相应数字格式（例如，货币汇总使用 s="6"）
+- [ ] 百分比公式：值存储为小数，格式为 `0.0%`；在应用百分比格式前不要将值乘以 100
 
-### Visual Hierarchy
-- [ ] Header rows (years/metric names): style=4 (bold black)
-- [ ] Summary rows (Total/EBITDA/Net Income): bold + corresponding number format (append style if needed)
-- [ ] Unit description rows (e.g., "$ thousands"): use style=0 or style=2 (blue not needed)
-
----
-
-## 8. Prohibited Actions (What You Must NOT Do)
-
-- **Do not modify existing `<xf>` entries**: This will batch-change the style of all cells referencing that index
-- **Do not delete fills[0] and fills[1]**: Required by OOXML specification; deletion causes file corruption
-- **Do not modify cell values or formulas**: The FORMAT path only changes styles, not content
-- **Do not use openpyxl for formatting**: openpyxl rewrites the entire styles.xml on save, losing unsupported features
-- **Do not apply global override styles**: Do not cover the entire workbook with a single style; assign precisely by semantic role
-- **Do not write FF in the Alpha channel**: `rgb="FF0000FF"` makes the color fully transparent; the correct format is `rgb="000000FF"`
+### 视觉层次
+- [ ] 标题行（年份/指标名称）：style=4（粗体黑色）
+- [ ] 汇总行（总计/EBITDA/净利润）：粗体 + 相应数字格式（如需要则追加样式）
+- [ ] 单位描述行（例如，"$ thousands"）：使用 style=0 或 style=2（不需要蓝色）
 
 ---
 
-## 9. Common Errors and Fixes
+## 8. 禁止操作（您绝对不能做的事）
 
-### Error 1: Year displays as 2,024
+- **不要修改现有的 `<xf>` 条目**：这将批量更改引用该索引的所有单元格的样式
+- **不要删除 fills[0] 和 fills[1]**：OOXML 规范要求；删除会导致文件损坏
+- **不要修改单元格值或公式**：FORMAT 路径只更改样式，不更改内容
+- **不要使用 openpyxl 进行格式化**：openpyxl 在保存时重写整个 styles.xml，丢失不支持的功能
+- **不要应用全局覆盖样式**：不要用单一样式覆盖整个工作簿；按语义角色精确分配
+- **不要在透明度通道中写入 FF**：`rgb="FF0000FF"` 使颜色完全透明；正确格式是 `rgb="000000FF"`
 
-Cause: The year cell's `s` attribute uses a format with thousands separator (e.g., numFmtId="3" or numFmtId="167").
+---
+
+## 9. 常见错误和修复
+
+### 错误 1：年份显示为 2,024
+
+原因：年份单元格的 `s` 属性使用了带千位分隔符的格式（例如，numFmtId="3" 或 numFmtId="167"）。
 
 ```xml
-<!-- Incorrect -->
+<!-- 错误 -->
 <c r="B1" s="9"><v>2024</v></c>
 
-<!-- Fix: Change to s="11" (numFmtId="1", format 0) -->
+<!-- 修复：改为 s="11"（numFmtId="1"，格式 0） -->
 <c r="B1" s="11"><v>2024</v></c>
 ```
 
-### Error 2: Percentage displays as 800% (value was multiplied by 100)
+### 错误 2：百分比显示为 800%（值被乘以 100）
 
-Cause: 8% was stored as `<v>8</v>` instead of `<v>0.08</v>`. Excel's `%` format automatically multiplies the value by 100 for display.
+原因：8% 被存储为 `<v>8</v>` 而非 `<v>0.08</v>`。Excel 的 `%` 格式会自动将值乘以 100 显示。
 
 ```xml
-<!-- Incorrect -->
+<!-- 错误 -->
 <c r="B2" s="7"><v>8</v></c>
 
-<!-- Fix: Value must be stored in decimal form -->
+<!-- 修复：值必须以小数形式存储 -->
 <c r="B2" s="7"><v>0.08</v></c>
 ```
 
-### Error 3: File corruption after appending styles without updating count
+### 错误 3：追加样式后未更新计数导致文件损坏
 
-Cause: A `<font>` or `<xf>` element was appended but the count attribute was not updated; Excel reads beyond bounds using the old count.
+原因：追加了 `<font>` 或 `<xf>` 元素但未更新 count 属性；Excel 使用旧计数越界读取。
 
-Fix: Update the corresponding count immediately after appending each element:
+修复：在追加每个元素后立即更新相应的计数：
 ```xml
-<!-- After appending the 6th font, count must be changed from 5 to 6 -->
+<!-- 追加第 6 个字体后，count 必须从 5 改为 6 -->
 <fonts count="6">
   ...
 </fonts>
 ```
 
-### Error 4: Blue font + formula (color role contradiction)
+### 错误 4：蓝色字体 + 公式（颜色角色矛盾）
 
-Cause: A formula cell mistakenly uses an input style (e.g., s="5" for currency input).
+原因：公式单元格错误地使用了输入样式（例如，货币输入使用 s="5"）。
 
 ```xml
-<!-- Incorrect: Formula cell uses blue input style -->
+<!-- 错误：公式单元格使用蓝色输入样式 -->
 <c r="C5" s="5"><f>B5*1.08</f><v></v></c>
 
-<!-- Fix: Change formula cell to corresponding black formula style (5->6, 7->8, 9->10) -->
+<!-- 修复：将公式单元格改为相应的黑色公式样式（5->6, 7->8, 9->10） -->
 <c r="C5" s="6"><f>B5*1.08</f><v></v></c>
 ```
 
-### Error 5: AARRGGBB color missing Alpha (only 6 digits)
+### 错误 5：AARRGGBB 颜色缺少透明度（只有 6 位数字）
 
 ```xml
-<!-- Incorrect: 6-digit format, behavior depends on implementation, usually causes wrong color -->
+<!-- 错误：6 位格式，行为取决于实现，通常导致错误颜色 -->
 <color rgb="0000FF"/>
 
-<!-- Fix: Always use 8-digit AARRGGBB, Alpha fixed at 00 -->
+<!-- 修复：始终使用 8 位 AARRGGBB，透明度固定为 00 -->
 <color rgb="000000FF"/>
 ```
 
-### Error 6: Modifying existing xf (affects all cells referencing that index)
+### 错误 6：修改现有 xf（影响引用该索引的所有单元格）
 
-Cause: Directly modifying attributes of the Nth `<xf>` in cellXfs, causing all cells with `s="N"` to be batch-changed.
+原因：直接修改 cellXfs 中第 N 个 `<xf>` 的属性，导致所有使用 `s="N"` 的单元格被批量更改。
 
-Fix: Keep existing entries unchanged, append a new entry at the end, and only change the `s` attribute of cells that need the new style to the new index:
+修复：保持现有条目不变，在末尾追加新条目，只将需要新样式的单元格的 `s` 属性更改为新索引：
 ```xml
-<!-- Incorrect: Modified the existing xf at index=6 -->
+<!-- 错误：修改了索引=6 处的现有 xf -->
 <xf numFmtId="164" fontId="2" fillId="0" borderId="0" xfId="0"
     applyFont="1" applyNumberFormat="1" applyAlignment="1">
-  <alignment horizontal="right"/>  <!-- New attribute added, affects ALL cells already using s="6" -->
+  <alignment horizontal="right"/>  <!-- 新增属性，影响所有已使用 s="6" 的单元格 -->
 </xf>
 
-<!-- Fix: Append new index (when original count=13, new index=13), only change the s attribute of cells needing right alignment -->
-<!-- Keep index=6 as-is -->
+<!-- 修复：追加新索引（当原始 count=13 时，新索引=13），只将需要右对齐的单元格的 s 属性更改为新索引 -->
+<!-- 保持索引=6 不变 -->
 <xf numFmtId="164" fontId="2" fillId="0" borderId="0" xfId="0"
     applyFont="1" applyNumberFormat="1" applyAlignment="1">
   <alignment horizontal="right"/>
-</xf>  <!-- New index=13 -->
+</xf>  <!-- 新索引=13 -->
 ```
 
 ---
 
-## 10. Financial Model Structure Conventions
+## 10. 财务模型结构约定
 
-### 10.1 Header Rows
+### 10.1 标题行
 
-- Bold font (corresponds to style index 4 in this skill's template)
-- Year columns: use number format `0` (numFmtId="1", no thousands separator) to prevent 2024 from displaying as 2,024
-- A unit description row may be added below headers: gray or italic text, e.g., "$ thousands" or "% of Revenue"
+- 粗体字体（对应于此技能模板中的样式索引 4）
+- 年份列：使用数字格式 `0`（numFmtId="1"，无千位分隔符）以防止 2024 显示为 2,024
+- 标题下方可以添加单位描述行：灰色或斜体文本，例如，"$ thousands" 或 "% of Revenue"
 
-### 10.2 Row Type Standards
+### 10.2 行类型标准
 
-| Row Type | Style Recommendation | Example |
+| 行类型 | 样式推荐 | 示例 |
 |----------|---------------------|---------|
-| Category heading row | Bold, optionally with fill color | "Revenue" |
-| Line item row | Normal style | "Product A", "Product B" |
-| Subtotal row | Bold + top border | "Total Revenue" |
-| Operating metric row | Normal style | "Gross Margin %" |
-| Separator row | Empty row | (empty) |
+| 类别标题行 | 粗体，可选填充颜色 | "收入" |
+| 明细行 | 常规样式 | "产品 A"、"产品 B" |
+| 小计行 | 粗体 + 顶部边框 | "总收入" |
+| 运营指标行 | 常规样式 | "毛利率 %" |
+| 分隔行 | 空行 | （空） |
 
-### 10.3 Multi-Year Model Column Layout
+### 10.3 多年模型列布局
 
 ```
-Col A: Label column          (width 28, left-aligned text, s="4" for headers or s="0" for labels)
-Col B: FY2022 Actual         (width 12, year header s="11", data cells styled by semantic role)
-Col C: FY2023 Actual
-Col D: FY2024E               (forecast period - can use light gray fill fillId=3 to differentiate)
-Col E: FY2025E
-Col F: FY2026E
+A 列：标签列          （宽度 28，左对齐文本，标题使用 s="4" 或标签使用 s="0"）
+B 列：FY2022 实际     （宽度 12，年份标题 s="11"，数据单元格按语义角色设置样式）
+C 列：FY2023 实际
+D 列：FY2024E        （预测期 - 可使用浅灰色填充 fillId=3 区分）
+E 列：FY2025E
+F 列：FY2026E
 ```
 
-### 10.4 Cross-Sheet Reference Patterns
+### 10.4 跨工作表引用模式
 
-Complete XML example of parameters passing from assumptions sheet to model sheet:
+从假设工作表到模型工作表的参数传递完整 XML 示例：
 
 ```xml
-<!-- Assumptions sheet, cell B5: 8% growth rate, blue percentage input -->
+<!-- 假设工作表，单元格 B5：8% 增长率，蓝色百分比输入 -->
 <c r="B5" s="7"><v>0.08</v></c>
 
-<!-- Model sheet, cell C10: references assumption area growth rate, green percentage formula -->
-<!-- Requires appending index=13: green + percentage format (fontId=3, numFmtId=165) -->
+<!-- 模型工作表，单元格 C10：引用假设区域增长率，绿色百分比公式 -->
+<!-- 需要追加索引=13：绿色 + 百分比格式（fontId=3, numFmtId=165） -->
 <c r="C10" s="13"><f>Assumptions!B5</f><v></v></c>
 ```
 
 ---
 
-## 11. Assumption Categories
+## 11. 假设类别
 
-In the assumptions area (Assumptions sheet or assumptions block), organize assumptions in the following standard order for ease of review and maintenance:
+在假设区域（假设工作表或假设块）中，按以下标准顺序组织假设，以便于审阅和维护：
 
-1. **Revenue assumptions**: Growth rates, pricing, sales volume
-2. **Cost assumptions**: Gross margin, fixed/variable cost ratios
-3. **Working capital**: DSO (Days Sales Outstanding), DPO (Days Payable Outstanding), inventory days
-4. **Capital expenditures (CapEx)**: As a percentage of revenue or absolute amounts
-5. **Financing assumptions**: Interest rates, debt repayment schedules
-6. **Tax and other**: Effective tax rate, depreciation & amortization (D&A)
-
----
-
-## 12. Audit Trail Best Practices
-
-- Use `s="12"` (blue font + yellow fill highlight) to mark cells requiring review or pending changes, making them immediately visible to reviewers
-- In sensitivity analysis rows or a separate Sensitivity tab, show the impact of +/-1% changes in key assumptions on results
-- **Do not hide rows containing assumptions**: Assumption rows must be visible to reviewers; do not use the `hidden="1"` attribute
-- Note a "Last Updated" date at the top of the assumptions area or in a dedicated cell, recording the last modification time of the model
+1. **收入假设**：增长率、定价、销售量
+2. **成本假设**：毛利率、固定/可变成本比率
+3. **营运资本**：DSO（应收账款周转天数）、DPO（应付账款周转天数）、库存周转天数
+4. **资本支出（CapEx）**：占收入百分比或绝对金额
+5. **融资假设**：利率、债务偿还计划
+6. **税务及其他**：实际税率、折旧与摊销（D&A）
 
 ---
 
-## 13. Pre-Delivery Checklist (Common Financial Model Checklist)
+## 12. 审计跟踪最佳实践
 
-Before outputting the final file, confirm each item:
+- 使用 `s="12"`（蓝色字体 + 黄色填充高亮）标记需要审阅或待更改的单元格，使其对审阅者立即可见
+- 在敏感性分析行或单独的敏感性选项卡中，显示关键假设 +/-1% 变化对结果的影响
+- **不要隐藏包含假设的行**：假设行必须对审阅者可见；不要使用 `hidden="1"` 属性
+- 在假设区域顶部或专用单元格中记录"最后更新"日期，记录模型的最后修改时间
 
-- [ ] Formula rows contain no hard-coded values (can use `formula_check.py` to scan the packaged `.xlsx` file)
-- [ ] Year columns display as 2024 not 2,024 (numFmtId="1", format `0`)
-- [ ] Negative numbers display as (1,234) not -1,234 (use parenthetical style for externally delivered financial reports)
-- [ ] Zero values display as `-` in sparse rows rather than `0` (formatCode third segment is `"-"`)
-- [ ] Growth rates and percentages are stored as decimals (0.08 = 8%), format is `0.0%`
-- [ ] All cross-sheet reference cells use green font (style index 3 or an appended green + number format combination)
-- [ ] Assumptions block and model block are clearly separated (different sheets or separated by empty rows within the same sheet)
-- [ ] Summary rows use `SUM()` formulas, not manually hard-coded totals
-- [ ] Balance verification: summary rows = sum of their respective line items (a check row can be added at the end of the model to verify)
+---
+
+## 13. 交付前检查清单（常见财务模型检查清单）
+
+输出最终文件前，确认每个项目：
+
+- [ ] 公式行不包含硬编码值（可以使用 `formula_check.py` 扫描打包的 `.xlsx` 文件）
+- [ ] 年份列显示为 2024 而非 2,024（numFmtId="1"，格式 `0`）
+- [ ] 负数显示为 (1,234) 而非 -1,234（对外部交付的财务报告使用括号样式）
+- [ ] 零值在稀疏行中显示为 `-` 而非 `0`（formatCode 第三段是 `"-"`）
+- [ ] 增长率和百分比以小数存储（0.08 = 8%），格式为 `0.0%`
+- [ ] 所有跨工作表引用单元格使用绿色字体（样式索引 3 或追加的绿色 + 数字格式组合）
+- [ ] 假设块和模型块清晰分离（不同工作表或同一工作表内用空行分隔）
+- [ ] 汇总行使用 `SUM()` 公式，而非手动硬编码总计
+- [ ] 余额验证：汇总行 = 其各自明细项目的总和（可以在模型末尾添加检查行验证）
