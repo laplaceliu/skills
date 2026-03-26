@@ -328,6 +328,223 @@ fcntl(pipe_fd[0], F_SETPIPE_SZ, 4096);
 
 ---
 
+## 文件系统监控 (inotify / fanotify)
+
+### inotify 基础
+
+```cpp
+#include <sys/inotify.h>
+#include <unistd.h>
+#include <cstdio>
+#include <cstring>
+#include <stdexcept>
+#include <cerrno>
+
+class InotifyWatcher {
+public:
+    InotifyWatcher() {
+        fd_ = inotify_init();
+        if (fd_ < 0) {
+            throw std::runtime_error("inotify_init failed");
+        }
+    }
+
+    ~InotifyWatcher() {
+        if (fd_ >= 0) {
+            close(fd_);
+        }
+    }
+
+    // 添加监控
+    int add_watch(const char* path, uint32_t mask) {
+        int wd = inotify_add_watch(fd_, path, mask);
+        if (wd < 0) {
+            perror("inotify_add_watch");
+        }
+        return wd;
+    }
+
+    // 移除监控
+    int remove_watch(int wd) {
+        int ret = inotify_rm_watch(fd_, wd);
+        if (ret < 0) {
+            perror("inotify_rm_watch");
+        }
+        return ret;
+    }
+
+    // 获取文件描述符 (用于 poll/epoll)
+    int fd() const { return fd_; }
+
+private:
+    int fd_;
+};
+```
+
+### inotify 事件类型
+
+```cpp
+// 文件事件
+IN_ACCESS        // 文件访问 (read)
+IN_MODIFY        // 文件修改 (write)
+IN_ATTRIB        // 元数据变更 (chmod, chown)
+IN_CLOSE_WRITE   // 写操作关闭
+IN_CLOSE_NOWRITE // 非写操作关闭
+IN_OPEN          // 文件打开
+
+// 目录事件
+IN_CREATE        // 文件/目录创建
+IN_DELETE        // 文件/目录删除
+IN_MOVED_FROM    // 文件移出
+IN_MOVED_TO      // 文件移入
+
+// 组合事件
+IN_ALL_EVENTS    // 所有事件
+IN_MOVE          // IN_MOVED_FROM | IN_MOVED_TO
+IN_CLOSE         // IN_CLOSE_WRITE | IN_CLOSE_NOWRITE
+
+// 特殊
+IN_DONT_FOLLOW   // 不跟随符号链接
+IN_EXCL_UNLINK   // 删除时不报告
+IN_ONESHOT       // 单次监控
+IN_ONLYDIR       // 只监控目录
+```
+
+### inotify 读取事件
+
+```cpp
+#include <sys/inotify.h>
+#include <cstdlib>
+#include <cstring>
+
+// 事件缓冲区和读取
+const size_t BUF_LEN = 1024 * (sizeof(inotify_event) + NAME_MAX + 1);
+char buf[BUF_LEN];
+
+ssize_t len = read(inotify_fd, buf, BUF_LEN);
+if (len < 0) {
+    perror("read");
+    return;
+}
+
+// 遍历事件
+size_t i = 0;
+while (i < len) {
+    inotify_event* event = reinterpret_cast<inotify_event*>(&buf[i]);
+
+    printf("wd=%d, ", event->wd);
+    if (event->mask & IN_ACCESS)    printf("ACCESS ");
+    if (event->mask & IN_MODIFY)    printf("MODIFY ");
+    if (event->mask & IN_CREATE)    printf("CREATE ");
+    if (event->mask & IN_DELETE)    printf("DELETE ");
+    if (event->mask & IN_MOVED_TO)  printf("MOVED_TO ");
+    if (event->mask & IN_MOVED_FROM) printf("MOVED_FROM ");
+
+    if (event->len > 0) {
+        printf("name=%s", event->name);
+    }
+    printf("\n");
+
+    i += sizeof(inotify_event) + event->len;
+}
+```
+
+### inotify + epoll 监控多个路径
+
+```cpp
+#include <sys/epoll.h>
+#include <sys/inotify.h>
+#include <vector>
+#include <map>
+#include <string>
+
+class InotifyEpoll {
+public:
+    InotifyEpoll() {
+        inotify_fd_ = inotify_init();
+        if (inotify_fd_ < 0) throw std::runtime_error("inotify_init failed");
+
+        epoll_fd_ = epoll_create1(EPOLL_CLOEXEC);
+        if (epoll_fd_ < 0) throw std::runtime_error("epoll_create1 failed");
+
+        // 添加 inotify fd 到 epoll
+        struct epoll_event ev;
+        ev.events = EPOLLIN;
+        ev.data.fd = inotify_fd_;
+        if (epoll_ctl(epoll_fd_, EPOLL_CTL_ADD, inotify_fd_, &ev) < 0)
+            throw std::runtime_error("epoll_ctl failed");
+    }
+
+    int add_watch(const char* path, uint32_t mask) {
+        int wd = inotify_add_watch(inotify_fd_, path, mask);
+        if (wd >= 0) {
+            // 记录 wd 到路径的映射
+            watch_map_[wd] = path;
+        }
+        return wd;
+    }
+
+    int wait(int timeout_ms = -1) {
+        return epoll_wait(epoll_fd_, events_.data(), events_.size(), timeout_ms);
+    }
+
+    const epoll_event& event(int i) const { return events_[i]; }
+
+    std::string get_path(int wd) const {
+        auto it = watch_map_.find(wd);
+        return it != watch_map_.end() ? it->second : "";
+    }
+
+private:
+    int inotify_fd_;
+    int epoll_fd_;
+    std::vector<struct epoll_event> events_{16};
+    std::map<int, std::string> watch_map_;  // wd -> path
+};
+```
+
+### fanotify (高级文件系统监控)
+
+```cpp
+#include <sys/fanotify.h>
+#include <sys/stat.h>
+
+// fanotify 需要 CAP_SYS_ADMIN 权限
+int fanotify_fd = fanotify_init(FAN_CLASS_PRE_CONTENT, O_RDONLY);
+if (fanotify_fd < 0) {
+    perror("fanotify_init");
+}
+
+// 监控目录和文件
+fanotify_mark(fanotify_fd, FAN_MARK_ADD | FAN_MARK_FILESYSTEM,
+              FAN_MODIFY | FAN_CLOSE_WRITE | FAN_OPEN,
+              AT_FDCWD, "/path/to/monitor");
+
+// 读取事件
+char buf[4096];
+ssize_t len = read(fanotify_fd, buf, sizeof(buf));
+
+// fanotify_event 的数据结构不同，包含权限决策
+```
+
+### inotify 规则
+
+```
+inotify_init() 创建 inotify 实例
+inotify_add_watch() 添加监控路径
+inotify_rm_watch() 移除监控
+read() 读取事件 (阻塞或非阻塞)
+事件结构包含: wd, mask, cookie, len, name
+
+适合监控: 文件修改、目录变化、权限变更
+不适合: 递归监控子目录 (需手动递归添加)
+
+绝不依赖 inotify 做安全监控 (可被绕过)
+绝不忽略 event->len (文件名可能存在)
+```
+
+---
+
 ## 目录流 (opendir/readdir)
 
 ### 遍历目录
